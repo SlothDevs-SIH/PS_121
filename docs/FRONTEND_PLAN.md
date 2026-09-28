@@ -42,7 +42,7 @@
   2. **`frontend-checks`**: generated types up to date, lint, format, type-check, unit tests, build;
   3. **`integration`**: Compose stack → backend integration tests → CLI check → **Playwright e2e** → report uploaded on failure.
 
-  ⏳ The new jobs have not run on GitHub yet — see V-F3.
+  ✅ **All three jobs green on GitHub (2026-09-28):** [run](https://github.com/SlothDevs-SIH/PS_121/actions/runs/36463537008) on commit `8c9f9f1`.
 
 **Real problems found and fixed while building F0** (kept here, as DHRUVA's doc does, because they're the kind of thing a judge or reviewer asks about):
 1. **Live Well Monitor was tagged field-only.** The master plan's own persona table (§2.3) says RTMAC monitoring engineers, who work in the office, use it. The e2e navigation test caught the count mismatch. It's fixed, and a unit test now asserts that office users see Live.
@@ -59,7 +59,7 @@
 |---|---|---|---|---|
 | V-F1 | TypeScript pinned to 5.9, not the template's 6.0 | `openapi-typescript` 7.13 (latest) declares `peer typescript@^5.x`; npm refused TS 6 | Pinned `typescript ~5.9.3`; every template compiler option is supported. Revisit when `openapi-typescript` supports TS 6 | ✅ Resolved |
 | V-F2 | Playwright pinned to exactly 1.56.1 | That release uses Chromium build 1194, which is pre-installed in the dev sandbox (checked against `browsers.json` of 1.55/1.56/1.57). CI installs the matching browser itself | Keep pinned; bump deliberately with `npx playwright install` | ✅ Resolved |
-| V-F3 | New CI jobs not yet observed green on GitHub | Every step run locally with the same commands | Watch the first run; record the link here | ⏳ Open |
+| V-F3 | New CI jobs not yet observed green on GitHub | Every step run locally with the same commands | [Run](https://github.com/SlothDevs-SIH/PS_121/actions/runs/36463537008) on `8c9f9f1`: backend-checks ✅, frontend-checks ✅, integration (incl. Playwright e2e) ✅ | ✅ Resolved 2026-09-28 |
 | V-F4 | Source maps are shipped in the nginx image | `build.sourcemap: true` puts `*.map` files next to the JS; useful for debugging, but they expose source | Before any OIL pilot (F6): build with `sourcemap: 'hidden'` and strip `*.map` from the image | ⏳ Open |
 | V-F5 | Linter is **oxlint** (the Vite template default), not ESLint | Master plan named no linter; oxlint is much faster, supports React rules, and caught fast-refresh export issues | Keep. Add ESLint only if a needed rule (e.g. `jsx-a11y` depth) is missing | ✅ Decided |
 | V-F6 | "shadcn/ui" in the master plan | shadcn is a copy-in component convention, not a dependency. F0 hand-writes `Button`, `Card`, `Badge` in that convention (`cn()` = `clsx` + `tailwind-merge`) | Add further shadcn components (Dialog, Tabs, Select, Tooltip…) as needed, copied into `components/ui/` | ✅ Decided |
@@ -348,7 +348,7 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 7 | Planned-screen pages with live endpoint probes | F0 | ✅ | `src/pages/PlannedScreen.tsx` · component + e2e probe tests |
 | 8 | nginx image: SPA fallback, proxy (HTTP + WS), CSP/security headers, caching | F0 | ⚠️ ships source maps (V-F4) | `frontend/Dockerfile`, `frontend/nginx/default.conf.template` · e2e WebSocket test, curl header checks (App. B) |
 | 9 | Compose `frontend` service, health-gated | F0 | ✅ | `docker-compose.yml` · `up --wait` healthy |
-| 10 | CI: frontend-checks + e2e in integration | F0 | ⚠️ not yet observed on GitHub (V-F3) | `.github/workflows/ci.yml` |
+| 10 | CI: frontend-checks + e2e in integration | F0 | ✅ | `.github/workflows/ci.yml` · [run](https://github.com/SlothDevs-SIH/PS_121/actions/runs/36463537008) green |
 | 11 | Well Map | F1 | 📋 | §4.1 |
 | 12 | Ingestion upload & job status | F1 | 📋 | §4.2 |
 | 13 | `EvidenceLink`, `PageViewer`, `ConfidenceValue`, `DataTable`, units formatter | F1 | 📋 | §4.12, §3.3 |
@@ -366,7 +366,7 @@ Frontend phases follow the backend phases they depend on, typically starting a f
 
 | Phase | Needs backend | Master plan | Scope | Exit criteria |
 |---|---|---|---|---|
-| **F0 Skeleton** | B0 | P0 | Shell, theming, field mode, API layer, System Status, planned screens, nginx image, CI | ✅ **Met 2026-09-28**, except V-F3 (GitHub CI observation) — Appendix B |
+| **F0 Skeleton** | B0 | P0 | Shell, theming, field mode, API layer, System Status, planned screens, nginx image, CI | ✅ **Met 2026-09-28**, including a green GitHub CI run — Appendix B |
 | **F1 Map & ingestion** | B1 | P1 | Well Map (surface mode), upload + job status, `EvidenceLink`/`PageViewer`, `ConfidenceValue`, `DataTable`, units formatter, route-level code splitting, tile decision | Radius search on Volve + synthetic wells works end to end in the browser; 10 files uploaded and tracked; e2e covers both |
 | **F2 Knowledge** | B2 | P2 | Review queue, Well 360, **Correlation Panel**, Knowledge Search, at-formation/closest-approach modes on the map, axe checks in e2e | Correlation panel renders 6 wells < 1 s with evidence links; review round trip; search with citations |
 | **F3 Risk & ledger** | B3 | P3a | Mitigation Ledger, `RiskCurve` on Map/Well 360/Correlation hazard strip | Ledger shows the planted ranking; risk curves show n and CI |
@@ -535,7 +535,7 @@ One codebase serves office laptops, RTMAC wall screens and rig tablets, with no 
 
 ## 16. Immediate Next Actions (frontend)
 
-1. **Watch the first GitHub CI run with the new jobs**; fix anything it finds; resolve V-F3.
+1. ~~Watch the first GitHub CI run~~ — done, all green (V-F3).
 2. **F1 kickoff:** §6.1 tasks 1–3 (units formatter, evidence components, code splitting). These can start now against fixtures — UI eng.
 3. **Tile decision** (V-F10): the self-hosted tile pack option and its size for the demo area — UI eng. + infra.
 4. **Correlation panel spike on static JSON** (RF1) — start early; it's the highest-risk UI component.
@@ -594,6 +594,7 @@ Related changes outside `frontend/`:
 | Headers | `curl -I localhost:8080/` | CSP as in §11, `X-Frame-Options: DENY`, `Cache-Control: no-cache` |
 | Request-ID pass-through | `curl -H 'X-Request-ID: trace-42' localhost:8080/api/v1/wells` | response `x-request-id: trace-42` |
 | Browser e2e | `npm run e2e` (Playwright 1.56.1, Chromium) | **14 passed** (7 scenarios × desktop + tablet) |
+| GitHub CI | push of `8c9f9f1` | [run](https://github.com/SlothDevs-SIH/PS_121/actions/runs/36463537008): backend-checks ✅ · frontend-checks ✅ · integration (compose + backend integration + Playwright e2e) ✅ |
 | Visual review | Playwright screenshots: System Status (light, 1280), Well Map (dark, 1280), Live Well Monitor (field + dark, 800 wide), System Status (375 wide) | Layouts correct; the 375 px table overflow and the "System" theme label were found here and fixed |
 
 ## Appendix C — Document Maintenance Rules

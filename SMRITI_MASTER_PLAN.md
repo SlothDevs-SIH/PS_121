@@ -626,7 +626,7 @@ This table is the project's heartbeat. Update it the same day something changes.
 
 | # | Component | Status | Evidence (file / test) | Notes |
 |---|---|---|---|---|
-| 1 | Repo scaffold, Docker Compose, CI | ✅ Backend B0 + frontend F0 | `docker-compose.yml` (7 services), `backend/`, `frontend/`, `.github/workflows/ci.yml` · backend 31 unit + 5 integration, frontend 21 unit + 14 e2e (BACKEND_PLAN / FRONTEND_PLAN App. B) | Backend CI green on GitHub (run #1); frontend jobs: see FRONTEND_PLAN V-F3 |
+| 1 | Repo scaffold, Docker Compose, CI | ✅ Backend B0 + frontend F0 | `docker-compose.yml` (7 services), `backend/`, `frontend/`, `.github/workflows/ci.yml` · backend 31 unit + 5 integration, frontend 21 unit + 14 e2e (BACKEND_PLAN / FRONTEND_PLAN App. B) | CI green on GitHub for backend, frontend and full-stack e2e (2026-09-28) |
 | 2 | S1 Ingestion (Docling + PaddleOCR + S3 store) | 📋 Planned | — | |
 | 3 | S2 Extraction (rules + LLM + confidence + review queue) | 📋 Planned | — | Gold set needed (§13.1) |
 | 4 | S2 DDR time-log parser | 📋 Planned | — | Label source for 7b/7d |
