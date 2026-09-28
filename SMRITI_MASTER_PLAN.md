@@ -7,7 +7,7 @@
 **Sponsor / Organisation:** Oil India Limited (OIL), a public sector undertaking under the Ministry of Petroleum and Natural Gas
 **Event:** Smart India Hackathon 2026
 **Repository:** `slothdevs-sih/ps_121`
-**Document date:** 2026-09-28 (v1.0)
+**Document date:** 2026-09-28 (v1.0) · **updated 2026-09-28 (v1.1):** backend phase B0 (skeleton) built and verified — see [`docs/BACKEND_PLAN.md`](docs/BACKEND_PLAN.md); object storage changed from MinIO to an S3-compatible store (SeaweedFS in Compose) because the MinIO Docker Hub image was not pullable on 2026-09-28; §5 rows 1 and 24 updated.
 **Status of this document:** The canonical single source of truth for PS 121, written to the same standard as `DHRUVA_MASTER_KOTLIN.md` (PS 168). It is a **plan**: as of v1.0, **no code has been written**. Every number in this document is a **target** or a **design parameter** unless it is explicitly marked **MEASURED** with a file reference. When something gets built, update its row in §5 ("Designed vs. Built"), don't just add a paragraph.
 
 > ⚠️ **Honesty rule carried over from DHRUVA:** this document exists to stop the team from saying things in the judging room that it can't defend. Every "✅" must point to a file and a test. Every number must point to a script and a dataset. If a feature is simulated (e.g. the eRTMAC feed), say "simulated" out loud. See §24 (Communication Rules).
@@ -18,7 +18,7 @@
 
 Read this section first if you only read one thing.
 
-**Built:** nothing yet. The repository is empty (branch `claude/admiring-euler-jhepwt`, no commits before this document).
+**Built:** ~~nothing yet~~ **(updated 2026-09-28)** backend phase **B0 — skeleton** is built and verified: Docker Compose stack (PostgreSQL 16 + PostGIS + pgvector + TimescaleDB, Redis, S3 store, FastAPI, Celery), migrations, health/readiness, the full §8 API contract mounted (unbuilt routes return 501 naming their phase), CLI, 30 unit + 5 integration tests, CI workflow. Details and evidence: [`docs/BACKEND_PLAN.md`](docs/BACKEND_PLAN.md). Frontend, data and all domain features are not built yet.
 
 **Decided (locked unless the whole team agrees to reopen):**
 1. **Product shape:** one integrated web platform with three layers — *Knowledge* (extraction + searchable repository), *Correlation* (map + depth/formation-aligned offset view), *Intelligence* (risk prediction + real-time alerts). This is "Option 4" from the solution discussion.
@@ -26,7 +26,7 @@ Read this section first if you only read one thing.
    - **USP 1 — "Déjà Vu" live pattern matching:** the live drilling-parameter stream is continuously compared against the 30–60 min of data that preceded every historical incident in offset wells. See §3 Stage 7d.
    - **USP 2 — Mitigation Effectiveness Ledger:** mitigations are ranked by recorded outcome (NPT hours, recurrence, volume lost), not just listed. See §3 Stage 8.
 3. **A strong supporting differentiator** (not pitched as a USP, but most teams will miss it): **subsurface-aware proximity** — "nearby" is measured between wellbore trajectories at the same formation / TVDSS, not only between surface coordinates. See §3 Stage 4.
-4. **Stack:** Python/FastAPI backend, PostgreSQL with PostGIS + pgvector + TimescaleDB, MinIO, Docling + PaddleOCR, self-hosted open-weight LLM via Ollama (demo) / vLLM (production), LightGBM/XGBoost + SHAP, STUMPY + tslearn, React + TypeScript + Leaflet + D3 + ECharts, Docker Compose. Full list and reasoning in §11.
+4. **Stack:** Python/FastAPI backend, PostgreSQL with PostGIS + pgvector + TimescaleDB, S3-compatible object storage (SeaweedFS in Compose; was MinIO — changed 2026-09-28, see header), Docling + PaddleOCR, self-hosted open-weight LLM via Ollama (demo) / vLLM (production), LightGBM/XGBoost + SHAP, STUMPY + tslearn, React + TypeScript + Leaflet + D3 + ECharts, Docker Compose. Full list and reasoning in §11.
 5. **Data for the prototype:** Equinor **Volve** open dataset (real DDRs, real-time drilling data, surveys, well logs) as the "real data" backbone, plus a **synthetic Upper-Assam-style offset-well set** so the demo speaks OIL's geology. Neither is OIL data — say so. See §12.
 6. **Principle:** *No citation, no claim.* Every alert, recommendation, and copilot answer must link to the source record (document + page, or database row). This is the single design rule that makes the system trustworthy to drilling engineers.
 
@@ -179,7 +179,7 @@ D1 Well Completion Reports · D2 Daily Drilling Reports · D3 Drilling and mud l
        ▼                                      ▼                 ▼                  ▼
  [S1 Ingest & OCR] ──► [S2 Extract to schema] ──► [S3 Normalise]           [S12 eRTMAC adapter
   Docling, PaddleOCR     LLM + rules + confidence   units, depth datums,     WITSML/ETP/WITS0/
-  page images → MinIO    → review queue             formation dictionary,    CSV replay]
+  page images → S3       → review queue             formation dictionary,    CSV replay]
                                                     well aliases, CRS              │
                                                            │                       │
                                                   [S4 Trajectory engine]           │
@@ -188,7 +188,7 @@ D1 Well Completion Reports · D2 Daily Drilling Reports · D3 Drilling and mud l
                                                            ▼                       ▼
  ┌───────────────────────────── KNOWLEDGE STORE ──────────────────────────────────────────┐
  │ PostgreSQL: relational core · PostGIS (maps, 3D paths) · pgvector (semantic search) ·  │
- │ TimescaleDB (real-time channels) · full-text (BM25-style)   |   MinIO: original files   │
+ │ TimescaleDB (real-time channels) · full-text (BM25-style)   |   S3 store: original files│
  └───────┬──────────────┬──────────────────┬──────────────────────────┬───────────────────┘
          ▼              ▼                  ▼                          ▼
  [S5 Search & RAG] [S6 Correlation]  [S7 Risk Intelligence]     [S8 Mitigation
@@ -217,7 +217,7 @@ Every stage below uses the same layout: **Purpose · Inputs · Method · Outputs
 **Inputs:** D1 WCRs, D2 DDRs, D8 program records, D9 event/NPT records, geological reports (D5), bulk folders or single uploads.
 
 **Method:**
-1. **Intake:** upload UI + watched folder + bulk CLI (`smriti ingest <folder>`). Compute SHA-256 per file → skip duplicates. Store the original in MinIO (`raw/<sha256>.<ext>`).
+1. **Intake:** upload UI + watched folder + bulk CLI (`smriti ingest <folder>`). Compute SHA-256 per file → skip duplicates. Store the original in S3-compatible object storage (`smriti-raw/<sha256>.<ext>`).
 2. **Document-type classification:** rules first (filename patterns, first-page keywords such as "Daily Drilling Report", "Well Completion Report", "Casing Tally", "Cement Job Report"), then a zero-shot LLM classifier on page 1 text for anything unmatched. Classes: `WCR`, `DDR`, `MUD_LOG`, `CASING_REPORT`, `CEMENT_REPORT`, `MUD_PROGRAM`, `SURVEY`, `BIT_RECORD`, `GEO_REPORT`, `NPT_REPORT`, `OTHER`.
 3. **Per-page routing:**
    - Native-text PDF page → **Docling** (text, reading order, headings, tables via its table-structure model).
@@ -227,7 +227,7 @@ Every stage below uses the same layout: **Purpose · Inputs · Method · Outputs
 4. **Keep geometry:** every text span and table cell keeps its page number and bounding box → used later to **highlight the exact evidence** on the page image in the UI.
 5. **Chunking for search:** section-aware chunks (~300–500 tokens, split on headings/table boundaries, never mid-table), each chunk tagged with document, page(s), well, and date where known.
 
-**Outputs:** `document`, `page`, `text_span`, `table`, `chunk` rows; page images in MinIO.
+**Outputs:** `document`, `page`, `text_span`, `table`, `chunk` rows; page images in object storage.
 
 **PS mapping:** O-i (OCR/NLP), D1, D2, D8, D9.
 
@@ -626,8 +626,8 @@ This table is the project's heartbeat. Update it the same day something changes.
 
 | # | Component | Status | Evidence (file / test) | Notes |
 |---|---|---|---|---|
-| 1 | Repo scaffold, Docker Compose, CI | 📋 Planned | — | §26 layout |
-| 2 | S1 Ingestion (Docling + PaddleOCR + MinIO) | 📋 Planned | — | |
+| 1 | Repo scaffold, Docker Compose, CI | ⚠️ Backend built (B0); frontend not started | `docker-compose.yml`, `backend/`, `.github/workflows/ci.yml` · 30 unit + 5 integration tests (docs/BACKEND_PLAN.md App. B) | CI not yet observed green on GitHub |
+| 2 | S1 Ingestion (Docling + PaddleOCR + S3 store) | 📋 Planned | — | |
 | 3 | S2 Extraction (rules + LLM + confidence + review queue) | 📋 Planned | — | Gold set needed (§13.1) |
 | 4 | S2 DDR time-log parser | 📋 Planned | — | Label source for 7b/7d |
 | 5 | S3 Normalisation (units, datums, formation dictionary, aliases, CRS) | 📋 Planned | — | |
@@ -649,7 +649,7 @@ This table is the project's heartbeat. Update it the same day something changes.
 | 21 | S12 WITSML 1.4.1.x / ETP / WITS0 adapters | 📋 Planned | — | At least one real protocol adapter tested against a mock server; others "designed" |
 | 22 | Synthetic Upper-Assam dataset generator | 📋 Planned | — | §12.3 |
 | 23 | Offset Risk Brief PDF export | 📋 Planned | — | Nice-to-have |
-| 24 | Auth + RBAC + audit log | 📋 Planned | — | §16 |
+| 24 | Auth + RBAC + audit log | ⚠️ Dev-mode auth only (refused in prod) | `backend/app/core/auth.py` · `test_meta_auth.py` | OIDC/RBAC/audit planned for backend phase B6 |
 | 25 | Evaluation harness + reports (§13) | 📋 Planned | — | Every quoted number comes from here |
 
 ---
@@ -724,7 +724,7 @@ CREATE TABLE formation_top (
 CREATE TABLE document (
   document_id BIGSERIAL PRIMARY KEY,
   sha256 CHAR(64) UNIQUE NOT NULL,
-  object_key TEXT NOT NULL,                    -- MinIO key
+  object_key TEXT NOT NULL,                    -- S3 object key
   doc_type TEXT,                               -- WCR / DDR / MUD_LOG / …
   well_id INT REFERENCES well,
   report_date DATE,
@@ -992,7 +992,7 @@ All are **targets**, to be measured by the evaluation harness (§13) before quot
 | **Jobs** | **Celery + Redis** | Ingestion, extraction, batch scoring |
 | **Streaming** | **Redis Streams** (demo) → **Kafka** (production) | RT samples, alerts |
 | **Database** | **PostgreSQL 16** + **PostGIS** + **pgvector** + **TimescaleDB** | One database for relational, geo, vector, time-series |
-| **Object storage** | **MinIO** (S3-compatible) | Original files, page images |
+| **Object storage** | **S3-compatible store** — SeaweedFS 4.47 in Compose (MinIO/Ceph/AWS S3 interchangeable via boto3). *Corrected 2026-09-28: was MinIO; its Docker Hub image was not pullable.* | Original files, page images |
 | **Auth** | **Keycloak** (OIDC) | SSO-ready, roles |
 | **Frontend** | **React + TypeScript + Vite**, Tailwind + shadcn/ui, TanStack Query | Web app |
 | **Map** | **Leaflet** (react-leaflet); MapLibre GL optional for 3D | Offset map |
@@ -1226,10 +1226,10 @@ Pick the specific model by **measured** extraction F1 on the gold set (§13.1), 
 | **Authentication** | Keycloak OIDC; ready to federate with OIL's directory (LDAP/AD) — "ready to", not "integrated". |
 | **Roles (RBAC)** | `viewer` (search, map, correlation) · `field_engineer` (+ live monitor, ack alerts for assigned wells) · `rtmac_engineer` (+ all rigs, escalate) · `drilling_engineer` (+ ledger, risk briefs) · `data_steward` (+ ingestion, review, dictionaries) · `admin` (+ thresholds, users, channel mappings). |
 | **Data scoping** | Row-level filtering by field/asset where required (PostgreSQL row-level security). |
-| **Encryption** | TLS for all traffic; encryption at rest via disk/volume encryption; MinIO server-side encryption. |
+| **Encryption** | TLS for all traffic; encryption at rest via disk/volume encryption; S3-store server-side/volume encryption. |
 | **Audit** | Every login, document view, alert action, review decision, and copilot query logged (`audit_log`). |
 | **LLM safety** | Local models only by default; tool-calling copilot with read-only tools; prompt-injection defence (§Stage 10); no training on user queries without approval. |
-| **Backups** | Nightly `pg_dump` + WAL archiving; MinIO bucket replication. |
+| **Backups** | Nightly `pg_dump` + WAL archiving; S3 bucket replication. |
 | **Secrets** | `.env` excluded from git; Docker secrets / Kubernetes secrets in production. |
 
 ---
@@ -1259,7 +1259,7 @@ Dates are relative (W = week) until V4 gives the real deadlines. Assumes ~7 week
 
 | Phase | When | Goal | Exit criteria (all must be true) |
 |---|---|---|---|
-| **P0 — Setup** | Days 1–3 | Repo, CI, Compose skeleton, data access | `docker compose up` brings up Postgres(+extensions), MinIO, Redis, API "hello", frontend "hello"; CI green; Volve drilling folders downloaded; roles assigned; V1–V5 answered |
+| **P0 — Setup** | Days 1–3 | Repo, CI, Compose skeleton, data access | `docker compose up` brings up Postgres(+extensions), S3 store, Redis, API "hello", frontend "hello"; CI green; Volve drilling folders downloaded; roles assigned; V1–V5 answered |
 | **P1 — Data foundation** | W1–W2 | Ingestion, normalisation, trajectories, map | 50+ Volve DDRs and 10 synthetic scanned reports ingested; surveys → TVDSS with passing unit tests; map with radius search (surface mode) working on Volve + synthetic wells; synthetic generator v1 |
 | **P2 — Knowledge layer** | W2–W3 | Extraction, search, correlation | Events extracted with confidence + review queue; gold set annotated and first F1 measured; hybrid search + lessons cards; correlation panel (TVDSS + flatten on top); all three proximity modes |
 | **P3 — Intelligence layer** | W3–W5 | Risk + alerts + USPs | 7a risk-by-depth curves; rig-state detection; physics indicators; LightGBM models with LOWO results; Déjà Vu library + live matching; ledger with planted-rate validation; alert engine with lifecycle; replay adapter streaming Volve data |
@@ -1502,6 +1502,7 @@ Those are powerful platforms built mainly around structured real-time data. Our 
 ```
 ps_121/
 ├── SMRITI_MASTER_PLAN.md          ← this document (canonical)
+├── Makefile                       ← up/down/test/itest/check shortcuts
 ├── README.md                      ← setup & run (≤ 1 page), links here
 ├── docker-compose.yml
 ├── .env.example
@@ -1542,6 +1543,7 @@ ps_121/
 │   └── results/                   ← the ONLY source of quoted numbers
 ├── infra/ (keycloak realm, grafana dashboards, k8s manifests)
 └── docs/
+    ├── BACKEND_PLAN.md            ← backend plan & build record (B0 done)
     ├── architecture.md            ← ≤ 2 pages (deliverable)
     ├── taxonomy.md                ← events & mitigation vocabularies
     ├── licenses.md                ← datasets & models licences
@@ -1555,7 +1557,7 @@ ps_121/
 1. **Answer V1–V5** (PS ID, team ID, eRTMAC wording, deadlines, deliverables) — Docs lead, Day 1.
 2. **Assign roles** (§17) and create branches — Team lead, Day 1.
 3. **Start the Volve download** (drilling-related folders only) and list the real folder/file structure into `data/README.md`; update §12.1 — Data eng., Day 1–2.
-4. **Repo scaffold:** Compose with Postgres (PostGIS, pgvector, TimescaleDB), MinIO, Redis, FastAPI, React; CI green — Infra, Day 1–3.
+4. **Repo scaffold:** Compose with Postgres (PostGIS, pgvector, TimescaleDB), S3 store, Redis, FastAPI, React; CI green — Infra, Day 1–3. **Backend part done 2026-09-28** (see `docs/BACKEND_PLAN.md`); React "hello" and first GitHub CI run still open.
 5. **Write `docs/taxonomy.md`** (event types, subtypes, mitigation codes, outcome definitions) and get it reviewed by someone with drilling knowledge (faculty/mentor) — Domain eng., Day 2–4.
 6. **Minimum-curvature + TVDSS module with tests** — Domain eng., Day 2–4.
 7. **Synthetic generator v1** (wells, surveys, tops, events, mitigations) — Data eng. + ML eng., Week 1.
@@ -1671,7 +1673,7 @@ class ExtractionResult(BaseModel):
 
 ## Appendix E — Docker Compose Services (target)
 
-`postgres` (PostgreSQL 16 + PostGIS + pgvector + TimescaleDB) · `minio` · `redis` · `api` (FastAPI) · `worker` (Celery) · `stream` (replay/adapters + scoring loop) · `llm` (Ollama or vLLM) · `keycloak` · `frontend` (static build behind nginx) · `mlflow` (dev profile) · `grafana` + `prometheus` (ops profile).
+`postgres` (PostgreSQL 16 + PostGIS + pgvector + TimescaleDB) · `s3` (SeaweedFS; was `minio`) · `migrate` (one-shot bootstrap) · `redis` · `api` (FastAPI) · `worker` (Celery) · `stream` (replay/adapters + scoring loop) · `llm` (Ollama or vLLM) · `keycloak` · `frontend` (static build behind nginx) · `mlflow` (dev profile) · `grafana` + `prometheus` (ops profile).
 
 ## Appendix F — Document Maintenance Rules
 

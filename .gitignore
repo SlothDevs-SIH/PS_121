@@ -1,0 +1,16 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+htmlcov/
+node_modules/
+dist/
+# Raw datasets never go in git (master plan §12.4)
+data/raw/
+data/volve/
+*.segy
