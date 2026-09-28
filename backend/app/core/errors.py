@@ -35,6 +35,11 @@ class AppError(Exception):
         self.details = details or {}
 
 
+class NotFoundError(AppError):
+    status_code = 404
+    code = "not_found"
+
+
 class NotImplementedYetError(AppError):
     """Raised by skeleton endpoints: the route and contract exist, the logic lands in `phase`."""
 

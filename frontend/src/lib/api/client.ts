@@ -13,6 +13,20 @@ export type ErrorBody = components['schemas']['ErrorBody']
 export type ReadinessReport = components['schemas']['ReadinessReport']
 export type Meta = components['schemas']['Meta']
 export type CurrentUser = components['schemas']['CurrentUser']
+export type WellSummary = components['schemas']['WellSummary']
+export type WellList = components['schemas']['WellList']
+export type WellDetail = components['schemas']['WellDetail']
+export type TrajectoryOut = components['schemas']['TrajectoryOut']
+export type OffsetsOut = components['schemas']['OffsetsOut']
+export type OffsetOut = components['schemas']['OffsetOut']
+export type FormationOut = components['schemas']['FormationOut']
+export type DocumentSummary = components['schemas']['DocumentSummary']
+export type DocumentList = components['schemas']['DocumentList']
+export type DocumentDetail = components['schemas']['DocumentDetail']
+export type PageOut = components['schemas']['PageOut']
+export type SpanOut = components['schemas']['SpanOut']
+export type UploadResult = components['schemas']['UploadResult']
+export type ProximityMode = 'SURFACE' | 'AT_FORMATION' | 'CLOSEST_APPROACH'
 
 export class ApiError extends Error {
   readonly status: number
@@ -90,8 +104,33 @@ export async function fetchReadiness(): Promise<ReadinessReport> {
   throw new ApiError(response.status, null, `Unexpected /readyz status ${response.status}`)
 }
 
+function qs(params: Record<string, string | number | undefined | null>): string {
+  const q = new URLSearchParams()
+  for (const [k, v] of Object.entries(params))
+    if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
+  const s = q.toString()
+  return s ? `?${s}` : ''
+}
+
 export const api = {
   meta: () => apiFetch<Meta>('/api/v1/meta'),
   me: () => apiFetch<CurrentUser>('/api/v1/me'),
   readiness: fetchReadiness,
+  wells: (params: { q?: string; status?: string } = {}) =>
+    apiFetch<WellList>(`/api/v1/wells${qs({ ...params, limit: 500 })}`),
+  well: (id: number) => apiFetch<WellDetail>(`/api/v1/wells/${id}`),
+  trajectory: (id: number) => apiFetch<TrajectoryOut>(`/api/v1/wells/${id}/trajectory`),
+  offsets: (id: number, radiusKm: number, mode: ProximityMode) =>
+    apiFetch<OffsetsOut>(`/api/v1/wells/${id}/offsets${qs({ radius_km: radiusKm, mode })}`),
+  formations: () => apiFetch<FormationOut[]>('/api/v1/formations'),
+  documents: (params: { status?: string; well_id?: number } = {}) =>
+    apiFetch<DocumentList>(`/api/v1/documents${qs({ ...params, limit: 500 })}`),
+  document: (id: number) => apiFetch<DocumentDetail>(`/api/v1/documents/${id}`),
+  page: (id: number, pageNo: number) =>
+    apiFetch<PageOut>(`/api/v1/documents/${id}/pages/${pageNo}`),
+  upload: (files: File[]) => {
+    const body = new FormData()
+    for (const f of files) body.append('files', f, f.name)
+    return apiFetch<UploadResult[]>('/api/v1/documents', { method: 'POST', body })
+  },
 }

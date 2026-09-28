@@ -127,6 +127,362 @@
         "title": "CurrentUser",
         "type": "object"
       },
+      "DataQuality": {
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/QualityCheck"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "score": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "score",
+          "checks"
+        ],
+        "title": "DataQuality",
+        "type": "object"
+      },
+      "DocumentDetail": {
+        "properties": {
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "doc_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doc Type"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "ingest_status": {
+            "title": "Ingest Status",
+            "type": "string"
+          },
+          "page_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Count"
+          },
+          "pages": {
+            "items": {
+              "$ref": "#/components/schemas/PageSummary"
+            },
+            "title": "Pages",
+            "type": "array"
+          },
+          "processed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processed At"
+          },
+          "raw_well_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Well Name"
+          },
+          "report_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Date"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "uploaded_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uploaded By"
+          },
+          "well_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Well Id"
+          },
+          "well_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Well Name"
+          }
+        },
+        "required": [
+          "id",
+          "filename",
+          "doc_type",
+          "well_id",
+          "well_name",
+          "raw_well_name",
+          "report_date",
+          "page_count",
+          "ingest_status",
+          "error",
+          "synthetic",
+          "size_bytes",
+          "created_at",
+          "processed_at",
+          "sha256",
+          "content_type",
+          "uploaded_by",
+          "pages"
+        ],
+        "title": "DocumentDetail",
+        "type": "object"
+      },
+      "DocumentList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "status_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Status Counts",
+            "type": "object"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "status_counts"
+        ],
+        "title": "DocumentList",
+        "type": "object"
+      },
+      "DocumentSummary": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "doc_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doc Type"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "ingest_status": {
+            "title": "Ingest Status",
+            "type": "string"
+          },
+          "page_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Count"
+          },
+          "processed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processed At"
+          },
+          "raw_well_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Well Name"
+          },
+          "report_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Date"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "well_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Well Id"
+          },
+          "well_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Well Name"
+          }
+        },
+        "required": [
+          "id",
+          "filename",
+          "doc_type",
+          "well_id",
+          "well_name",
+          "raw_well_name",
+          "report_date",
+          "page_count",
+          "ingest_status",
+          "error",
+          "synthetic",
+          "size_bytes",
+          "created_at",
+          "processed_at"
+        ],
+        "title": "DocumentSummary",
+        "type": "object"
+      },
       "ErrorBody": {
         "properties": {
           "code": {
@@ -172,6 +528,87 @@
           "error"
         ],
         "title": "ErrorResponse",
+        "type": "object"
+      },
+      "FormationOut": {
+        "properties": {
+          "basin": {
+            "title": "Basin",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "lithology": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lithology"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "strat_order": {
+            "title": "Strat Order",
+            "type": "integer"
+          },
+          "synonyms": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Synonyms",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "basin",
+          "name",
+          "synonyms",
+          "strat_order",
+          "lithology"
+        ],
+        "title": "FormationOut",
+        "type": "object"
+      },
+      "FormationTopOut": {
+        "properties": {
+          "formation": {
+            "title": "Formation",
+            "type": "string"
+          },
+          "strat_order": {
+            "title": "Strat Order",
+            "type": "integer"
+          },
+          "top_md_m": {
+            "title": "Top Md M",
+            "type": "number"
+          },
+          "top_tvd_m": {
+            "title": "Top Tvd M",
+            "type": "number"
+          },
+          "top_tvdss_m": {
+            "title": "Top Tvdss M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "formation",
+          "strat_order",
+          "top_md_m",
+          "top_tvd_m",
+          "top_tvdss_m"
+        ],
+        "title": "FormationTopOut",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -228,6 +665,244 @@
         "title": "Meta",
         "type": "object"
       },
+      "OffsetOut": {
+        "properties": {
+          "bearing_deg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bearing Deg"
+          },
+          "distance_m": {
+            "title": "Distance M",
+            "type": "number"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "title": "Lon",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "td_md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Td Md M"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          },
+          "well_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Well Type"
+          }
+        },
+        "required": [
+          "well_id",
+          "name",
+          "status",
+          "well_type",
+          "lat",
+          "lon",
+          "td_md_m",
+          "synthetic",
+          "distance_m",
+          "bearing_deg"
+        ],
+        "title": "OffsetOut",
+        "type": "object"
+      },
+      "OffsetsOut": {
+        "properties": {
+          "formation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formation"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "offsets": {
+            "items": {
+              "$ref": "#/components/schemas/OffsetOut"
+            },
+            "title": "Offsets",
+            "type": "array"
+          },
+          "radius_km": {
+            "title": "Radius Km",
+            "type": "number"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "well_id",
+          "mode",
+          "radius_km",
+          "formation",
+          "offsets"
+        ],
+        "title": "OffsetsOut",
+        "type": "object"
+      },
+      "PageOut": {
+        "properties": {
+          "document_id": {
+            "title": "Document Id",
+            "type": "integer"
+          },
+          "height_px": {
+            "title": "Height Px",
+            "type": "integer"
+          },
+          "image_url": {
+            "title": "Image Url",
+            "type": "string"
+          },
+          "ocr_mean_conf": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ocr Mean Conf"
+          },
+          "ocr_used": {
+            "title": "Ocr Used",
+            "type": "boolean"
+          },
+          "page_no": {
+            "title": "Page No",
+            "type": "integer"
+          },
+          "spans": {
+            "items": {
+              "$ref": "#/components/schemas/SpanOut"
+            },
+            "title": "Spans",
+            "type": "array"
+          },
+          "width_px": {
+            "title": "Width Px",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "document_id",
+          "page_no",
+          "width_px",
+          "height_px",
+          "image_url",
+          "ocr_used",
+          "ocr_mean_conf",
+          "spans"
+        ],
+        "title": "PageOut",
+        "type": "object"
+      },
+      "PageSummary": {
+        "properties": {
+          "ocr_mean_conf": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ocr Mean Conf"
+          },
+          "ocr_used": {
+            "title": "Ocr Used",
+            "type": "boolean"
+          },
+          "page_no": {
+            "title": "Page No",
+            "type": "integer"
+          },
+          "span_count": {
+            "title": "Span Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "page_no",
+          "ocr_used",
+          "ocr_mean_conf",
+          "span_count"
+        ],
+        "title": "PageSummary",
+        "type": "object"
+      },
+      "PathPoint": {
+        "properties": {
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "title": "Lon",
+            "type": "number"
+          },
+          "tvdss_m": {
+            "title": "Tvdss M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lon",
+          "tvdss_m"
+        ],
+        "title": "PathPoint",
+        "type": "object"
+      },
       "ProximityMode": {
         "enum": [
           "SURFACE",
@@ -236,6 +911,29 @@
         ],
         "title": "ProximityMode",
         "type": "string"
+      },
+      "QualityCheck": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "ok",
+          "detail"
+        ],
+        "title": "QualityCheck",
+        "type": "object"
       },
       "ReadinessReport": {
         "properties": {
@@ -260,6 +958,174 @@
           "components"
         ],
         "title": "ReadinessReport",
+        "type": "object"
+      },
+      "SpanOut": {
+        "properties": {
+          "bbox": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Bbox",
+            "type": "array"
+          },
+          "conf": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conf"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "line_no": {
+            "title": "Line No",
+            "type": "integer"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "line_no",
+          "text",
+          "bbox",
+          "conf"
+        ],
+        "title": "SpanOut",
+        "type": "object"
+      },
+      "StationOut": {
+        "properties": {
+          "azi_deg": {
+            "title": "Azi Deg",
+            "type": "number"
+          },
+          "dls_deg_30m": {
+            "title": "Dls Deg 30M",
+            "type": "number"
+          },
+          "east_m": {
+            "title": "East M",
+            "type": "number"
+          },
+          "inc_deg": {
+            "title": "Inc Deg",
+            "type": "number"
+          },
+          "md_m": {
+            "title": "Md M",
+            "type": "number"
+          },
+          "north_m": {
+            "title": "North M",
+            "type": "number"
+          },
+          "tvd_m": {
+            "title": "Tvd M",
+            "type": "number"
+          },
+          "tvdss_m": {
+            "title": "Tvdss M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "md_m",
+          "inc_deg",
+          "azi_deg",
+          "tvd_m",
+          "tvdss_m",
+          "north_m",
+          "east_m",
+          "dls_deg_30m"
+        ],
+        "title": "StationOut",
+        "type": "object"
+      },
+      "TrajectoryOut": {
+        "properties": {
+          "assumed": {
+            "title": "Assumed",
+            "type": "boolean"
+          },
+          "crs_epsg": {
+            "title": "Crs Epsg",
+            "type": "integer"
+          },
+          "path": {
+            "items": {
+              "$ref": "#/components/schemas/PathPoint"
+            },
+            "title": "Path",
+            "type": "array"
+          },
+          "stations": {
+            "items": {
+              "$ref": "#/components/schemas/StationOut"
+            },
+            "title": "Stations",
+            "type": "array"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          },
+          "wellbore_id": {
+            "title": "Wellbore Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "well_id",
+          "wellbore_id",
+          "assumed",
+          "crs_epsg",
+          "stations",
+          "path"
+        ],
+        "title": "TrajectoryOut",
+        "type": "object"
+      },
+      "UploadResult": {
+        "properties": {
+          "document_id": {
+            "title": "Document Id",
+            "type": "integer"
+          },
+          "duplicate": {
+            "title": "Duplicate",
+            "type": "boolean"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "document_id",
+          "filename",
+          "sha256",
+          "status",
+          "duplicate"
+        ],
+        "title": "UploadResult",
         "type": "object"
       },
       "ValidationError": {
@@ -300,6 +1166,317 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "WellDetail": {
+        "properties": {
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Aliases",
+            "type": "array"
+          },
+          "completion_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completion Date"
+          },
+          "crs_epsg": {
+            "title": "Crs Epsg",
+            "type": "integer"
+          },
+          "data_quality": {
+            "$ref": "#/components/schemas/DataQuality"
+          },
+          "datum_assumed": {
+            "title": "Datum Assumed",
+            "type": "boolean"
+          },
+          "document_count": {
+            "title": "Document Count",
+            "type": "integer"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "formation_tops": {
+            "items": {
+              "$ref": "#/components/schemas/FormationTopOut"
+            },
+            "title": "Formation Tops",
+            "type": "array"
+          },
+          "gl_elev_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gl Elev M"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "title": "Lon",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile"
+          },
+          "rig_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rig Name"
+          },
+          "rkb_elev_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rkb Elev M"
+          },
+          "spud_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spud Date"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "td_md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Td Md M"
+          },
+          "trajectory_assumed": {
+            "title": "Trajectory Assumed",
+            "type": "boolean"
+          },
+          "units_system": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units System"
+          },
+          "well_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Well Type"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "field",
+          "status",
+          "well_type",
+          "profile",
+          "lat",
+          "lon",
+          "td_md_m",
+          "spud_date",
+          "synthetic",
+          "document_count",
+          "aliases",
+          "rkb_elev_m",
+          "gl_elev_m",
+          "datum_assumed",
+          "completion_date",
+          "rig_name",
+          "units_system",
+          "trajectory_assumed",
+          "crs_epsg",
+          "formation_tops",
+          "data_quality"
+        ],
+        "title": "WellDetail",
+        "type": "object"
+      },
+      "WellList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/WellSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "WellList",
+        "type": "object"
+      },
+      "WellSummary": {
+        "properties": {
+          "document_count": {
+            "title": "Document Count",
+            "type": "integer"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "title": "Lon",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "profile": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile"
+          },
+          "spud_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spud Date"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "td_md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Td Md M"
+          },
+          "well_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Well Type"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "field",
+          "status",
+          "well_type",
+          "profile",
+          "lat",
+          "lon",
+          "td_md_m",
+          "spud_date",
+          "synthetic",
+          "document_count"
+        ],
+        "title": "WellSummary",
         "type": "object"
       }
     }
@@ -644,23 +1821,88 @@
       }
     },
     "/api/v1/documents": {
-      "post": {
-        "operationId": "upload_documents_api_v1_documents_post",
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_upload_documents_api_v1_documents_post"
-              }
+      "get": {
+        "operationId": "list_documents_api_v1_documents_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "well_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Well Id"
             }
           },
-          "required": true
-        },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "doc_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Doc Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentList"
+                }
               }
             },
             "description": "Successful Response"
@@ -674,16 +1916,49 @@
               }
             },
             "description": "Validation Error"
+          }
+        },
+        "summary": "List documents",
+        "tags": [
+          "documents"
+        ]
+      },
+      "post": {
+        "operationId": "upload_documents_api_v1_documents_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_documents_api_v1_documents_post"
+              }
+            }
           },
-          "501": {
+          "required": true
+        },
+        "responses": {
+          "202": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "items": {
+                    "$ref": "#/components/schemas/UploadResult"
+                  },
+                  "title": "Response Upload Documents Api V1 Documents Post",
+                  "type": "array"
                 }
               }
             },
-            "description": "Planned, not implemented in this phase"
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Upload report files and start ingestion",
@@ -710,7 +1985,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentDetail"
+                }
               }
             },
             "description": "Successful Response"
@@ -724,19 +2001,47 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Document metadata and status",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/file": {
+      "get": {
+        "operationId": "get_file_api_v1_documents__document_id__file_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {}
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Original uploaded file",
         "tags": [
           "documents"
         ]
@@ -769,7 +2074,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/PageOut"
+                }
               }
             },
             "description": "Successful Response"
@@ -783,19 +2090,98 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Page image and text spans for evidence highlighting",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/pages/{page_no}/image": {
+      "get": {
+        "operationId": "get_page_image_api_v1_documents__document_id__pages__page_no__image_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "page_no",
+            "required": true,
+            "schema": {
+              "title": "Page No",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/png": {}
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rendered page image (PNG)",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/reprocess": {
+      "post": {
+        "operationId": "reprocess_api_v1_documents__document_id__reprocess_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Re-run ingestion for a document",
         "tags": [
           "documents"
         ]
@@ -937,6 +2323,59 @@
         "summary": "Search drilling events",
         "tags": [
           "events"
+        ]
+      }
+    },
+    "/api/v1/formations": {
+      "get": {
+        "operationId": "get_formations_api_v1_formations_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "basin",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Basin"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FormationOut"
+                  },
+                  "title": "Response Get Formations Api V1 Formations Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Formation dictionary",
+        "tags": [
+          "wells"
         ]
       }
     },
@@ -1276,7 +2715,7 @@
     },
     "/api/v1/wells": {
       "get": {
-        "operationId": "list_wells_api_v1_wells_get",
+        "operationId": "get_wells_api_v1_wells_get",
         "parameters": [
           {
             "in": "query",
@@ -1309,13 +2748,55 @@
               ],
               "title": "Status"
             }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
           }
         ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/WellList"
+                }
               }
             },
             "description": "Successful Response"
@@ -1329,16 +2810,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "List and filter wells",
@@ -1365,7 +2836,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/WellDetail"
+                }
               }
             },
             "description": "Successful Response"
@@ -1379,16 +2852,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Well 360 summary",
@@ -1452,7 +2915,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/OffsetsOut"
+                }
               }
             },
             "description": "Successful Response"
@@ -1570,7 +3035,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/TrajectoryOut"
+                }
               }
             },
             "description": "Successful Response"
@@ -1584,16 +3051,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Survey stations and 3D path",

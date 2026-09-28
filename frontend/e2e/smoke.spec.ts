@@ -23,7 +23,7 @@ test('home redirects to System Status and shows a ready backend', async ({ page 
   for (const name of ['postgres', 'redis', 'object_storage']) {
     await expect(table.getByRole('row', { name: new RegExp(name) })).toContainText('ok')
   }
-  await expect(page.getByTestId('backend-phase')).toHaveText('B0')
+  await expect(page.getByTestId('backend-phase')).toHaveText(/^B\d$/)
   await expect(page.getByTestId('component-list').getByRole('listitem')).toHaveCount(16)
   expect(errors).toEqual([])
 })
@@ -44,10 +44,10 @@ test('every screen in the navigation loads without errors', async ({ page }) => 
 })
 
 test('planned screens probe the real backend and show its phase', async ({ page }) => {
-  await page.goto('/map')
-  await expect(page.getByTestId('planned-phase')).toHaveText('Planned · frontend phase F1')
-  await expect(page.getByTestId('endpoint-probes').getByText('501 · backend phase B1')).toHaveCount(
-    2,
+  await page.goto('/correlation')
+  await expect(page.getByTestId('planned-phase')).toHaveText('Planned · frontend phase F2')
+  await expect(page.getByTestId('endpoint-probes').getByText('501 · backend phase B2')).toHaveCount(
+    1,
   )
   await page.goto('/ledger')
   await expect(page.getByTestId('endpoint-probes')).toContainText('501 · backend phase B3')

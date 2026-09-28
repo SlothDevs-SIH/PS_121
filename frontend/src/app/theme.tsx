@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 
+import type { UnitSystem } from '../lib/format/units'
 import { readPref, writePref } from '../lib/storage'
 import { ThemeContext, type ThemeChoice, type ThemeState, type UiMode } from './themeContext'
 
 const THEME_KEY = 'smriti.theme'
 const MODE_KEY = 'smriti.mode'
+const UNITS_KEY = 'smriti.units'
 
 function systemPrefersDark(): boolean {
   return typeof window.matchMedia === 'function'
@@ -17,6 +19,10 @@ function initialTheme(): ThemeChoice {
   return saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'system'
 }
 
+function initialUnits(): UnitSystem {
+  return readPref(UNITS_KEY) === 'oilfield' ? 'oilfield' : 'metric'
+}
+
 function initialMode(): UiMode {
   return readPref(MODE_KEY) === 'field' ? 'field' : 'office'
 }
@@ -24,6 +30,7 @@ function initialMode(): UiMode {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeChoice>(initialTheme)
   const [mode, setModeState] = useState<UiMode>(initialMode)
+  const [units, setUnitsState] = useState<UnitSystem>(initialUnits)
   const [systemDark, setSystemDark] = useState<boolean>(systemPrefersDark)
 
   useEffect(() => {
@@ -50,6 +57,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       theme,
       resolvedTheme,
       mode,
+      units,
+      setUnits: (u) => {
+        setUnitsState(u)
+        writePref(UNITS_KEY, u)
+      },
       setTheme: (t) => {
         setThemeState(t)
         writePref(THEME_KEY, t)
@@ -59,7 +71,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         writePref(MODE_KEY, m)
       },
     }),
-    [theme, resolvedTheme, mode],
+    [theme, resolvedTheme, mode, units],
   )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

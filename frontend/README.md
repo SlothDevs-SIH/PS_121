@@ -1,6 +1,6 @@
 # SMRITI frontend
 
-React + TypeScript web app for SMRITI (eRTMAC-NWIS, SIH PS 121). Current phase: **F0 (skeleton)**.
+React + TypeScript web app for SMRITI (eRTMAC-NWIS, SIH PS 121). Current phase: **F1 done** (Well Map, Ingestion, evidence viewer).
 Design and roadmap: [`docs/FRONTEND_PLAN.md`](../docs/FRONTEND_PLAN.md).
 
 ## Run

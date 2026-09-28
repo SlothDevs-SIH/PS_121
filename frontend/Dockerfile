@@ -14,7 +14,10 @@ ENV VITE_GIT_SHA=$GIT_SHA
 RUN npm run build
 
 FROM ${NGINX_IMAGE}
-ENV API_UPSTREAM=http://api:8000
+ENV API_UPSTREAM=http://api:8000 \
+    MAP_TILE_URL="" \
+    MAP_TILE_ATTRIBUTION="" \
+    MAP_TILE_ORIGIN=""
 COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80

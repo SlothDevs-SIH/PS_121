@@ -1,6 +1,7 @@
 """SQLAlchemy engine/session. Synchronous psycopg 3 for B0; see BACKEND_PLAN.md ADR-B3."""
 
 from collections.abc import Iterator
+from contextlib import contextmanager
 from functools import lru_cache
 
 from sqlalchemy import Engine, create_engine
@@ -31,5 +32,19 @@ def get_session() -> Iterator[Session]:
     session = _session_factory()()
     try:
         yield session
+    finally:
+        session.close()
+
+
+@contextmanager
+def session_scope() -> Iterator[Session]:
+    """Transactional scope for scripts and Celery tasks: commit on success, roll back on error."""
+    session = _session_factory()()
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
     finally:
         session.close()

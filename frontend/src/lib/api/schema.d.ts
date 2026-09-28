@@ -113,7 +113,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List documents */
+        get: operations["list_documents_api_v1_documents_get"];
         put?: never;
         /** Upload report files and start ingestion */
         post: operations["upload_documents_api_v1_documents_post"];
@@ -140,6 +141,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{document_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Original uploaded file */
+        get: operations["get_file_api_v1_documents__document_id__file_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documents/{document_id}/pages/{page_no}": {
         parameters: {
             query?: never;
@@ -157,6 +175,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{document_id}/pages/{page_no}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Rendered page image (PNG) */
+        get: operations["get_page_image_api_v1_documents__document_id__pages__page_no__image_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{document_id}/reprocess": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Re-run ingestion for a document */
+        post: operations["reprocess_api_v1_documents__document_id__reprocess_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events": {
         parameters: {
             query?: never;
@@ -166,6 +218,23 @@ export interface paths {
         };
         /** Search drilling events */
         get: operations["list_events_api_v1_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/formations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Formation dictionary */
+        get: operations["get_formations_api_v1_formations_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -318,7 +387,7 @@ export interface paths {
             cookie?: never;
         };
         /** List and filter wells */
-        get: operations["list_wells_api_v1_wells_get"];
+        get: operations["get_wells_api_v1_wells_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -482,6 +551,100 @@ export interface components {
             /** User Id */
             user_id: string;
         };
+        /** DataQuality */
+        DataQuality: {
+            /** Checks */
+            checks: components["schemas"]["QualityCheck"][];
+            /** Score */
+            score: number;
+        };
+        /** DocumentDetail */
+        DocumentDetail: {
+            /** Content Type */
+            content_type: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Doc Type */
+            doc_type: string | null;
+            /** Error */
+            error: string | null;
+            /** Filename */
+            filename: string;
+            /** Id */
+            id: number;
+            /** Ingest Status */
+            ingest_status: string;
+            /** Page Count */
+            page_count: number | null;
+            /** Pages */
+            pages: components["schemas"]["PageSummary"][];
+            /** Processed At */
+            processed_at: string | null;
+            /** Raw Well Name */
+            raw_well_name: string | null;
+            /** Report Date */
+            report_date: string | null;
+            /** Sha256 */
+            sha256: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /** Synthetic */
+            synthetic: boolean;
+            /** Uploaded By */
+            uploaded_by: string | null;
+            /** Well Id */
+            well_id: number | null;
+            /** Well Name */
+            well_name: string | null;
+        };
+        /** DocumentList */
+        DocumentList: {
+            /** Items */
+            items: components["schemas"]["DocumentSummary"][];
+            /** Status Counts */
+            status_counts: {
+                [key: string]: number;
+            };
+            /** Total */
+            total: number;
+        };
+        /** DocumentSummary */
+        DocumentSummary: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Doc Type */
+            doc_type: string | null;
+            /** Error */
+            error: string | null;
+            /** Filename */
+            filename: string;
+            /** Id */
+            id: number;
+            /** Ingest Status */
+            ingest_status: string;
+            /** Page Count */
+            page_count: number | null;
+            /** Processed At */
+            processed_at: string | null;
+            /** Raw Well Name */
+            raw_well_name: string | null;
+            /** Report Date */
+            report_date: string | null;
+            /** Size Bytes */
+            size_bytes: number;
+            /** Synthetic */
+            synthetic: boolean;
+            /** Well Id */
+            well_id: number | null;
+            /** Well Name */
+            well_name: string | null;
+        };
         /** ErrorBody */
         ErrorBody: {
             /** Code */
@@ -501,6 +664,34 @@ export interface components {
         /** ErrorResponse */
         ErrorResponse: {
             error: components["schemas"]["ErrorBody"];
+        };
+        /** FormationOut */
+        FormationOut: {
+            /** Basin */
+            basin: string;
+            /** Id */
+            id: number;
+            /** Lithology */
+            lithology: string | null;
+            /** Name */
+            name: string;
+            /** Strat Order */
+            strat_order: number;
+            /** Synonyms */
+            synonyms: string[];
+        };
+        /** FormationTopOut */
+        FormationTopOut: {
+            /** Formation */
+            formation: string;
+            /** Strat Order */
+            strat_order: number;
+            /** Top Md M */
+            top_md_m: number;
+            /** Top Tvd M */
+            top_tvd_m: number;
+            /** Top Tvdss M */
+            top_tvdss_m: number;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -522,11 +713,95 @@ export interface components {
             /** Version */
             version: string;
         };
+        /** OffsetOut */
+        OffsetOut: {
+            /** Bearing Deg */
+            bearing_deg: number | null;
+            /** Distance M */
+            distance_m: number;
+            /** Lat */
+            lat: number;
+            /** Lon */
+            lon: number;
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
+            /** Synthetic */
+            synthetic: boolean;
+            /** Td Md M */
+            td_md_m: number | null;
+            /** Well Id */
+            well_id: number;
+            /** Well Type */
+            well_type: string | null;
+        };
+        /** OffsetsOut */
+        OffsetsOut: {
+            /** Formation */
+            formation: string | null;
+            /** Mode */
+            mode: string;
+            /** Offsets */
+            offsets: components["schemas"]["OffsetOut"][];
+            /** Radius Km */
+            radius_km: number;
+            /** Well Id */
+            well_id: number;
+        };
+        /** PageOut */
+        PageOut: {
+            /** Document Id */
+            document_id: number;
+            /** Height Px */
+            height_px: number;
+            /** Image Url */
+            image_url: string;
+            /** Ocr Mean Conf */
+            ocr_mean_conf: number | null;
+            /** Ocr Used */
+            ocr_used: boolean;
+            /** Page No */
+            page_no: number;
+            /** Spans */
+            spans: components["schemas"]["SpanOut"][];
+            /** Width Px */
+            width_px: number;
+        };
+        /** PageSummary */
+        PageSummary: {
+            /** Ocr Mean Conf */
+            ocr_mean_conf: number | null;
+            /** Ocr Used */
+            ocr_used: boolean;
+            /** Page No */
+            page_no: number;
+            /** Span Count */
+            span_count: number;
+        };
+        /** PathPoint */
+        PathPoint: {
+            /** Lat */
+            lat: number;
+            /** Lon */
+            lon: number;
+            /** Tvdss M */
+            tvdss_m: number;
+        };
         /**
          * ProximityMode
          * @enum {string}
          */
         ProximityMode: "SURFACE" | "AT_FORMATION" | "CLOSEST_APPROACH";
+        /** QualityCheck */
+        QualityCheck: {
+            /** Detail */
+            detail: string;
+            /** Name */
+            name: string;
+            /** Ok */
+            ok: boolean;
+        };
         /** ReadinessReport */
         ReadinessReport: {
             /** Components */
@@ -536,6 +811,66 @@ export interface components {
              * @enum {string}
              */
             status: "ready" | "not_ready";
+        };
+        /** SpanOut */
+        SpanOut: {
+            /** Bbox */
+            bbox: number[];
+            /** Conf */
+            conf: number | null;
+            /** Id */
+            id: number;
+            /** Line No */
+            line_no: number;
+            /** Text */
+            text: string;
+        };
+        /** StationOut */
+        StationOut: {
+            /** Azi Deg */
+            azi_deg: number;
+            /** Dls Deg 30M */
+            dls_deg_30m: number;
+            /** East M */
+            east_m: number;
+            /** Inc Deg */
+            inc_deg: number;
+            /** Md M */
+            md_m: number;
+            /** North M */
+            north_m: number;
+            /** Tvd M */
+            tvd_m: number;
+            /** Tvdss M */
+            tvdss_m: number;
+        };
+        /** TrajectoryOut */
+        TrajectoryOut: {
+            /** Assumed */
+            assumed: boolean;
+            /** Crs Epsg */
+            crs_epsg: number;
+            /** Path */
+            path: components["schemas"]["PathPoint"][];
+            /** Stations */
+            stations: components["schemas"]["StationOut"][];
+            /** Well Id */
+            well_id: number;
+            /** Wellbore Id */
+            wellbore_id: number;
+        };
+        /** UploadResult */
+        UploadResult: {
+            /** Document Id */
+            document_id: number;
+            /** Duplicate */
+            duplicate: boolean;
+            /** Filename */
+            filename: string;
+            /** Sha256 */
+            sha256: string;
+            /** Status */
+            status: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -549,6 +884,88 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** WellDetail */
+        WellDetail: {
+            /** Aliases */
+            aliases: string[];
+            /** Completion Date */
+            completion_date: string | null;
+            /** Crs Epsg */
+            crs_epsg: number;
+            data_quality: components["schemas"]["DataQuality"];
+            /** Datum Assumed */
+            datum_assumed: boolean;
+            /** Document Count */
+            document_count: number;
+            /** Field */
+            field: string;
+            /** Formation Tops */
+            formation_tops: components["schemas"]["FormationTopOut"][];
+            /** Gl Elev M */
+            gl_elev_m: number | null;
+            /** Id */
+            id: number;
+            /** Lat */
+            lat: number;
+            /** Lon */
+            lon: number;
+            /** Name */
+            name: string;
+            /** Profile */
+            profile: string | null;
+            /** Rig Name */
+            rig_name: string | null;
+            /** Rkb Elev M */
+            rkb_elev_m: number | null;
+            /** Spud Date */
+            spud_date: string | null;
+            /** Status */
+            status: string;
+            /** Synthetic */
+            synthetic: boolean;
+            /** Td Md M */
+            td_md_m: number | null;
+            /** Trajectory Assumed */
+            trajectory_assumed: boolean;
+            /** Units System */
+            units_system: string | null;
+            /** Well Type */
+            well_type: string | null;
+        };
+        /** WellList */
+        WellList: {
+            /** Items */
+            items: components["schemas"]["WellSummary"][];
+            /** Total */
+            total: number;
+        };
+        /** WellSummary */
+        WellSummary: {
+            /** Document Count */
+            document_count: number;
+            /** Field */
+            field: string;
+            /** Id */
+            id: number;
+            /** Lat */
+            lat: number;
+            /** Lon */
+            lon: number;
+            /** Name */
+            name: string;
+            /** Profile */
+            profile: string | null;
+            /** Spud Date */
+            spud_date: string | null;
+            /** Status */
+            status: string;
+            /** Synthetic */
+            synthetic: boolean;
+            /** Td Md M */
+            td_md_m: number | null;
+            /** Well Type */
+            well_type: string | null;
         };
     };
     responses: never;
@@ -791,6 +1208,41 @@ export interface operations {
             };
         };
     };
+    list_documents_api_v1_documents_get: {
+        parameters: {
+            query?: {
+                well_id?: number | null;
+                status?: string | null;
+                doc_type?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     upload_documents_api_v1_documents_post: {
         parameters: {
             query?: never;
@@ -805,12 +1257,12 @@ export interface operations {
         };
         responses: {
             /** @description Successful Response */
-            200: {
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["UploadResult"][];
                 };
             };
             /** @description Validation Error */
@@ -820,15 +1272,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -850,7 +1293,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["DocumentDetail"];
                 };
             };
             /** @description Validation Error */
@@ -862,13 +1305,35 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Planned, not implemented in this phase */
-            501: {
+        };
+    };
+    get_file_api_v1_documents__document_id__file_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/pdf": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -891,7 +1356,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["PageOut"];
                 };
             };
             /** @description Validation Error */
@@ -903,13 +1368,67 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Planned, not implemented in this phase */
-            501: {
+        };
+    };
+    get_page_image_api_v1_documents__document_id__pages__page_no__image_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: number;
+                page_no: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "image/png": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reprocess_api_v1_documents__document_id__reprocess_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -955,6 +1474,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_formations_api_v1_formations_get: {
+        parameters: {
+            query?: {
+                basin?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FormationOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -1219,11 +1769,14 @@ export interface operations {
             };
         };
     };
-    list_wells_api_v1_wells_get: {
+    get_wells_api_v1_wells_get: {
         parameters: {
             query?: {
                 field?: string | null;
                 status?: string | null;
+                q?: string | null;
+                limit?: number;
+                offset?: number;
             };
             header?: never;
             path?: never;
@@ -1237,7 +1790,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["WellList"];
                 };
             };
             /** @description Validation Error */
@@ -1247,15 +1800,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1277,7 +1821,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["WellDetail"];
                 };
             };
             /** @description Validation Error */
@@ -1287,15 +1831,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1321,7 +1856,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["OffsetsOut"];
                 };
             };
             /** @description Validation Error */
@@ -1403,7 +1938,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["TrajectoryOut"];
                 };
             };
             /** @description Validation Error */
@@ -1413,15 +1948,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

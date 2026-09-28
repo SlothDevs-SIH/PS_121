@@ -16,5 +16,4 @@ class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
 
-# ORM models are added from phase B1 onward (master plan §6) and imported here so
-# Alembic autogenerate can see them.
+# ORM models live in app/db/models/ and are imported by migrations/env.py for Alembic.

@@ -28,6 +28,11 @@ PLANNED_HTTP = {
     ("post", "/api/v1/alerts/{alert_id}/feedback"),
     ("post", "/api/v1/replay"),
     ("get", "/api/v1/reports/offset-brief/{well_id}"),
+    ("get", "/api/v1/documents"),
+    ("get", "/api/v1/documents/{document_id}/pages/{page_no}/image"),
+    ("get", "/api/v1/documents/{document_id}/file"),
+    ("post", "/api/v1/documents/{document_id}/reprocess"),
+    ("get", "/api/v1/formations"),
     ("get", "/api/v1/meta"),
     ("get", "/api/v1/me"),
     ("get", "/healthz"),
@@ -45,8 +50,8 @@ def test_openapi_contains_every_planned_endpoint(client: TestClient) -> None:
 @pytest.mark.parametrize(
     ("method", "url", "phase"),
     [
-        ("get", "/api/v1/wells", "B1"),
-        ("get", "/api/v1/wells/7/offsets?radius_km=5&mode=AT_FORMATION&formation=Barail", "B1"),
+        ("get", "/api/v1/wells/7/offsets?radius_km=5&mode=AT_FORMATION&formation=Barail", "B2"),
+        ("get", "/api/v1/wells/7/offsets?mode=CLOSEST_APPROACH", "B2"),
         ("get", "/api/v1/search?q=lost%20circulation", "B2"),
         ("get", "/api/v1/correlation?wells=1&wells=2&align=FLATTEN_ON_TOP", "B2"),
         ("get", "/api/v1/wells/7/risk-profile", "B3"),

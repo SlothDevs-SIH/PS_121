@@ -28,7 +28,7 @@ export interface ScreenSpec {
   endpoints: ProbeEndpoint[]
 }
 
-export const CURRENT_FRONTEND_PHASE: FrontendPhase = 'F0'
+export const CURRENT_FRONTEND_PHASE: FrontendPhase = 'F1'
 
 export const SCREENS: ScreenSpec[] = [
   {
@@ -42,7 +42,7 @@ export const SCREENS: ScreenSpec[] = [
     audiences: ['office', 'field'],
     psRefs: ['O-ii', 'G-i'],
     phase: 'F1',
-    status: 'planned',
+    status: 'built',
     endpoints: [
       { method: 'GET', path: '/api/v1/wells' },
       { method: 'GET', path: '/api/v1/wells/1/offsets?radius_km=5&mode=SURFACE' },
@@ -156,10 +156,10 @@ export const SCREENS: ScreenSpec[] = [
     audiences: ['office'],
     psRefs: ['O-i'],
     phase: 'F1',
-    status: 'planned',
+    status: 'in_progress',
     endpoints: [
       { method: 'POST', path: '/api/v1/documents' },
-      { method: 'GET', path: '/api/v1/documents/1' },
+      { method: 'GET', path: '/api/v1/documents' },
       { method: 'GET', path: '/api/v1/review-queue' },
     ],
   },

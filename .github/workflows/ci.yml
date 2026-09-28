@@ -69,6 +69,8 @@ jobs:
           cp .env.example .env
           docker compose build --build-arg GIT_SHA=${GITHUB_SHA::7}
           docker compose up -d --wait --wait-timeout 240
+      - name: Seed a small synthetic field (OCR runs in the worker container)
+        run: docker compose exec -T worker python -m app.cli seed --wells 12 --max-documents 30 --wait --timeout-s 900
       - name: Integration tests
         working-directory: backend
         run: |

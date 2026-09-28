@@ -107,5 +107,91 @@ def openapi(
     typer.echo(f"wrote {out}")
 
 
+@cli.command()
+def seed(
+    wells: Annotated[int, typer.Option(help="Completed wells to generate")] = 40,
+    documents: Annotated[bool, typer.Option(help="Render and ingest reports")] = True,
+    max_documents: Annotated[int, typer.Option(help="Ingest at most N reports (0 = all)")] = 0,
+    inline: Annotated[bool, typer.Option(help="Process here instead of via the worker")] = False,
+    wait: Annotated[bool, typer.Option(help="Wait until queued reports are processed")] = False,
+    timeout_s: Annotated[float, typer.Option(help="Max wait for --wait")] = 900.0,
+) -> None:
+    """Idempotent: re-seeding updates wells in place and skips reports already ingested."""
+    import tempfile
+
+    from sqlalchemy import func, select
+
+    from app.db.models import Document
+    from app.db.session import session_scope
+    from app.ingest.service import process_document, store_upload
+    from app.normalise.master_import import import_field
+    from app.synthetic.documents import write_documents
+    from app.synthetic.generator import generate
+
+    configure_logging(json_output=False)
+    settings = get_settings()
+    data = generate(wells)
+    with session_scope() as session:
+        typer.echo(f"[seed] master data: {import_field(session, data)}")
+    truth = data.to_json()
+    new_ids: list[int] = []
+    if documents:
+        with tempfile.TemporaryDirectory() as tmp:
+            docs = write_documents(data, Path(tmp))
+            truth["documents"] = [d.__dict__ for d in docs]
+            if max_documents:
+                docs = docs[:max_documents]
+            for gd in docs:
+                with session_scope() as session:
+                    stored = store_upload(
+                        session, gd.file, (Path(tmp) / gd.file).read_bytes(), "seed"
+                    )
+                    if not stored.duplicate:
+                        new_ids.append(stored.document.id)
+        typer.echo(f"[seed] reports: {len(docs)} selected, {len(new_ids)} new")
+    get_s3_client().put_object(
+        Bucket=settings.s3_bucket_raw,
+        Key="synthetic/truth.json",
+        Body=json.dumps(truth).encode(),
+        ContentType="application/json",
+    )
+    typer.echo(
+        "[seed] ground truth written to s3://" + settings.s3_bucket_raw + "/synthetic/truth.json"
+    )
+    if inline:
+        for doc_id in new_ids:
+            with session_scope() as session:
+                process_document(session, doc_id)
+    else:
+        from app.ingest.tasks import process_document_task
+
+        for doc_id in new_ids:
+            process_document_task.delay(doc_id)
+    if wait and new_ids and not inline:
+        deadline = time.monotonic() + timeout_s
+        while True:
+            with session_scope() as session:
+                pending = (
+                    session.scalar(
+                        select(func.count()).where(
+                            Document.id.in_(new_ids),
+                            Document.ingest_status.in_(("queued", "processing")),
+                        )
+                    )
+                    or 0
+                )
+            if pending == 0:
+                break
+            if time.monotonic() > deadline:
+                typer.echo(f"[seed] timed out with {pending} reports still pending")
+                raise typer.Exit(code=1)
+            time.sleep(3)
+    with session_scope() as session:
+        rows = session.execute(
+            select(Document.ingest_status, func.count()).group_by(Document.ingest_status)
+        ).all()
+    typer.echo(f"[seed] document status: {dict((str(k), int(v)) for k, v in rows)}")
+
+
 if __name__ == "__main__":
     cli()

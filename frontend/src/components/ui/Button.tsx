@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, Ref } from 'react'
 
 import { cn } from '../../lib/cn'
 
@@ -13,10 +13,12 @@ export function Button({
   variant = 'ghost',
   className,
   type = 'button',
+  ref,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; ref?: Ref<HTMLButtonElement> }) {
   return (
     <button
+      ref={ref}
       type={type}
       className={cn(
         'inline-flex min-h-9 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors disabled:opacity-50',

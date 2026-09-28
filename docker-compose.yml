@@ -110,6 +110,9 @@ services:
     image: smriti-frontend:dev
     environment:
       API_UPSTREAM: http://api:8000
+      MAP_TILE_URL: ${MAP_TILE_URL:-}
+      MAP_TILE_ATTRIBUTION: ${MAP_TILE_ATTRIBUTION:-}
+      MAP_TILE_ORIGIN: ${MAP_TILE_ORIGIN:-}
     ports:
       - "127.0.0.1:${WEB_PORT:-8080}:80"
     depends_on:

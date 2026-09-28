@@ -1,5 +1,5 @@
 # Convenience targets. Backend commands run through uv inside backend/.
-.PHONY: up down logs ps lint fmt types test itest check web-dev web-lint web-test web-e2e api-contract
+.PHONY: up down logs ps seed lint fmt types test itest check web-dev web-lint web-test web-e2e api-contract
 
 up:            ## Start the full stack and wait until healthy
 	docker compose up -d --build --wait
@@ -9,6 +9,8 @@ logs:
 	docker compose logs -f --tail=100
 ps:
 	docker compose ps
+seed:          ## Load the synthetic Upper-Assam-style field and ingest its ~190 reports
+	docker compose exec -T worker python -m app.cli seed --wait
 lint:
 	cd backend && uv run ruff check . && uv run ruff format --check .
 fmt:

@@ -1,5 +1,6 @@
 # SMRITI web server: serves the built SPA and proxies the backend on the same origin,
-# so the browser never needs CORS. ${API_UPSTREAM} is substituted at container start.
+# so the browser never needs CORS. ${API_UPSTREAM} and the MAP_TILE_* variables are
+# substituted at container start (values must not contain quote characters).
 
 map $http_x_request_id $smriti_request_id {
     default $http_x_request_id;
@@ -28,13 +29,21 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "DENY" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    # Map tiles (F1) will add their tile host to img-src.
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws: wss:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" always;
+    # img-src allows exactly one extra origin: the configured map tile server (none by default).
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: ${MAP_TILE_ORIGIN}; connect-src 'self' ws: wss:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" always;
 
     location = /nginx-health {
         access_log off;
         default_type text/plain;
         return 200 "ok\n";
+    }
+
+    # Runtime configuration for the SPA (one image works online, offline and on-prem).
+    location = /config.json {
+        default_type application/json;
+        add_header Cache-Control "no-cache" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        return 200 '{"mapTileUrl":"${MAP_TILE_URL}","mapTileAttribution":"${MAP_TILE_ATTRIBUTION}"}';
     }
 
     location /api/ {
@@ -75,7 +84,7 @@ server {
         add_header X-Content-Type-Options "nosniff" always;
         add_header X-Frame-Options "DENY" always;
         add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-        add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws: wss:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" always;
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: ${MAP_TILE_ORIGIN}; connect-src 'self' ws: wss:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" always;
         try_files $uri $uri/ /index.html;
     }
 }

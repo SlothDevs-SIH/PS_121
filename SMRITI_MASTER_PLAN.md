@@ -7,7 +7,7 @@
 **Sponsor / Organisation:** Oil India Limited (OIL), a public sector undertaking under the Ministry of Petroleum and Natural Gas
 **Event:** Smart India Hackathon 2026
 **Repository:** `slothdevs-sih/ps_121`
-**Document date:** 2026-09-28 (v1.0) · **updated 2026-09-28 (v1.1):** backend phase B0 (skeleton) built and verified — see [`docs/BACKEND_PLAN.md`](docs/BACKEND_PLAN.md); object storage changed from MinIO to an S3-compatible store (SeaweedFS in Compose) because the MinIO Docker Hub image was not pullable on 2026-09-28; §5 rows 1 and 24 updated. · **updated 2026-09-28 (v1.2):** frontend phase F0 (skeleton) built and verified — see [`docs/FRONTEND_PLAN.md`](docs/FRONTEND_PLAN.md); §5 rows 1, 18, 19 updated; Live Well Monitor audience corrected to include office-based RTMAC engineers (was field-only in the first frontend registry, contradicting §2.3).
+**Document date:** 2026-09-28 (v1.0) · **updated 2026-09-28 (v1.1):** backend phase B0 (skeleton) built and verified — see [`docs/BACKEND_PLAN.md`](docs/BACKEND_PLAN.md); object storage changed from MinIO to an S3-compatible store (SeaweedFS in Compose) because the MinIO Docker Hub image was not pullable on 2026-09-28; §5 rows 1 and 24 updated. · **updated 2026-09-28 (v1.2):** frontend phase F0 (skeleton) built and verified — see [`docs/FRONTEND_PLAN.md`](docs/FRONTEND_PLAN.md); §5 rows 1, 18, 19 updated; Live Well Monitor audience corrected to include office-based RTMAC engineers (was field-only in the first frontend registry, contradicting §2.3). · **updated 2026-09-28 (v1.3):** **Part 1 built** — backend B1 + frontend F1: synthetic field generator (42 wells, 191 reports), document ingestion with OCR and evidence bounding boxes, well master data with trajectories, surface offset search, Well Map and Ingestion screens. See §5 and the two phase plans. OCR stack changed from Docling + PaddleOCR to PDFium + Tesseract (BACKEND_PLAN ADR-B12). Work paused after Part 1 at the team's request.
 **Status of this document:** The canonical single source of truth for PS 121, written to the same standard as `DHRUVA_MASTER_KOTLIN.md` (PS 168). It is a **plan**: as of v1.0, **no code has been written**. Every number in this document is a **target** or a **design parameter** unless it is explicitly marked **MEASURED** with a file reference. When something gets built, update its row in §5 ("Designed vs. Built"), don't just add a paragraph.
 
 > ⚠️ **Honesty rule carried over from DHRUVA:** this document exists to stop the team from saying things in the judging room that it can't defend. Every "✅" must point to a file and a test. Every number must point to a script and a dataset. If a feature is simulated (e.g. the eRTMAC feed), say "simulated" out loud. See §24 (Communication Rules).
@@ -627,12 +627,12 @@ This table is the project's heartbeat. Update it the same day something changes.
 | # | Component | Status | Evidence (file / test) | Notes |
 |---|---|---|---|---|
 | 1 | Repo scaffold, Docker Compose, CI | ✅ Backend B0 + frontend F0 | `docker-compose.yml` (7 services), `backend/`, `frontend/`, `.github/workflows/ci.yml` · backend 31 unit + 5 integration, frontend 21 unit + 14 e2e (BACKEND_PLAN / FRONTEND_PLAN App. B) | CI green on GitHub for backend, frontend and full-stack e2e (2026-09-28) |
-| 2 | S1 Ingestion (Docling + PaddleOCR + S3 store) | 📋 Planned | — | |
+| 2 | S1 Ingestion (PDFium text layer + Tesseract OCR with table-rule removal + S3 store) | ✅ Built (B1) | `backend/app/ingest/*` · 191/191 synthetic reports processed and linked; mean OCR confidence 86.3% | Changed from Docling + PaddleOCR (BACKEND_PLAN ADR-B12) |
 | 3 | S2 Extraction (rules + LLM + confidence + review queue) | 📋 Planned | — | Gold set needed (§13.1) |
 | 4 | S2 DDR time-log parser | 📋 Planned | — | Label source for 7b/7d |
-| 5 | S3 Normalisation (units, datums, formation dictionary, aliases, CRS) | 📋 Planned | — | |
-| 6 | S4 Minimum-curvature trajectory + TVDSS | 📋 Planned | — | Unit tests vs worked examples |
-| 7 | S4 Three proximity modes | 📋 Planned | — | Supporting differentiator |
+| 5 | S3 Normalisation (units, datums, formation dictionary, aliases, CRS) | ✅ Built (B1) | `backend/app/normalise/*` · integration tests | Alias confirmation UI is F2 |
+| 6 | S4 Minimum-curvature trajectory + TVDSS | ✅ Built (B1) | `backend/app/geo/mincurv.py` · exact closed-form arc tests | |
+| 7 | S4 Three proximity modes | ⚠️ Surface mode built (B1, p95 14.6 ms on 10k wells); at-formation and closest-approach planned B2 | `backend/app/geo/service.py`, `scripts/perf_offsets.py` | Supporting differentiator; the 3D paths and entry points it needs are already stored |
 | 8 | S5 Hybrid search + reranker + lessons cards | 📋 Planned | — | |
 | 9 | S6 Correlation panel (3 alignment modes) | 📋 Planned | — | D3 component |
 | 10 | S7a Offset prior risk (weighted Beta-Binomial) | 📋 Planned | — | |
@@ -643,11 +643,11 @@ This table is the project's heartbeat. Update it the same day something changes.
 | 15 | S8 Mitigation Effectiveness Ledger (USP 2) | 📋 Planned | — | |
 | 16 | S9 Alert engine (fusion, hysteresis, budget, lifecycle, feedback) | 📋 Planned | — | |
 | 17 | S10 Copilot with read-only tools | 📋 Planned | — | |
-| 18 | S11 Office view | ⚠️ Shell + System Status built (F0); domain screens planned F1–F6 | `frontend/src/app/*`, `frontend/src/pages/SystemStatus.tsx` · FRONTEND_PLAN §5 | |
+| 18 | S11 Office view | ⚠️ Shell, System Status (F0), **Well Map and Ingestion upload/status (F1)** built; other screens planned F2–F6 | `frontend/src/app/*`, `frontend/src/pages/SystemStatus.tsx` · FRONTEND_PLAN §5 | |
 | 19 | S11 Field view + PWA well pack | ⚠️ Field view mode (larger type, reduced nav) built in F0; PWA well pack planned F5 | `frontend/src/app/theme.tsx`, `screens.ts` · `AppShell.test.tsx`, e2e | |
 | 20 | S12 Replay adapter (CSV/Parquet → Redis Streams) | 📋 Planned | — | Demo path |
 | 21 | S12 WITSML 1.4.1.x / ETP / WITS0 adapters | 📋 Planned | — | At least one real protocol adapter tested against a mock server; others "designed" |
-| 22 | Synthetic Upper-Assam dataset generator | 📋 Planned | — | §12.3 |
+| 22 | Synthetic Upper-Assam dataset generator | ✅ Built (B1) | `backend/app/synthetic/*`, `app.cli seed` · deterministic, idempotent re-seed | 42 wells, 113 events with planted mitigation rates, 191 reports (30% scanned) |
 | 23 | Offset Risk Brief PDF export | 📋 Planned | — | Nice-to-have |
 | 24 | Auth + RBAC + audit log | ⚠️ Dev-mode auth only (refused in prod) | `backend/app/core/auth.py` · `test_meta_auth.py` | OIDC/RBAC/audit planned for backend phase B6 |
 | 25 | Evaluation harness + reports (§13) | 📋 Planned | — | Every quoted number comes from here |
@@ -976,8 +976,8 @@ All are **targets**, to be measured by the evaluation harness (§13) before quot
 
 | Layer | Choice | Role |
 |---|---|---|
-| **Document parsing** | **Docling** | PDF layout, reading order, table structure |
-| **OCR** | **PaddleOCR** (Tesseract fallback) | Scanned pages, tables |
+| **Document parsing** | **PDFium** (`pypdfium2`) — *changed 2026-09-28 from Docling; see BACKEND_PLAN ADR-B12* | PDF text layer with line bounding boxes; page rendering |
+| **OCR** | **Tesseract 5** with table-rule removal — *changed 2026-09-28 from PaddleOCR* | Scanned pages, tables |
 | **Image preprocessing** | OpenCV | Deskew, denoise, binarise |
 | **Rule-based NLP** | spaCy + regex | Depths, units, dates, casing sizes, formations |
 | **Structured extraction** | Open-weight instruct LLM + **Pydantic** schemas + `instructor`/Outlines (constrained JSON) | Events, programs, lessons |

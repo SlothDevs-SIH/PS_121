@@ -16,9 +16,10 @@ describe('screen registry', () => {
     expect(numbers).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
   })
 
-  it('uses valid phases, and only System Status is built in F0', () => {
+  it('uses valid phases; F1 built the Map and started Ingestion', () => {
     expect(SCREENS.every((s) => PHASES.has(s.phase))).toBe(true)
-    expect(SCREENS.filter((s) => s.status === 'built').map((s) => s.id)).toEqual(['system'])
+    expect(SCREENS.filter((s) => s.status === 'built').map((s) => s.id)).toEqual(['map', 'system'])
+    expect(SCREENS.filter((s) => s.status === 'in_progress').map((s) => s.id)).toEqual(['ingest'])
   })
 
   it('only references endpoints that exist in the backend OpenAPI contract', () => {

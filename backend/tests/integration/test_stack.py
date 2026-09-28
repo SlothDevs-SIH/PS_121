@@ -20,6 +20,18 @@ pytestmark = pytest.mark.integration
 API = os.environ.get("SMRITI_API_URL", "http://localhost:8000")
 
 
+def _alembic_head() -> str:
+    from pathlib import Path
+
+    from alembic.config import Config
+    from alembic.script import ScriptDirectory
+
+    cfg = Config(str(Path(__file__).resolve().parents[2] / "alembic.ini"))
+    head = ScriptDirectory.from_config(cfg).get_current_head()
+    assert head is not None
+    return head
+
+
 def test_api_is_ready() -> None:
     r = httpx.get(f"{API}/readyz", timeout=10)
     assert r.status_code == 200, r.text
@@ -40,7 +52,7 @@ def test_required_extensions_installed_and_migration_at_head() -> None:
         conn.execute(text("SELECT extversion FROM pg_extension WHERE extname='timescaledb'"))
         conn.execute(text("SELECT similarity('HAPJAN-12', 'HPJ-12')")).scalar_one()
     assert set(get_settings().required_pg_extensions) <= exts
-    assert version == "0001"
+    assert version == _alembic_head()
 
 
 def test_object_storage_round_trip() -> None:
@@ -61,6 +73,6 @@ def test_celery_worker_round_trip() -> None:
 
 
 def test_skeleton_endpoint_through_real_server() -> None:
-    r = httpx.get(f"{API}/api/v1/wells", timeout=10)
+    r = httpx.get(f"{API}/api/v1/correlation", params={"wells": 1}, timeout=10)
     assert r.status_code == 501
-    assert r.json()["error"]["details"]["phase"] == "B1"
+    assert r.json()["error"]["details"]["phase"] == "B2"

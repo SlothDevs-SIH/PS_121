@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     s3_bucket_raw: str = "smriti-raw"  # original uploaded files, keyed by sha256
     s3_bucket_pages: str = "smriti-pages"  # rendered page images for evidence display
 
+    # Ingestion
+    max_upload_mb: int = 50
+    ocr_needs_review_below: float = 60.0  # mean OCR confidence (0..100) that triggers review
+
     # Auth: "dev" returns a fixed local user; "oidc" (Keycloak) is planned for phase B6
     auth_mode: Literal["dev", "oidc"] = "dev"
 

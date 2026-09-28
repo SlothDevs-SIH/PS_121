@@ -3,13 +3,69 @@
 **Team:** Slothdevs · **Solution:** SMRITI (working name) · **Problem Statement:** PS 121 — eRTMAC-NWIS (Oil India Limited)
 **Parent document:** [`SMRITI_MASTER_PLAN.md`](../SMRITI_MASTER_PLAN.md). That is the product source of truth; **this** document is the source of truth for the backend. When the two disagree, fix both in the same PR.
 **Document date:** 2026-09-28 (v1.0) · **updated 2026-09-28 (v1.1):** frontend F0 landed (V-B4 resolved); new `app.cli openapi` command exports the API contract for the frontend (+1 unit test → 31); CI jobs restructured (`backend-checks`, `frontend-checks`, `integration`).
-**Backend phase:** **B0 — Skeleton: ✅ COMPLETE (2026-09-28)**. Next: **B1 — Data foundation**.
+**Backend phase:** B0 ✅ · **B1 — Data foundation: ✅ COMPLETE (2026-09-28, Part 1)**. Next: **B2 — Knowledge layer** (not started — the team chose to stop after Part 1).
 
 > ⚠️ **Same honesty rule as the master plan and DHRUVA:** a "✅" must point to a file and a test that passed. Every number in §0 was measured on 2026-09-28 in this repository. Everything from B1 onward is a **plan**.
 
 ---
 
 ## 0. Where the backend actually stands right now (2026-09-28)
+
+### 0.1 B1 — Data foundation (built in Part 1, 2026-09-28)
+
+**Built and verified** (evidence: Appendix B2):
+- **Synthetic Upper-Assam-style field** (`app/synthetic/`), seeded and deterministic:
+  - 42 wells: 40 completed, 1 drilling (for the Part 4 replay), 1 planned.
+  - J, S and vertical profiles, with minimum-curvature surveys.
+  - 251 formation tops across 9 formations.
+  - Casing and mud programmes.
+  - 113 drilling events with mitigations and outcomes drawn from **planted success rates** (the ground truth for the Part 3 ledger).
+  - **191 PDF reports** (151 DDRs, 40 WCRs), 30% "scanned" as image-only.
+  - The reports vary like a real archive: well-name aliases, formation synonyms, metric and oilfield units, varied phrasing, and a SYNTHETIC watermark on every page.
+  - Re-rendering is byte-identical, so re-seeding is idempotent (0 new documents on a second run, verified).
+  - Ground truth is written to `s3://smriti-raw/synthetic/truth.json`.
+- **Ingestion (S1):**
+  - Upload with magic-byte type check, a 50 MB limit and SHA-256 de-duplication.
+  - The PDF text layer is read with PDFium, with line bounding boxes; image-only pages are OCR'd with **Tesseract after table-rule removal**.
+  - Page PNGs go to object storage; text spans carry normalised bounding boxes.
+  - Section-aware chunks.
+  - Document classification, well-name and report-date parsing; well linking through alias normalisation, with trigram near-matches queued as `alias_candidate`.
+  - A `needs_review` status for unlinked wells or low OCR confidence.
+  - An idempotent Celery task with transient-error retries.
+- **Master data (S3) and trajectories (S4):**
+  - Idempotent import; TVDSS on every station and top.
+  - 3D `LINESTRING Z` wellbore paths and formation entry points in UTM 46N.
+  - Surface radius search on a GiST index (other proximity modes → B2).
+- **API:**
+  - `/wells`, `/wells/{id}`, `/wells/{id}/trajectory`, `/wells/{id}/offsets`, `/formations`.
+  - `/documents` (upload + list), `/documents/{id}`, `…/pages/{n}` (spans + bounding boxes), `…/pages/{n}/image`, `…/file`, `…/reprocess`.
+  - A data-quality score per well.
+- **CLI:** `seed` (generate → import → render → ingest, with `--inline` / `--wait`).
+- **Measured results:**
+  - 191/191 reports processed; 191/191 linked to the right well (including OCR'd and aliased names).
+  - Mean OCR confidence 86.3% across 65 OCR'd pages (lowest page 69.6%).
+  - 3,838 text spans and 765 chunks.
+  - Full seed with inline OCR takes 3 min 26 s on the sandbox CPU.
+  - Offset query on **10,000 wells: p50 2.9 ms, p95 14.6 ms** (target < 500 ms; `scripts/perf_offsets.py`).
+- **Tests:**
+  - **58 unit tests**, including exact closed-form minimum-curvature tests and ingestion-rule tests.
+  - **11 integration tests** against the live stack. Among them: offsets checked against an independent haversine distance, and the full upload → worker → evidence round trip.
+  - Ruff and strict mypy clean; `alembic check` clean.
+
+**Real bugs found and fixed while building B1** (kept for the record, as DHRUVA's doc does):
+1. **SeaweedFS could only store one bucket.** With its defaults (30 GB volumes, slots sized from free disk), the first bucket took every slot, so page images failed with "no free volumes". B0 only ever wrote to one bucket, so it passed. Fixed with 512 MB volumes and 64 slots (`infra/seaweedfs/entrypoint.sh`).
+2. **OCR read table rules as characters and dropped whole rows.** Fixed by erasing long horizontal and vertical dark runs before OCR (`app/ingest/imageprep.py`); the scanned table then read perfectly.
+3. **OCR artefacts broke well-name parsing** ("SYN ASM 02_"). Stray `_|~` are now stripped from OCR words.
+4. **Completion reports took the spud date as their report date.** "Spud date:" matched the generic "Date:" rule; a completion report is now dated by its completion date.
+5. **Two reports for the same well and day shared a filename**, so one silently overwrote the other (191 generated, 190 ingested). The report number is now in the filename.
+6. **Synthetic PDFs embedded the current time**, so re-seeding would re-ingest everything. Creation dates are now fixed.
+
+**Not done in B1, stated plainly:**
+- **No Volve data.** Downloading it needs registration, which isn't possible here. B1's "50+ Volve DDRs" criterion was met with 151 synthetic DDRs + 40 WCRs instead; Volve remains the plan for real data.
+- **No LLM classification fallback.** Rules classify every synthetic report correctly; the LLM hook moves to B2 with extraction.
+- **No at-formation or closest-approach offset modes** (B2, as planned).
+
+### 0.2 B0 — Skeleton (built earlier on 2026-09-28)
 
 **Built and verified in B0**, with the evidence recorded in Appendix B:
 
@@ -59,6 +115,11 @@
 | V-B6 | Starlette deprecation warning in tests | `fastapi.testclient` warns "install httpx2 instead" (Starlette 1.7) | Harmless today; revisit when upgrading FastAPI/Starlette | ⏳ Watch |
 | V-B7 | Docker Hub rate limits (HTTP 429) during pulls | Seen in the sandbox; may also hit CI | Retry succeeded; if CI hits it, add Docker Hub login or a registry mirror | ⏳ Watch |
 | V-B8 | Sync SQLAlchemy chosen for B0 | Async not needed yet; see ADR-B3 | Re-evaluate in B4 when WebSocket fan-out lands | ⏳ Planned review |
+| V-B9 | OCR stack differs from the master plan (Docling + PaddleOCR) | Both pull in PyTorch-scale dependencies. PDFium (text layer + boxes) + Tesseract 5 (with our table-rule removal) met the need at 86% mean OCR confidence on the synthetic scans | ADR-B12. Re-evaluate Docling/PaddleOCR against real OIL scans; the page-extraction interface (`app/ingest/pages.py`) is the only thing to swap | ✅ Decided |
+| V-B10 | Debian package mirrors are blocked in this development sandbox | Tesseract can't be apt-installed into the image here | `ARG WITH_OCR` (default `true`; CI builds with OCR). Sandbox images build with `WITH_OCR=false` and OCR ran on the host; the containerised OCR path is proven by CI | ✅ Resolved |
+| V-B11 | Migration order changed from the plan | `document.well_id` references `well`, so master data must come first | Now `0002_master_data`, `0003_documents`, `0004_trajectory` (§8) | ✅ Resolved |
+| V-B12 | Page images are streamed through the API, not by pre-signed URLs | The S3 endpoint (`s3:8333`) isn't reachable from browsers, and same-origin images keep the CSP strict | `GET /documents/{id}/pages/{n}/image` | ✅ Decided |
+| V-B13 | Synthetic data only | No Volve access in the sandbox | Master plan §12.5 is unchanged; OIL/Volve data goes through the same `import_field` + upload path | ⏳ Open |
 
 ---
 
@@ -408,9 +469,9 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 15 | Dockerfile (non-root, health check, `PYTHON_IMAGE` arg) | B0 | ✅ | `backend/Dockerfile` |
 | 16 | docker-compose (6 services, health-gated startup) | B0 | ✅ | `docker-compose.yml` · `docker compose up -d --wait` all healthy |
 | 17 | CI workflow (checks + compose integration) | B0 | ✅ | `.github/workflows/ci.yml` · [run #1](https://github.com/SlothDevs-SIH/PS_121/actions/runs/36460112777) green |
-| 18 | S1 ingestion | B1 | 📋 | §4.1 |
-| 19 | S3 normalisation + master data tables | B1 | 📋 | §4.2 |
-| 20 | S4 min-curvature + surface offsets | B1 | 📋 | §4.3 |
+| 18 | S1 ingestion (upload, PDFium text layer, Tesseract OCR + rule removal, spans/bbox, page images, chunks, classification, well linking, Celery task) | B1 | ✅ | `app/ingest/*` · `test_ingest_rules.py` (19), integration `test_upload_process_and_page_evidence` |
+| 19 | S3 normalisation + master data tables (import, TVDSS, formations, alias resolution, data-quality score) | B1 | ✅ | `app/normalise/*`, migrations 0002–0004 · integration `test_trajectory_and_well_detail` |
+| 20 | S4 min-curvature + surface offsets | B1 | ✅ | `app/geo/*` · `test_mincurv.py` (8, closed-form), integration `test_surface_offsets_match_independent_distance`, `scripts/perf_offsets.py` |
 | 21 | S4 at-formation + closest-approach | B2 | 📋 | §4.3 |
 | 22 | S2 extraction + review queue + DDR parser | B2 | 📋 | §4.4 |
 | 23 | S5 search + lessons cards | B2 | 📋 | §4.5 |
@@ -419,6 +480,7 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 26 | S12 stream/replay, S7b, S7d, S9 alerts, WebSockets | B4 | 📋 | §4.10–4.12 |
 | 27 | S10 copilot, reports | B5 | 📋 | §4.13–4.14 |
 | 28 | OIDC/RBAC/audit, digests pinned, perf & security hardening | B6 | 📋 | §4.15, §12 |
+| 29 | Synthetic field generator + `seed` CLI (ground truth for later phases) | B1 | ✅ | `app/synthetic/*`, `app/cli.py seed` · determinism check (byte-identical re-render), re-seed = 0 new documents |
 
 ---
 
@@ -429,14 +491,14 @@ Backend phases map onto master plan §18 (P0–P5). Durations assume ~7 weeks to
 | Phase | Master plan | When | Scope | Exit criteria (all must be true) |
 |---|---|---|---|---|
 | **B0 Skeleton** | P0 | Days 1–3 | Platform, Compose, migrations, CI, API contract | ✅ **Met 2026-09-28**, including a green GitHub CI run — see Appendix B |
-| **B1 Data foundation** | P1 | W1–W2 | S1 ingestion; S3 master data & datums; S4 min-curvature + surface offsets; migrations 0002–0004; OCR worker image | 50+ Volve DDRs and 10 synthetic scanned reports ingested with page images and spans; `/wells`, `/wells/{id}/trajectory`, `/wells/{id}/offsets?mode=SURFACE` return real data; min-curvature tests pass; offsets p95 < 500 ms on 10k wells |
+| **B1 Data foundation** | P1 | W1–W2 | S1 ingestion; S3 master data & datums; S4 min-curvature + surface offsets; migrations 0002–0004; OCR worker image | ✅ **Met 2026-09-28** with one substitution: 151 synthetic DDRs + 40 WCRs (58 DDRs and 7 WCRs scanned) instead of Volve DDRs (V-B13). Endpoints return real data; min-curvature closed-form tests pass; offsets p95 14.6 ms on 10k wells. See §0.1 and Appendix B2 |
 | **B2 Knowledge layer** | P2 | W2–W3 | S2 extraction + review queue + DDR parser; S5 search; S6 correlation; S4 other proximity modes; LLM service; migrations 0005–0006 | Gold-set event F1 measured and saved; search Recall@5 measured; correlation JSON for all 3 alignment modes; review queue round trip works |
 | **B3 Batch intelligence** | P3 (first half) | W3–W4 | S7a prior, S7c physics, S8 ledger | Risk-profile endpoint live; physics formula tests pass; ledger recovers the planted ranking (ρ ≥ 0.8) |
 | **B4 Real-time** | P3 (second half) | W4–W5 | S12 stream + replay; rig state; S7b scoring; S7d Déjà Vu; S9 alerts; WebSockets; migrations 0007–0009 | Replay of a Volve well and a synthetic well produces the expected alerts over the WebSocket; alert latency p95 ≤ 5 s; every alert has evidence (property test) |
 | **B5 Copilot & reports** | P4 | W5–W6 | S10 copilot (SSE); Offset Risk Brief PDF; MLflow profile | Copilot answers the 50-question set with citations measured; unanswerable refusal rate measured; PDF renders |
 | **B6 Hardening** | P5 | W6–W7 | OIDC/RBAC/audit; image digests pinned; Prometheus metrics + Grafana; load test; security review; backups script | All master plan §9 targets measured and recorded in `eval/results/`; `SMRITI_AUTH_MODE=oidc` works end-to-end; no critical findings open |
 
-### 6.1 B1 task breakdown (next up — ordered)
+### 6.1 B1 task breakdown — ✅ all done 2026-09-28 (items 3 and 5 changed: see V-B9, V-B12)
 
 1. Migration `0002_documents` + ORM models (`document`, `page`, `text_span`, `chunk` without embedding) + repo tests.
 2. `POST /documents` (multipart, SHA-256 dedupe, S3 put, row, enqueue) + `GET /documents/{id}`; replace the two 501 stubs; update contract tests.
@@ -469,6 +531,8 @@ All variables are prefixed `SMRITI_` and read by `app/core/config.py`. Defaults 
 | `SMRITI_S3_BUCKET_RAW` / `SMRITI_S3_BUCKET_PAGES` | `smriti-raw` / `smriti-pages` | B0 | Created by `bootstrap` |
 | `SMRITI_AUTH_MODE` | `dev` | B0 | `dev` or `oidc` (B6) |
 | `SMRITI_READINESS_TIMEOUT_S` | `2.0` | B0 | Per-dependency probe timeout |
+| `SMRITI_MAX_UPLOAD_MB` | `50` | B1 | Per-file upload limit (413 above it) |
+| `SMRITI_OCR_NEEDS_REVIEW_BELOW` | `60.0` | B1 | Mean OCR confidence (0–100) below which a document goes to `needs_review` |
 | `SMRITI_LLM_BASE_URL`, `SMRITI_LLM_MODEL` | — | B2 | OpenAI-compatible endpoint (Ollama/vLLM) |
 | `SMRITI_EMBEDDING_MODEL` | — | B2 | e.g. BGE-M3 |
 | `SMRITI_EXTRACT_CONFIDENCE_THRESHOLD` | — (0.75 planned) | B2 | Review-queue cut-off |
@@ -484,9 +548,9 @@ Compose-level variables (`.env.example`): `POSTGRES_USER/PASSWORD/DB/PORT`, `RED
 | Revision | Phase | Contents |
 |---|---|---|
 | `0001_extensions` ✅ | B0 | `postgis`, `vector`, `timescaledb`, `pg_trgm` |
-| `0002_documents` | B1 | `document`, `page`, `text_span`, `chunk` (no embedding yet) |
-| `0003_master_data` | B1 | `field`, `well`, `wellbore`, `formation`, `formation_top`, `alias_candidate` |
-| `0004_trajectory` | B1 | `survey_station`, `wellbore.path_geom` + GiST, `formation_top.entry_point` |
+| `0002_master_data` ✅ | B1 | `field`, `formation`, `well`, `wellbore` (with `path_geom`), `formation_top` (with `entry_point`) |
+| `0003_documents` ✅ | B1 | `document`, `page`, `text_span`, `chunk` (no embedding yet), `alias_candidate` |
+| `0004_trajectory` ✅ | B1 | `survey_station`; GiST indexes on `well.surface_loc`, `wellbore.path_geom`, `formation_top.entry_point`; trigram index on `well.canonical_name` |
 | `0005_engineering_records` | B2 | `casing_string`, `cement_job`, `mud_interval`, `ddr_operation`, `event`, `event_evidence`, `mitigation`, `review_item` |
 | `0006_search` | B2 | `chunk.embedding VECTOR(1024)` + HNSW; `chunk.tsv` + GIN; `event.lesson_card` |
 | `0007_realtime` | B4 | `rt_sample` hypertable (+ compression policy), `rig_state`, `channel_mapping`, `replay_session` |
@@ -629,12 +693,14 @@ Redis Stream  rt:{wellbore_id}  (MAXLEN ~200k)
 | ADR-B3 | Sync SQLAlchemy (psycopg 3) in B0–B3 | Async SQLAlchemy | Simpler, well-trodden; FastAPI runs sync routes in a threadpool; heavy work goes to Celery anyway. Revisit in B4 for WebSocket fan-out (V-B8); psycopg 3 supports async, so migrating is contained |
 | ADR-B4 | Celery + Redis | RQ, Dramatiq, Arq | Mature retries/acks/queues/routing; Redis is already needed for streams |
 | ADR-B5 | S3 API via boto3; SeaweedFS in Compose | MinIO SDK + MinIO server | MinIO image unavailable on Docker Hub (2026-09-28); plain S3 keeps storage swappable (SeaweedFS, MinIO, Ceph RGW, AWS S3) |
-| ADR-B6 | Separate OCR/LLM worker image (B1) | One fat image | Docling/PaddleOCR/torch are large; keep the API image small and fast to start |
+| ADR-B6 | ~~Separate OCR/LLM worker image (B1)~~ **One image, OCR optional (`WITH_OCR`)** — revised 2026-09-28 | Separate worker image | With Tesseract instead of Docling/PaddleOCR/torch (ADR-B12), OCR adds tens of MB, not GBs; one image is simpler. An LLM worker image is still planned for B2 |
 | ADR-B7 | One PostgreSQL with extensions | Separate vector/time-series/graph stores | Master plan ADR; fewer systems; SQL joins across geo + vector + time-series |
 | ADR-B8 | Redis Streams for real-time (B4) | Kafka in the demo | Same consumer-group semantics; fewer moving parts; Kafka is the production answer |
 | ADR-B9 | Skeleton routes return 501 with the phase | Leaving routes undefined | The frontend builds against the real contract now; the contract test prevents drift; the status stays honest |
 | ADR-B10 | `/readyz` checks extensions and buckets, not just connectivity | Plain TCP pings | "Connected but not migrated" is the most common broken state; the probe says exactly what to run |
 | ADR-B11 | Dev auth refused in `prod` | Trusting configuration | Fail closed: a misconfigured pilot can't silently run without auth |
+| ADR-B12 | PDFium text layer + Tesseract 5 with table-rule removal | Docling + PaddleOCR | Much smaller dependency footprint (no PyTorch); measured 86% mean OCR confidence and 100% well linking on the synthetic scans; swappable behind `app/ingest/pages.py` |
+| ADR-B13 | Synthetic field generator with planted ground truth | Hand-made fixtures | Every later phase needs realistic structure with *known* answers (events, mitigation success rates); generated deterministically from one seed |
 
 ---
 
@@ -677,12 +743,11 @@ MinIO's Docker Hub image wasn't available when we built. Our code speaks plain S
 
 ## 16. Immediate Next Actions (backend)
 
-1. ~~Watch the first GitHub CI run~~ — done, green (V-B2).
-2. **B1 kickoff:** tasks 1–2 of §6.1 (documents migration + upload endpoint) — Integration + Data eng.
-3. **OCR worker image spike:** build `Dockerfile.worker-ocr` with Docling + PaddleOCR (CPU); record the image size and pages/minute on a 10-page scanned fixture in this document — Data eng.
-4. **`geo/mincurv.py`** with textbook test cases — Domain eng.
-5. **Frontend "hello" + OpenAPI type generation** (closes V-B4) — UI eng.
-6. **Save the pinned images** (`docker save`) to a shared drive for the finale machine (RB5) — Infra.
+*(Updated 2026-09-28 after Part 1. B0 and B1 are done; work is paused here at the team's request.)*
+
+1. **B2 kickoff when resumed** — the rule extractor for events, mitigations and outcomes over the 191 ingested reports, scored against `synthetic/truth.json`. The ground truth already exists, so extraction F1 can be measured from day one.
+2. **Real data:** try to obtain Volve drilling folders (or OIL samples, V6) and run them through the same `import_field` + upload path (V-B13).
+3. **Save the pinned images** (`docker save`) for the finale machine (RB5) — Infra.
 
 ---
 
@@ -746,6 +811,24 @@ Run in this repository on 2026-09-28. Numbers are copied from the actual output.
 | Image versions | `SELECT … FROM pg_available_extensions` | PostgreSQL 16.15; timescaledb 2.30.1; postgis 3.6.4; vector 0.8.6; pg_trgm 1.6 |
 | S3 auth enforced | boto3 with wrong credentials | request rejected (`ClientError`) |
 | GitHub CI | push of commit `8c25b69` | [run #1](https://github.com/SlothDevs-SIH/PS_121/actions/runs/36460112777): `backend-checks` ✅, `backend-integration` ✅ |
+
+## Appendix B2 — B1 Verification Record (2026-09-28)
+
+Clean run: images rebuilt, every volume wiped (`docker compose down -v`), stack up, full seed.
+
+| Check | Command | Result |
+|---|---|---|
+| Full seed | `uv run python -m app.cli seed --inline` (OCR on the host; see V-B10) | 42 wells, 9 formations, 251 tops; **191 reports, 191 new, all `processed`**; 3 min 26 s |
+| Re-seed | same command again | `191 selected, 0 new` (idempotent) |
+| Well linking | SQL over `document` | **0 of 191** unlinked |
+| OCR quality | SQL over `page` | 65 OCR'd pages, **mean confidence 86.3%**, lowest 69.6% |
+| Extracted content | SQL | 3,838 text spans with bboxes · 765 chunks |
+| Unit tests | `uv run pytest` | **58 passed** |
+| Integration tests | `uv run pytest -m integration` | **11 passed** |
+| Lint / types / migrations | ruff, ruff format, `mypy --strict`, `alembic check` | clean · "No new upgrade operations detected" |
+| Offsets performance | `uv run python scripts/perf_offsets.py` | 10,000 wells, 200 queries: **p50 2.9 ms, p95 14.6 ms**, max 51 ms; GiST index used |
+| Contract | `app.cli openapi` vs committed `frontend/src/lib/api/openapi.json` | identical |
+| Worker round trip | `docker compose exec worker python -m app.cli check --worker` | exit 0 |
 
 ## Appendix C — Document Maintenance Rules
 

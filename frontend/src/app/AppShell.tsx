@@ -1,4 +1,4 @@
-import { HardHat, Monitor, Moon, Sun, SunMoon } from 'lucide-react'
+import { HardHat, Monitor, Moon, Ruler, Sun, SunMoon } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router'
 
 import { BackendStatus } from '../components/BackendStatus'
@@ -21,7 +21,7 @@ const themeLabel: Record<ThemeChoice, string> = {
 }
 
 export function AppShell() {
-  const { theme, setTheme, mode, setMode } = useTheme()
+  const { theme, setTheme, mode, setMode, units, setUnits } = useTheme()
   const ThemeIcon = themeIcon[theme]
   const nav = screensFor(mode)
 
@@ -74,6 +74,14 @@ export function AppShell() {
             >
               {mode === 'office' ? <Monitor size={16} /> : <HardHat size={16} />}
               {mode === 'office' ? 'Office view' : 'Field view'}
+            </Button>
+            <Button
+              onClick={() => setUnits(units === 'metric' ? 'oilfield' : 'metric')}
+              aria-label={`Units: ${units}. Switch to ${units === 'metric' ? 'oilfield' : 'metric'}`}
+              data-testid="units-toggle"
+            >
+              <Ruler size={16} />
+              {units === 'metric' ? 'Metric' : 'Oilfield'}
             </Button>
             <Button
               onClick={() => setTheme(nextTheme[theme])}

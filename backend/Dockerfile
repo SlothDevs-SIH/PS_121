@@ -11,7 +11,15 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/opt/venv \
     PATH="/opt/venv/bin:$PATH"
 
-RUN pip install --no-cache-dir uv==0.8.17 \
+# Tesseract OCR (English) for scanned report pages (S1). Only the ingestion worker needs it;
+# WITH_OCR=false builds a smaller image (e.g. API-only, or where Debian mirrors are blocked).
+ARG WITH_OCR=true
+RUN if [ "$WITH_OCR" = "true" ]; then \
+        apt-get update \
+        && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng \
+        && rm -rf /var/lib/apt/lists/*; \
+    fi \
+    && pip install --no-cache-dir uv==0.8.17 \
     && useradd --create-home --uid 10001 smriti
 
 WORKDIR /srv/backend

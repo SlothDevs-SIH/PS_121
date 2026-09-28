@@ -78,14 +78,10 @@ describe('App shell', () => {
   })
 
   it('renders planned screens with their phase and live endpoint probes', async () => {
-    mockBackend({
-      '/readyz': READY,
-      '/api/v1/wells': notImplemented('B1'),
-      '/api/v1/wells/1/offsets': notImplemented('B1'),
-    })
-    renderApp('/map')
-    expect(await screen.findByRole('heading', { name: 'Well Map' })).toBeInTheDocument()
-    expect(screen.getByTestId('planned-phase')).toHaveTextContent('frontend phase F1')
-    expect(await screen.findAllByText('501 · backend phase B1')).toHaveLength(2)
+    mockBackend({ '/readyz': READY, '/api/v1/correlation': notImplemented('B2') })
+    renderApp('/correlation')
+    expect(await screen.findByRole('heading', { name: 'Correlation Panel' })).toBeInTheDocument()
+    expect(screen.getByTestId('planned-phase')).toHaveTextContent('frontend phase F2')
+    expect(await screen.findAllByText('501 · backend phase B2')).toHaveLength(1)
   })
 })

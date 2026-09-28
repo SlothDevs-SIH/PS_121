@@ -3,13 +3,56 @@
 **Team:** Slothdevs · **Solution:** SMRITI (working name) · **Problem Statement:** PS 121 — eRTMAC-NWIS (Oil India Limited)
 **Parent documents:** [`SMRITI_MASTER_PLAN.md`](../SMRITI_MASTER_PLAN.md) (product) · [`BACKEND_PLAN.md`](BACKEND_PLAN.md) (API and data). This document is the source of truth for the web app. When they disagree, fix all of them in the same PR.
 **Document date:** 2026-09-28 (v1.0)
-**Frontend phase:** **F0 — Skeleton: ✅ COMPLETE (2026-09-28)**. Next: **F1 — Map & ingestion**.
+**Frontend phase:** F0 ✅ · **F1 — Map & ingestion: ✅ COMPLETE (2026-09-28, Part 1)**. Next: **F2 — Knowledge** (not started — the team chose to stop after Part 1).
 
 > ⚠️ **Same honesty rule as the master and backend plans:** a "✅" must point to a file and a test that passed. Every number in §0 and Appendix B was measured on 2026-09-28 in this repository. Everything from F1 onward is a **plan**.
 
 ---
 
 ## 0. Where the frontend actually stands right now (2026-09-28)
+
+### 0.1 F1 — Map & ingestion (built in Part 1, 2026-09-28)
+
+**Built and verified** (evidence: Appendix B2):
+- **Well Map** (`/map`, master plan screen 1):
+  - Leaflet map with vector circle markers (no image assets, CSP-safe) coloured by status, with non-offset wells greyed.
+  - The radius circle, and the active well's deviated path projected to the surface.
+  - A well picker, a 1–20 km radius slider, and the proximity-mode switch. Surface is live; at-formation and closest-approach are shown disabled and labelled "B2".
+  - A sortable offset table with distance, bearing, status and TD.
+  - State lives in the URL (`/map?well=12&r=5&mode=SURFACE`), so views can be shared.
+  - **Basemap from runtime config.** None by default (a quiet grid: offline/air-gap friendly). `MAP_TILE_URL` / `MAP_TILE_ORIGIN` switch on a tile server, and the CSP then allows exactly that one origin.
+- **Ingestion** (`/ingest`, screen 8, upload/status half):
+  - Drag-and-drop or picker upload of PDF/PNG/JPEG/TIFF, with per-file results (queued / already ingested / rejected with the error's request ID).
+  - Status counts and a status filter.
+  - The documents table polls every 3 s while anything is still processing, and shows `needs_review` reasons.
+  - Clicking a row opens the **evidence viewer**.
+  - The **review queue** half is F2, labelled on the page.
+- **Evidence viewer** (`PageViewer`, `EvidenceLink`):
+  - The stored page image with every extracted line outlined at its bounding box, and cited lines highlighted.
+  - A side list of lines with OCR confidence; clicking either side toggles the highlight.
+  - Page navigation, a link to the original file, Escape to close, and focus returned on close.
+  - This is the component principle P1 ("no citation, no claim") will use in every later screen.
+- **Shared pieces:**
+  - `DataTable` (sortable, `aria-sort`, nulls last, row selection).
+  - `ConfidenceValue` (dashed outline when unverified).
+  - `SyntheticBadge`.
+  - The units formatter (`lib/format/units.ts`, factors mirror the backend's; Indian digit grouping; depths always carry MD/TVD/TVDSS).
+  - A **Metric/Oilfield toggle** in the header (remembered per viewer).
+- **Route-level code splitting:** the shell is 118 kB gzipped (was 125 kB in F0 with everything). Leaflet (46 kB) loads only on the map; each page is its own chunk.
+- **Tests:**
+  - **35 unit/component tests** (was 21).
+  - **22 browser e2e tests** (11 scenarios × desktop + tablet) against the seeded stack. These cover:
+    - the radius slider flowing through to the URL and the offset count;
+    - the units toggle;
+    - upload → processing → evidence viewer → highlighted line, using a PDF generated in the test;
+    - runtime config and CSP;
+    - no horizontal scroll at 375 px, no console errors, and every screen having an `h1`.
+
+**Real problems found and fixed while building F1:**
+1. **The map overflowed the phone layout by 18 px.** Grid items default to `min-width: auto`, and Leaflet's internal panes are huge. The phone-width e2e test caught it; fixed with `min-w-0`.
+2. **Offset-table well names and depths wrapped mid-token** ("SYN-/ASM-/09"), found in the screenshot review. Those cells are now non-wrapping inside the table's horizontal scroll.
+
+### 0.2 F0 — Skeleton (built earlier on 2026-09-28)
 
 **Built and verified in F0** (evidence in Appendix B):
 
@@ -63,10 +106,10 @@
 | V-F4 | Source maps are shipped in the nginx image | `build.sourcemap: true` puts `*.map` files next to the JS; useful for debugging, but they expose source | Before any OIL pilot (F6): build with `sourcemap: 'hidden'` and strip `*.map` from the image | ⏳ Open |
 | V-F5 | Linter is **oxlint** (the Vite template default), not ESLint | Master plan named no linter; oxlint is much faster, supports React rules, and caught fast-refresh export issues | Keep. Add ESLint only if a needed rule (e.g. `jsx-a11y` depth) is missing | ✅ Decided |
 | V-F6 | "shadcn/ui" in the master plan | shadcn is a copy-in component convention, not a dependency. F0 hand-writes `Button`, `Card`, `Badge` in that convention (`cn()` = `clsx` + `tailwind-merge`) | Add further shadcn components (Dialog, Tabs, Select, Tooltip…) as needed, copied into `components/ui/` | ✅ Decided |
-| V-F7 | Single JS bundle, 125 kB gzip | Fine for F0; Leaflet/D3/ECharts in F1–F3 would grow it | Route-level code splitting (`React.lazy`) from F1; budget in §10 | ⏳ Planned |
+| V-F7 | Single JS bundle, 125 kB gzip | Fine for F0; Leaflet/D3/ECharts in F1–F3 would grow it | Done in F1: `React.lazy` per page; shell 118 kB gzip, Leaflet chunk 46 kB loaded only on the map | ✅ Resolved |
 | V-F8 | Docker Hub rate limits (HTTP 429) | Hit repeatedly when pulling `node`/`nginx` in the sandbox (same as V-B7) | Retry/back-off worked; `docker save` the images for the finale machine | ⏳ Watch |
 | V-F9 | Local image build needed a CA-trusting Node base (sandbox TLS inspection) | Same situation as V-B5 | `frontend/Dockerfile` takes `ARG NODE_IMAGE` / `NGINX_IMAGE`; no sandbox CA committed | ✅ Resolved |
-| V-F10 | Map tiles need a Content-Security-Policy change | CSP `img-src` is `'self' data: blob:` only | F1 decides the tile source (self-hosted/offline tiles preferred for the on-prem story) and adds only that host | ⏳ F1 |
+| V-F10 | Map tiles need a Content-Security-Policy change | CSP `img-src` is `'self' data: blob:` only | Done in F1: nginx serves `/config.json` from `MAP_TILE_URL` / `MAP_TILE_ATTRIBUTION`, and the CSP adds only `MAP_TILE_ORIGIN`. Default is no basemap (offline); a self-hosted tile pack is still the recommended on-prem option | ✅ Resolved |
 
 ---
 
@@ -349,9 +392,9 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 8 | nginx image: SPA fallback, proxy (HTTP + WS), CSP/security headers, caching | F0 | ⚠️ ships source maps (V-F4) | `frontend/Dockerfile`, `frontend/nginx/default.conf.template` · e2e WebSocket test, curl header checks (App. B) |
 | 9 | Compose `frontend` service, health-gated | F0 | ✅ | `docker-compose.yml` · `up --wait` healthy |
 | 10 | CI: frontend-checks + e2e in integration | F0 | ✅ | `.github/workflows/ci.yml` · [run](https://github.com/SlothDevs-SIH/PS_121/actions/runs/36463537008) green |
-| 11 | Well Map | F1 | 📋 | §4.1 |
-| 12 | Ingestion upload & job status | F1 | 📋 | §4.2 |
-| 13 | `EvidenceLink`, `PageViewer`, `ConfidenceValue`, `DataTable`, units formatter | F1 | 📋 | §4.12, §3.3 |
+| 11 | Well Map (surface mode; other modes shown disabled until B2) | F1 | ✅ | `src/pages/WellMapPage.tsx`, `src/components/map/WellMap.tsx` · `WellMapPage.test.tsx` (2), e2e map + units scenarios |
+| 12 | Ingestion upload & job status | F1 | ✅ | `src/pages/IngestPage.tsx` · `IngestPage.test.tsx` (3), e2e upload scenario |
+| 13 | `EvidenceLink`, `PageViewer`, `ConfidenceValue`, `DataTable`, units formatter, units toggle, runtime config | F1 | ✅ | `src/components/**`, `src/lib/format/units.ts`, `src/lib/config.ts` · `PageViewer.test.tsx` (2), `DataTable.test.tsx` (2), `units.test.ts` (5) |
 | 14 | Review queue, Well 360, Correlation Panel, Knowledge Search | F2 | 📋 | §4.2–4.5 |
 | 15 | Mitigation Ledger, risk curves on Map/Well 360 | F3 | 📋 | §4.6 |
 | 16 | Live Well Monitor, Alerts, Déjà Vu overlay | F4 | 📋 | §4.7–4.8 |
@@ -367,14 +410,14 @@ Frontend phases follow the backend phases they depend on, typically starting a f
 | Phase | Needs backend | Master plan | Scope | Exit criteria |
 |---|---|---|---|---|
 | **F0 Skeleton** | B0 | P0 | Shell, theming, field mode, API layer, System Status, planned screens, nginx image, CI | ✅ **Met 2026-09-28**, including a green GitHub CI run — Appendix B |
-| **F1 Map & ingestion** | B1 | P1 | Well Map (surface mode), upload + job status, `EvidenceLink`/`PageViewer`, `ConfidenceValue`, `DataTable`, units formatter, route-level code splitting, tile decision | Radius search on Volve + synthetic wells works end to end in the browser; 10 files uploaded and tracked; e2e covers both |
+| **F1 Map & ingestion** | B1 | P1 | Well Map (surface mode), upload + job status, `EvidenceLink`/`PageViewer`, `ConfidenceValue`, `DataTable`, units formatter, route-level code splitting, tile decision | ✅ **Met 2026-09-28** on synthetic wells (no Volve data, see BACKEND_PLAN V-B13): radius search end to end in the browser; uploads tracked to `processed` and viewable with evidence; e2e covers both |
 | **F2 Knowledge** | B2 | P2 | Review queue, Well 360, **Correlation Panel**, Knowledge Search, at-formation/closest-approach modes on the map, axe checks in e2e | Correlation panel renders 6 wells < 1 s with evidence links; review round trip; search with citations |
 | **F3 Risk & ledger** | B3 | P3a | Mitigation Ledger, `RiskCurve` on Map/Well 360/Correlation hazard strip | Ledger shows the planted ranking; risk curves show n and CI |
 | **F4 Real-time** | B4 | P3b | Live Well Monitor, Alerts list/detail, Déjà Vu overlay, WebSocket client with reconnect/stale handling | Replay → alerts appear in the UI ≤ 5 s after the backend emits them (measured); tablet smoothness target met |
 | **F5 Copilot & polish** | B5 | P4 | Copilot panel (SSE), Analytics, Offset Risk Brief download, PWA with an offline well pack | Copilot answers with clickable citations; field view usable offline for a cached well (knowledge views only) |
 | **F6 Hardening** | B6 | P5 | OIDC PKCE login, role-aware UI, Admin, hidden source maps, bundle budget in CI, usability test (master plan §13.6) | SUS ≥ 70 measured; performance budgets (§10) met and recorded |
 
-### 6.1 F1 task breakdown (next up — ordered)
+### 6.1 F1 task breakdown — ✅ all done 2026-09-28 (`DataTable` is a small custom component rather than TanStack Table)
 
 1. `lib/format/units.ts` + tests sharing fixture values with `backend/app/core/units.py`.
 2. `ConfidenceValue`, `EvidenceLink` (with a stub `PageViewer` dialog), `DataTable` (TanStack Table).
@@ -536,10 +579,11 @@ One codebase serves office laptops, RTMAC wall screens and rig tablets, with no 
 ## 16. Immediate Next Actions (frontend)
 
 1. ~~Watch the first GitHub CI run~~ — done, all green (V-F3).
-2. **F1 kickoff:** §6.1 tasks 1–3 (units formatter, evidence components, code splitting). These can start now against fixtures — UI eng.
-3. **Tile decision** (V-F10): the self-hosted tile pack option and its size for the demo area — UI eng. + infra.
-4. **Correlation panel spike on static JSON** (RF1) — start early; it's the highest-risk UI component.
-5. **`docker save`** the node/nginx base images for the finale machine (V-F8).
+*(Updated 2026-09-28 after Part 1. F0 and F1 are done; work is paused here at the team's request.)*
+
+2. **F2 kickoff when resumed:** the correlation panel on the real B1 data (tops and trajectories already exist for 42 wells). It's the highest-risk UI component (RF1), so it goes first.
+3. **Self-hosted tile pack** for the demo area, so the map has a basemap offline (V-F10 follow-up) — UI eng. + infra.
+4. **`docker save`** the node/nginx base images for the finale machine (V-F8).
 
 ---
 
@@ -596,6 +640,20 @@ Related changes outside `frontend/`:
 | Browser e2e | `npm run e2e` (Playwright 1.56.1, Chromium) | **14 passed** (7 scenarios × desktop + tablet) |
 | GitHub CI | push of `8c9f9f1` | [run](https://github.com/SlothDevs-SIH/PS_121/actions/runs/36463537008): backend-checks ✅ · frontend-checks ✅ · integration (compose + backend integration + Playwright e2e) ✅ |
 | Visual review | Playwright screenshots: System Status (light, 1280), Well Map (dark, 1280), Live Well Monitor (field + dark, 800 wide), System Status (375 wide) | Layouts correct; the 375 px table overflow and the "System" theme label were found here and fixed |
+
+## Appendix B2 — F1 Verification Record (2026-09-28)
+
+Clean run against the freshly seeded stack (see BACKEND_PLAN Appendix B2).
+
+| Check | Command | Result |
+|---|---|---|
+| Unit/component tests | `npm test` | **35 passed** (9 files) |
+| Lint / format / types | `npm run lint`, `format:check`, `typecheck` | clean |
+| Contract | regenerate types from the committed `openapi.json` | byte-identical; backend export = committed copy |
+| Build | `npm run build` | shell `index.js` **117.8 kB gzip**; `WellMap` chunk 46.0 kB; `WellMapPage` 2.3 kB; `IngestPage` 2.3 kB; `PageViewer` 1.8 kB |
+| Browser e2e | `npm run e2e` (Playwright 1.56.1, Chromium, through nginx) | **22 passed** (11 scenarios × desktop + tablet) |
+| Runtime config | `curl localhost:8080/config.json` | `{"mapTileUrl":"","mapTileAttribution":""}`; CSP `img-src 'self' data: blob:` plus the configured origin only |
+| Visual review | Playwright screenshots: Well Map (light, 1400 px), Ingestion (dark), evidence viewer on a scanned DDR | Correct; the offset-table wrapping found here was fixed |
 
 ## Appendix C — Document Maintenance Rules
 

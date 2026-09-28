@@ -9,7 +9,7 @@ VALID_PHASES = {f"B{i}" for i in range(7)}
 
 def test_meta_reports_phase_and_components(client: TestClient) -> None:
     body = client.get("/api/v1/meta").json()
-    assert body["backend_phase"] == CURRENT_PHASE == "B0"
+    assert body["backend_phase"] == CURRENT_PHASE == "B1"
     assert len(body["components"]) == len(COMPONENTS)
 
 
@@ -17,8 +17,9 @@ def test_component_registry_is_consistent() -> None:
     keys = [c.key for c in COMPONENTS]
     assert len(keys) == len(set(keys))
     assert all(c.phase in VALID_PHASES for c in COMPONENTS)
-    # Only the platform skeleton may be marked built in B0.
-    assert [c.key for c in COMPONENTS if c.status == "built"] == ["platform"]
+    # Built so far: B0 platform + B1 ingestion and normalisation (geo is partly built).
+    assert [c.key for c in COMPONENTS if c.status == "built"] == ["platform", "ingest", "normalise"]
+    assert [c.key for c in COMPONENTS if c.status == "in_progress"] == ["geo"]
 
 
 def test_dev_auth_returns_local_admin(client: TestClient) -> None:
