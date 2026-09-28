@@ -7,7 +7,7 @@
 **Sponsor / Organisation:** Oil India Limited (OIL), a public sector undertaking under the Ministry of Petroleum and Natural Gas
 **Event:** Smart India Hackathon 2026
 **Repository:** `slothdevs-sih/ps_121`
-**Document date:** 2026-09-28 (v1.0) · **updated 2026-09-28 (v1.1):** backend phase B0 (skeleton) built and verified — see [`docs/BACKEND_PLAN.md`](docs/BACKEND_PLAN.md); object storage changed from MinIO to an S3-compatible store (SeaweedFS in Compose) because the MinIO Docker Hub image was not pullable on 2026-09-28; §5 rows 1 and 24 updated.
+**Document date:** 2026-09-28 (v1.0) · **updated 2026-09-28 (v1.1):** backend phase B0 (skeleton) built and verified — see [`docs/BACKEND_PLAN.md`](docs/BACKEND_PLAN.md); object storage changed from MinIO to an S3-compatible store (SeaweedFS in Compose) because the MinIO Docker Hub image was not pullable on 2026-09-28; §5 rows 1 and 24 updated. · **updated 2026-09-28 (v1.2):** frontend phase F0 (skeleton) built and verified — see [`docs/FRONTEND_PLAN.md`](docs/FRONTEND_PLAN.md); §5 rows 1, 18, 19 updated; Live Well Monitor audience corrected to include office-based RTMAC engineers (was field-only in the first frontend registry, contradicting §2.3).
 **Status of this document:** The canonical single source of truth for PS 121, written to the same standard as `DHRUVA_MASTER_KOTLIN.md` (PS 168). It is a **plan**: as of v1.0, **no code has been written**. Every number in this document is a **target** or a **design parameter** unless it is explicitly marked **MEASURED** with a file reference. When something gets built, update its row in §5 ("Designed vs. Built"), don't just add a paragraph.
 
 > ⚠️ **Honesty rule carried over from DHRUVA:** this document exists to stop the team from saying things in the judging room that it can't defend. Every "✅" must point to a file and a test. Every number must point to a script and a dataset. If a feature is simulated (e.g. the eRTMAC feed), say "simulated" out loud. See §24 (Communication Rules).
@@ -18,7 +18,7 @@
 
 Read this section first if you only read one thing.
 
-**Built:** ~~nothing yet~~ **(updated 2026-09-28)** backend phase **B0 — skeleton** is built and verified: Docker Compose stack (PostgreSQL 16 + PostGIS + pgvector + TimescaleDB, Redis, S3 store, FastAPI, Celery), migrations, health/readiness, the full §8 API contract mounted (unbuilt routes return 501 naming their phase), CLI, 30 unit + 5 integration tests, CI workflow. Details and evidence: [`docs/BACKEND_PLAN.md`](docs/BACKEND_PLAN.md). Frontend, data and all domain features are not built yet.
+**Built:** ~~nothing yet~~ **(updated 2026-09-28)** backend phase **B0 — skeleton** is built and verified: Docker Compose stack (PostgreSQL 16 + PostGIS + pgvector + TimescaleDB, Redis, S3 store, FastAPI, Celery), migrations, health/readiness, the full §8 API contract mounted (unbuilt routes return 501 naming their phase), CLI, 30 unit + 5 integration tests, CI workflow. Details and evidence: [`docs/BACKEND_PLAN.md`](docs/BACKEND_PLAN.md). **Also (updated 2026-09-28):** frontend phase **F0 — skeleton** is built and verified: React/TypeScript app served by nginx in the same stack (http://localhost:8080), office/field views, light/dark themes, live System Status page, every §10 screen routed with live checks of its backend endpoints, 21 unit + 14 browser e2e tests — see [`docs/FRONTEND_PLAN.md`](docs/FRONTEND_PLAN.md). Data and all domain features are not built yet.
 
 **Decided (locked unless the whole team agrees to reopen):**
 1. **Product shape:** one integrated web platform with three layers — *Knowledge* (extraction + searchable repository), *Correlation* (map + depth/formation-aligned offset view), *Intelligence* (risk prediction + real-time alerts). This is "Option 4" from the solution discussion.
@@ -626,7 +626,7 @@ This table is the project's heartbeat. Update it the same day something changes.
 
 | # | Component | Status | Evidence (file / test) | Notes |
 |---|---|---|---|---|
-| 1 | Repo scaffold, Docker Compose, CI | ⚠️ Backend built (B0); frontend not started | `docker-compose.yml`, `backend/`, `.github/workflows/ci.yml` · 30 unit + 5 integration tests (docs/BACKEND_PLAN.md App. B) | CI green on GitHub (run #1, 2026-09-28) |
+| 1 | Repo scaffold, Docker Compose, CI | ✅ Backend B0 + frontend F0 | `docker-compose.yml` (7 services), `backend/`, `frontend/`, `.github/workflows/ci.yml` · backend 31 unit + 5 integration, frontend 21 unit + 14 e2e (BACKEND_PLAN / FRONTEND_PLAN App. B) | Backend CI green on GitHub (run #1); frontend jobs: see FRONTEND_PLAN V-F3 |
 | 2 | S1 Ingestion (Docling + PaddleOCR + S3 store) | 📋 Planned | — | |
 | 3 | S2 Extraction (rules + LLM + confidence + review queue) | 📋 Planned | — | Gold set needed (§13.1) |
 | 4 | S2 DDR time-log parser | 📋 Planned | — | Label source for 7b/7d |
@@ -643,8 +643,8 @@ This table is the project's heartbeat. Update it the same day something changes.
 | 15 | S8 Mitigation Effectiveness Ledger (USP 2) | 📋 Planned | — | |
 | 16 | S9 Alert engine (fusion, hysteresis, budget, lifecycle, feedback) | 📋 Planned | — | |
 | 17 | S10 Copilot with read-only tools | 📋 Planned | — | |
-| 18 | S11 Office view | 📋 Planned | — | |
-| 19 | S11 Field view + PWA well pack | 📋 Planned | — | |
+| 18 | S11 Office view | ⚠️ Shell + System Status built (F0); domain screens planned F1–F6 | `frontend/src/app/*`, `frontend/src/pages/SystemStatus.tsx` · FRONTEND_PLAN §5 | |
+| 19 | S11 Field view + PWA well pack | ⚠️ Field view mode (larger type, reduced nav) built in F0; PWA well pack planned F5 | `frontend/src/app/theme.tsx`, `screens.ts` · `AppShell.test.tsx`, e2e | |
 | 20 | S12 Replay adapter (CSV/Parquet → Redis Streams) | 📋 Planned | — | Demo path |
 | 21 | S12 WITSML 1.4.1.x / ETP / WITS0 adapters | 📋 Planned | — | At least one real protocol adapter tested against a mock server; others "designed" |
 | 22 | Synthetic Upper-Assam dataset generator | 📋 Planned | — | §12.3 |
@@ -1544,6 +1544,7 @@ ps_121/
 ├── infra/ (keycloak realm, grafana dashboards, k8s manifests)
 └── docs/
     ├── BACKEND_PLAN.md            ← backend plan & build record (B0 done)
+    ├── FRONTEND_PLAN.md           ← frontend plan & build record (F0 done)
     ├── architecture.md            ← ≤ 2 pages (deliverable)
     ├── taxonomy.md                ← events & mitigation vocabularies
     ├── licenses.md                ← datasets & models licences
@@ -1557,7 +1558,7 @@ ps_121/
 1. **Answer V1–V5** (PS ID, team ID, eRTMAC wording, deadlines, deliverables) — Docs lead, Day 1.
 2. **Assign roles** (§17) and create branches — Team lead, Day 1.
 3. **Start the Volve download** (drilling-related folders only) and list the real folder/file structure into `data/README.md`; update §12.1 — Data eng., Day 1–2.
-4. **Repo scaffold:** Compose with Postgres (PostGIS, pgvector, TimescaleDB), S3 store, Redis, FastAPI, React; CI green — Infra, Day 1–3. **Backend part done 2026-09-28** (see `docs/BACKEND_PLAN.md`); React "hello" still open; GitHub CI green.
+4. **Repo scaffold:** Compose with Postgres (PostGIS, pgvector, TimescaleDB), S3 store, Redis, FastAPI, React; CI green — Infra, Day 1–3. **Backend part done 2026-09-28** (see `docs/BACKEND_PLAN.md`); Frontend F0 done 2026-09-28 (see `docs/FRONTEND_PLAN.md`).
 5. **Write `docs/taxonomy.md`** (event types, subtypes, mitigation codes, outcome definitions) and get it reviewed by someone with drilling knowledge (faculty/mentor) — Domain eng., Day 2–4.
 6. **Minimum-curvature + TVDSS module with tests** — Domain eng., Day 2–4.
 7. **Synthetic generator v1** (wells, surveys, tops, events, mitigations) — Data eng. + ML eng., Week 1.

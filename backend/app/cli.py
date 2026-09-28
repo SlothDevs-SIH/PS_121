@@ -8,6 +8,7 @@ import json
 import time
 from collections.abc import Callable
 from pathlib import Path
+from typing import Annotated
 
 import typer
 from alembic import command
@@ -22,6 +23,8 @@ from app.storage.s3 import ensure_buckets, get_s3_client
 cli = typer.Typer(add_completion=False, no_args_is_help=True)
 
 ALEMBIC_INI = Path(__file__).resolve().parent.parent / "alembic.ini"
+# Relative to backend/, where the CLI is run from in development and CI.
+DEFAULT_OPENAPI_OUT = Path("../frontend/src/lib/api/openapi.json")
 
 
 def _wait_for(name: str, probe: Callable[[], None], timeout_s: float) -> None:
@@ -86,6 +89,22 @@ def check(worker: bool = typer.Option(False, help="Also round-trip a Celery ping
             typer.echo(f"worker: FAILED {type(exc).__name__}: {exc}")
             ok = False
     raise typer.Exit(code=0 if ok else 1)
+
+
+@cli.command()
+def openapi(
+    out: Annotated[Path, typer.Option(help="Output file ('-' for stdout)")] = DEFAULT_OPENAPI_OUT,
+) -> None:
+    """Deterministic (sorted keys) so CI can diff it against the committed copy."""
+    from app.main import create_app
+
+    schema = json.dumps(create_app().openapi(), indent=2, sort_keys=True) + "\n"
+    if str(out) == "-":
+        typer.echo(schema, nl=False)
+        return
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(schema, encoding="utf-8")
+    typer.echo(f"wrote {out}")
 
 
 if __name__ == "__main__":

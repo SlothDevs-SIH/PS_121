@@ -2,7 +2,7 @@
 
 **Team:** Slothdevs · **Solution:** SMRITI (working name) · **Problem Statement:** PS 121 — eRTMAC-NWIS (Oil India Limited)
 **Parent document:** [`SMRITI_MASTER_PLAN.md`](../SMRITI_MASTER_PLAN.md). That is the product source of truth; **this** document is the source of truth for the backend. When the two disagree, fix both in the same PR.
-**Document date:** 2026-09-28 (v1.0)
+**Document date:** 2026-09-28 (v1.0) · **updated 2026-09-28 (v1.1):** frontend F0 landed (V-B4 resolved); new `app.cli openapi` command exports the API contract for the frontend (+1 unit test → 31); CI jobs restructured (`backend-checks`, `frontend-checks`, `integration`).
 **Backend phase:** **B0 — Skeleton: ✅ COMPLETE (2026-09-28)**. Next: **B1 — Data foundation**.
 
 > ⚠️ **Same honesty rule as the master plan and DHRUVA:** a "✅" must point to a file and a test that passed. Every number in §0 was measured on 2026-09-28 in this repository. Everything from B1 onward is a **plan**.
@@ -40,7 +40,7 @@
 **Not in B0 (by design; each is planned and listed in §5):**
 - No domain tables yet (from B1).
 - No real authentication (B6).
-- No frontend "hello" (the master plan's P0 includes it, but this was a backend-only request — tracked in §V as V-B4).
+- ~~No frontend "hello"~~ — **resolved 2026-09-28:** frontend F0 is built (see [`FRONTEND_PLAN.md`](FRONTEND_PLAN.md)); V-B4 closed.
 - No LLM or OCR services in Compose yet (B1/B2).
 
 **Deviation from the master plan, made on evidence:** object storage is **SeaweedFS**, not MinIO, because `minio/minio` could not be pulled from Docker Hub on 2026-09-28 ("repository does not exist or may require docker login") and `quay.io/minio/minio` was refused from this environment. The code talks plain S3 through `boto3`, so switching to MinIO, Ceph or AWS S3 is a configuration change only. Master plan updated accordingly (see its 2026-09-28 update line).
@@ -54,7 +54,7 @@
 | V-B1 | Object storage ≠ master plan | Master plan said MinIO; MinIO's Docker Hub image wasn't pullable (2026-09-28) | SeaweedFS 4.47 (Apache-2.0) behind the S3 API; master plan corrected | ✅ Resolved |
 | V-B2 | GitHub CI not yet observed green | Workflow committed; every step verified locally | First run [#1](https://github.com/SlothDevs-SIH/PS_121/actions/runs/36460112777) passed both jobs on commit `8c25b69` | ✅ Resolved 2026-09-28 |
 | V-B3 | Image tags pinned by tag, not digest | `timescale/timescaledb-ha:pg16.15-ts2.30.1`, `redis:7.4-alpine`, `chrislusf/seaweedfs:4.47`, `python:3.11-slim` | Pin digests before any OIL pilot deployment (B6) | ⏳ Open |
-| V-B4 | Master-plan P0 frontend "hello" not done | This task covered the backend only | UI engineer adds `frontend/` + a `frontend` Compose service | ⏳ Open |
+| V-B4 | Master-plan P0 frontend "hello" not done | This task covered the backend only | Done 2026-09-28: frontend F0 with a `frontend` Compose service — see [`FRONTEND_PLAN.md`](FRONTEND_PLAN.md) | ✅ Resolved |
 | V-B5 | Local image build in this sandbox needed a CA-trusting base image | The development sandbox intercepts TLS; containers don't trust its CA | Solved *without* committing any sandbox CA: `backend/Dockerfile` takes `ARG PYTHON_IMAGE`, and the sandbox build used a local base image with the CA. Normal machines and GitHub runners need nothing special. The same argument lets OIL build from an internal mirror | ✅ Resolved |
 | V-B6 | Starlette deprecation warning in tests | `fastapi.testclient` warns "install httpx2 instead" (Starlette 1.7) | Harmless today; revisit when upgrading FastAPI/Starlette | ⏳ Watch |
 | V-B7 | Docker Hub rate limits (HTTP 429) during pulls | Seen in the sandbox; may also hit CI | Retry succeeded; if CI hits it, add Docker Hub login or a registry mirror | ⏳ Watch |
@@ -404,7 +404,7 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 11 | Alembic + migration `0001` (extensions) | B0 | ✅ | `app/db/migrations/versions/0001_extensions.py` · integration `test_required_extensions_installed_and_migration_at_head` |
 | 12 | S3 client + bucket bootstrap | B0 | ✅ | `app/storage/s3.py` · integration `test_object_storage_round_trip` |
 | 13 | Celery app + `system.ping` + worker health check | B0 | ✅ | `app/workers/celery_app.py` · integration `test_celery_worker_round_trip`, compose health check |
-| 14 | CLI `bootstrap` (idempotent) / `check --worker` | B0 | ✅ | `app/cli.py` · run twice (Appendix B) |
+| 14 | CLI `bootstrap` (idempotent) / `check --worker` / `openapi` (contract export, added with F0) | B0 | ✅ | `app/cli.py` · run twice (Appendix B); `tests/unit/test_cli.py` |
 | 15 | Dockerfile (non-root, health check, `PYTHON_IMAGE` arg) | B0 | ✅ | `backend/Dockerfile` |
 | 16 | docker-compose (6 services, health-gated startup) | B0 | ✅ | `docker-compose.yml` · `docker compose up -d --wait` all healthy |
 | 17 | CI workflow (checks + compose integration) | B0 | ✅ | `.github/workflows/ci.yml` · [run #1](https://github.com/SlothDevs-SIH/PS_121/actions/runs/36460112777) green |
@@ -551,7 +551,7 @@ Redis Stream  rt:{wellbore_id}  (MAXLEN ~200k)
 
 | Layer | Tooling | Runs where | B0 count |
 |---|---|---|---|
-| Unit (pure logic, API contract with TestClient, dependency overrides) | pytest, hypothesis | every push (CI job 1) and locally | **30 ✅** |
+| Unit (pure logic, API contract with TestClient, dependency overrides) | pytest, hypothesis | every push (CI job 1) and locally | **30 ✅** at B0 · **31** after the `openapi` CLI test (2026-09-28) |
 | Integration (real Postgres/Redis/S3/worker via Compose) | pytest `-m integration`, httpx | CI job 2 and locally with the stack up | **5 ✅** |
 | Performance (`perf` marker) | pytest-benchmark / Locust (B6) | on demand, before demo | 0 (from B1) |
 | LLM-dependent (`llm` marker) | local small model | on demand | 0 (from B2) |
@@ -565,7 +565,9 @@ Redis Stream  rt:{wellbore_id}  (MAXLEN ~200k)
 
 **CI (`.github/workflows/ci.yml`):**
 - `backend-checks`: `uv sync --frozen` → ruff check → ruff format check → mypy → pytest.
-- `backend-integration` (needs job 1): build the image with `GIT_SHA` → `docker compose up -d --wait` → `pytest -m integration` → `app.cli check --worker` inside the worker → logs on failure → `down -v` always.
+- `backend-checks` also diffs a fresh `app.cli openapi` export against `frontend/src/lib/api/openapi.json` (contract drift check, added with F0).
+- `frontend-checks`: see [`FRONTEND_PLAN.md`](FRONTEND_PLAN.md) §9.
+- `integration` (renamed from `backend-integration` 2026-09-28; needs both checks jobs): build images with `GIT_SHA` → `docker compose up -d --wait` → `pytest -m integration` → `app.cli check --worker` inside the worker → Playwright e2e through nginx → logs/report on failure → `down -v` always.
 
 ---
 
