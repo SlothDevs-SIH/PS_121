@@ -35,7 +35,7 @@
   1. lint + types + unit tests;
   2. build the Compose stack, run the integration tests, run the CLI check inside the worker, and dump logs on failure.
 
-  ⚠️ **CI has not run on GitHub yet.** The workflow is committed and every step was run locally with the same commands, but the first green run on GitHub is still pending. Update this line when it lands.
+  ✅ **CI green on GitHub (2026-09-28):** [run #1](https://github.com/SlothDevs-SIH/PS_121/actions/runs/36460112777), both jobs passed on commit `8c25b69`.
 
 **Not in B0 (by design; each is planned and listed in §5):**
 - No domain tables yet (from B1).
@@ -52,7 +52,7 @@
 | # | Item | Detail | Resolution / action | Status |
 |---|---|---|---|---|
 | V-B1 | Object storage ≠ master plan | Master plan said MinIO; MinIO's Docker Hub image wasn't pullable (2026-09-28) | SeaweedFS 4.47 (Apache-2.0) behind the S3 API; master plan corrected | ✅ Resolved |
-| V-B2 | GitHub CI not yet observed green | Workflow committed; every step verified locally | Watch the first run; fix and record here | ⏳ Open |
+| V-B2 | GitHub CI not yet observed green | Workflow committed; every step verified locally | First run [#1](https://github.com/SlothDevs-SIH/PS_121/actions/runs/36460112777) passed both jobs on commit `8c25b69` | ✅ Resolved 2026-09-28 |
 | V-B3 | Image tags pinned by tag, not digest | `timescale/timescaledb-ha:pg16.15-ts2.30.1`, `redis:7.4-alpine`, `chrislusf/seaweedfs:4.47`, `python:3.11-slim` | Pin digests before any OIL pilot deployment (B6) | ⏳ Open |
 | V-B4 | Master-plan P0 frontend "hello" not done | This task covered the backend only | UI engineer adds `frontend/` + a `frontend` Compose service | ⏳ Open |
 | V-B5 | Local image build in this sandbox needed a CA-trusting base image | The development sandbox intercepts TLS; containers don't trust its CA | Solved *without* committing any sandbox CA: `backend/Dockerfile` takes `ARG PYTHON_IMAGE`, and the sandbox build used a local base image with the CA. Normal machines and GitHub runners need nothing special. The same argument lets OIL build from an internal mirror | ✅ Resolved |
@@ -407,7 +407,7 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 14 | CLI `bootstrap` (idempotent) / `check --worker` | B0 | ✅ | `app/cli.py` · run twice (Appendix B) |
 | 15 | Dockerfile (non-root, health check, `PYTHON_IMAGE` arg) | B0 | ✅ | `backend/Dockerfile` |
 | 16 | docker-compose (6 services, health-gated startup) | B0 | ✅ | `docker-compose.yml` · `docker compose up -d --wait` all healthy |
-| 17 | CI workflow (checks + compose integration) | B0 | ⚠️ not yet observed on GitHub (V-B2) | `.github/workflows/ci.yml` |
+| 17 | CI workflow (checks + compose integration) | B0 | ✅ | `.github/workflows/ci.yml` · [run #1](https://github.com/SlothDevs-SIH/PS_121/actions/runs/36460112777) green |
 | 18 | S1 ingestion | B1 | 📋 | §4.1 |
 | 19 | S3 normalisation + master data tables | B1 | 📋 | §4.2 |
 | 20 | S4 min-curvature + surface offsets | B1 | 📋 | §4.3 |
@@ -428,7 +428,7 @@ Backend phases map onto master plan §18 (P0–P5). Durations assume ~7 weeks to
 
 | Phase | Master plan | When | Scope | Exit criteria (all must be true) |
 |---|---|---|---|---|
-| **B0 Skeleton** | P0 | Days 1–3 | Platform, Compose, migrations, CI, API contract | ✅ **Met 2026-09-28** except the GitHub CI observation (V-B2) — see Appendix B |
+| **B0 Skeleton** | P0 | Days 1–3 | Platform, Compose, migrations, CI, API contract | ✅ **Met 2026-09-28**, including a green GitHub CI run — see Appendix B |
 | **B1 Data foundation** | P1 | W1–W2 | S1 ingestion; S3 master data & datums; S4 min-curvature + surface offsets; migrations 0002–0004; OCR worker image | 50+ Volve DDRs and 10 synthetic scanned reports ingested with page images and spans; `/wells`, `/wells/{id}/trajectory`, `/wells/{id}/offsets?mode=SURFACE` return real data; min-curvature tests pass; offsets p95 < 500 ms on 10k wells |
 | **B2 Knowledge layer** | P2 | W2–W3 | S2 extraction + review queue + DDR parser; S5 search; S6 correlation; S4 other proximity modes; LLM service; migrations 0005–0006 | Gold-set event F1 measured and saved; search Recall@5 measured; correlation JSON for all 3 alignment modes; review queue round trip works |
 | **B3 Batch intelligence** | P3 (first half) | W3–W4 | S7a prior, S7c physics, S8 ledger | Risk-profile endpoint live; physics formula tests pass; ledger recovers the planted ranking (ρ ≥ 0.8) |
@@ -675,7 +675,7 @@ MinIO's Docker Hub image wasn't available when we built. Our code speaks plain S
 
 ## 16. Immediate Next Actions (backend)
 
-1. **Watch the first GitHub CI run** on this branch; fix anything it finds; resolve V-B2.
+1. ~~Watch the first GitHub CI run~~ — done, green (V-B2).
 2. **B1 kickoff:** tasks 1–2 of §6.1 (documents migration + upload endpoint) — Integration + Data eng.
 3. **OCR worker image spike:** build `Dockerfile.worker-ocr` with Docling + PaddleOCR (CPU); record the image size and pages/minute on a 10-page scanned fixture in this document — Data eng.
 4. **`geo/mincurv.py`** with textbook test cases — Domain eng.
@@ -743,6 +743,7 @@ Run in this repository on 2026-09-28. Numbers are copied from the actual output.
 | Idempotent bootstrap | `docker compose run --rm migrate` (second run) | `migrations: at head`, `buckets: created none` |
 | Image versions | `SELECT … FROM pg_available_extensions` | PostgreSQL 16.15; timescaledb 2.30.1; postgis 3.6.4; vector 0.8.6; pg_trgm 1.6 |
 | S3 auth enforced | boto3 with wrong credentials | request rejected (`ClientError`) |
+| GitHub CI | push of commit `8c25b69` | [run #1](https://github.com/SlothDevs-SIH/PS_121/actions/runs/36460112777): `backend-checks` ✅, `backend-integration` ✅ |
 
 ## Appendix C — Document Maintenance Rules
 

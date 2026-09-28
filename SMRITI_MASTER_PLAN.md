@@ -626,7 +626,7 @@ This table is the project's heartbeat. Update it the same day something changes.
 
 | # | Component | Status | Evidence (file / test) | Notes |
 |---|---|---|---|---|
-| 1 | Repo scaffold, Docker Compose, CI | ⚠️ Backend built (B0); frontend not started | `docker-compose.yml`, `backend/`, `.github/workflows/ci.yml` · 30 unit + 5 integration tests (docs/BACKEND_PLAN.md App. B) | CI not yet observed green on GitHub |
+| 1 | Repo scaffold, Docker Compose, CI | ⚠️ Backend built (B0); frontend not started | `docker-compose.yml`, `backend/`, `.github/workflows/ci.yml` · 30 unit + 5 integration tests (docs/BACKEND_PLAN.md App. B) | CI green on GitHub (run #1, 2026-09-28) |
 | 2 | S1 Ingestion (Docling + PaddleOCR + S3 store) | 📋 Planned | — | |
 | 3 | S2 Extraction (rules + LLM + confidence + review queue) | 📋 Planned | — | Gold set needed (§13.1) |
 | 4 | S2 DDR time-log parser | 📋 Planned | — | Label source for 7b/7d |
@@ -1557,7 +1557,7 @@ ps_121/
 1. **Answer V1–V5** (PS ID, team ID, eRTMAC wording, deadlines, deliverables) — Docs lead, Day 1.
 2. **Assign roles** (§17) and create branches — Team lead, Day 1.
 3. **Start the Volve download** (drilling-related folders only) and list the real folder/file structure into `data/README.md`; update §12.1 — Data eng., Day 1–2.
-4. **Repo scaffold:** Compose with Postgres (PostGIS, pgvector, TimescaleDB), S3 store, Redis, FastAPI, React; CI green — Infra, Day 1–3. **Backend part done 2026-09-28** (see `docs/BACKEND_PLAN.md`); React "hello" and first GitHub CI run still open.
+4. **Repo scaffold:** Compose with Postgres (PostGIS, pgvector, TimescaleDB), S3 store, Redis, FastAPI, React; CI green — Infra, Day 1–3. **Backend part done 2026-09-28** (see `docs/BACKEND_PLAN.md`); React "hello" still open; GitHub CI green.
 5. **Write `docs/taxonomy.md`** (event types, subtypes, mitigation codes, outcome definitions) and get it reviewed by someone with drilling knowledge (faculty/mentor) — Domain eng., Day 2–4.
 6. **Minimum-curvature + TVDSS module with tests** — Domain eng., Day 2–4.
 7. **Synthetic generator v1** (wells, surveys, tops, events, mitigations) — Data eng. + ML eng., Week 1.
