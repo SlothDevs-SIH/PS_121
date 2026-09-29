@@ -93,7 +93,23 @@ export const META = {
 
 export const ME = {
   status: 200,
-  body: { user_id: 'dev', name: 'Local Developer', roles: ['admin'] },
+  body: {
+    user_id: 'dev',
+    name: 'Local Developer',
+    roles: ['admin'],
+    permissions: [
+      'act_alerts',
+      'admin',
+      'control_replay',
+      'copilot',
+      'ingest',
+      'read_knowledge',
+      'read_live',
+      'read_risk',
+      'review',
+    ],
+    auth_mode: 'dev',
+  },
 }
 
 export function notImplemented(phase: string) {

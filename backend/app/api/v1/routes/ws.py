@@ -5,7 +5,8 @@
   5 s saying whether the stream is stale (no frame for 30 s) and where the replay is.
 - ``/ws/alerts``: every alert created or fused, as the full alert (optionally one well's).
 
-Auth for WebSockets (token in the first message or a query parameter) lands in phase B6.
+Auth (B5): in jwt mode the token goes in ``?token=`` (browsers cannot set headers on a
+WebSocket); the user needs the ``read_live`` permission. Closes 4401 / 4403 otherwise.
 """
 
 import asyncio
@@ -18,8 +19,9 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from sqlalchemy import select
 
 from app.alerts.service import get_alert
+from app.core.auth import user_for_token
 from app.core.config import get_settings
-from app.core.errors import NotFoundError
+from app.core.errors import AppError, NotFoundError
 from app.db.models import Wellbore
 from app.db.models.realtime import ReplaySession
 from app.db.session import session_scope
@@ -31,6 +33,24 @@ FRAME_INTERVAL_S = 1.0
 STATUS_INTERVAL_S = 5.0
 STALE_AFTER_S = 30.0
 WS_NOT_FOUND = 4404
+WS_UNAUTHENTICATED = 4401
+WS_FORBIDDEN = 4403
+
+
+def _authorise(token: str | None) -> int | None:
+    """None when the socket may proceed, else the close code (jwt mode: ``?token=``)."""
+    try:
+        with session_scope() as s:
+            user = user_for_token(get_settings(), s, token)
+    except AppError as exc:
+        return WS_UNAUTHENTICATED if exc.status_code == 401 else WS_FORBIDDEN
+    return None if user.can("read_live") else WS_FORBIDDEN
+
+
+async def _refuse(ws: WebSocket, code: int) -> None:
+    msg = "log in first" if code == WS_UNAUTHENTICATED else "your role does not allow this"
+    await ws.send_json({"type": "error", "error": {"code": code, "message": msg}})
+    await ws.close(code=code)
 
 
 def _redis() -> "aioredis.Redis":
@@ -74,8 +94,11 @@ def _wellbore_and_session(well_id: int) -> tuple[int | None, dict[str, Any] | No
 
 
 @router.websocket("/ws/wells/{well_id}/live")
-async def live_well(ws: WebSocket, well_id: int) -> None:
+async def live_well(ws: WebSocket, well_id: int, token: str | None = None) -> None:
     await ws.accept()
+    if (code := await asyncio.to_thread(_authorise, token)) is not None:
+        await _refuse(ws, code)
+        return
     wb, info = await asyncio.to_thread(_wellbore_and_session, well_id)
     if wb is None:
         await ws.send_json({"type": "error", "error": {"code": "not_found"}})
@@ -113,8 +136,11 @@ async def live_well(ws: WebSocket, well_id: int) -> None:
 
 
 @router.websocket("/ws/alerts")
-async def live_alerts(ws: WebSocket, well_id: int | None = None) -> None:
+async def live_alerts(ws: WebSocket, well_id: int | None = None, token: str | None = None) -> None:
     await ws.accept()
+    if (code := await asyncio.to_thread(_authorise, token)) is not None:
+        await _refuse(ws, code)
+        return
     r = _redis()
     last_id = "$"
     try:

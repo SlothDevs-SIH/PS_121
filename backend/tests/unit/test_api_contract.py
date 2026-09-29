@@ -53,6 +53,12 @@ PLANNED_HTTP = {
     ("get", "/api/v1/replay"),
     ("get", "/api/v1/stream/status"),
     ("get", "/api/v1/wells/{well_id}/realtime"),
+    # B5 auth, users, audit
+    ("post", "/api/v1/auth/login"),
+    ("get", "/api/v1/users"),
+    ("post", "/api/v1/users"),
+    ("patch", "/api/v1/users/{user_id}"),
+    ("get", "/api/v1/audit"),
 }
 
 # Response schema of every built route (the frontend's generated types depend on these names).
@@ -84,6 +90,13 @@ RESPONSE_MODELS = {
     ("post", "/api/v1/replay"): "ReplaySessionOut",
     ("get", "/api/v1/stream/status"): "StreamStatus",
     ("get", "/api/v1/wells/{well_id}/realtime"): "RealtimeWindow",
+    # B5
+    ("get", "/api/v1/me"): "Me",
+    ("post", "/api/v1/auth/login"): "TokenOut",
+    ("post", "/api/v1/users"): "UserOut",
+    ("patch", "/api/v1/users/{user_id}"): "UserOut",
+    ("get", "/api/v1/audit"): "AuditPage",
+    ("post", "/api/v1/copilot/chat"): "CopilotAnswer",
 }
 
 EVENT_BODY = {
@@ -125,7 +138,6 @@ def test_built_routes_declare_their_response_model(
     ("method", "url", "body", "phase"),
     [
         # Later phases
-        ("post", "/api/v1/copilot/chat", None, "B5"),
         ("get", "/api/v1/reports/offset-brief/7", None, "B5"),
     ],
 )
@@ -215,6 +227,32 @@ def test_validation_uses_error_envelope(client: TestClient) -> None:
         ("post", "/api/v1/alerts/1/feedback", {"verdict": "great"}),
         ("get", "/api/v1/wells/7/realtime?minutes=0", None),
         ("get", "/api/v1/wells/7/realtime?max_points=5", None),
+        ("post", "/api/v1/auth/login", {"username": "a"}),
+        (
+            "post",
+            "/api/v1/users",
+            {"username": "Bad Name", "name": "x", "password": "p" * 12, "roles": ["viewer"]},
+        ),
+        (
+            "post",
+            "/api/v1/users",
+            {"username": "bob", "name": "x", "password": "short", "roles": ["viewer"]},
+        ),
+        (
+            "post",
+            "/api/v1/users",
+            {"username": "bob", "name": "x", "password": "p" * 12, "roles": ["pilot"]},
+        ),
+        (
+            "post",
+            "/api/v1/users",
+            {"username": "bob", "name": "x", "password": "p" * 12, "roles": []},
+        ),
+        ("patch", "/api/v1/users/1", {"roles": ["viewer"], "extra": 1}),
+        ("get", "/api/v1/audit?limit=0", None),
+        ("post", "/api/v1/copilot/chat", {"message": ""}),
+        ("post", "/api/v1/copilot/chat", {"message": "x" * 1001}),
+        ("post", "/api/v1/copilot/chat", {"message": "hi", "tools": ["sql"]}),
         # cross-parameter rules (app.api.v1.params)
         ("get", "/api/v1/events?radius_km=5", None),
         ("get", "/api/v1/events?tvdss_from_m=2000&tvdss_to_m=1000", None),

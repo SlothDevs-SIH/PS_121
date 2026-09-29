@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.api.v1.params import NOT_FOUND, RadiusKm, require_well_for_radius
 from app.api.v1.schemas.knowledge import LedgerResponse
+from app.core.auth import require
 from app.db.session import get_session
 from app.db.vocab import EventType, Severity
 from app.ledger import core
@@ -18,6 +19,7 @@ DbSession = Annotated[Session, Depends(get_session)]
 
 @router.get(
     "/ledger",
+    dependencies=[Depends(require("read_risk"))],
     tags=["ledger"],
     summary="Mitigation effectiveness ranking (USP 2)",
     response_model=LedgerResponse,

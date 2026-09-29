@@ -6,6 +6,7 @@ seed       generate the synthetic field and ingest its reports
 extract    (re-)run S2 extraction over ingested reports
 index      (re-)run S5 search indexing (embeddings + lesson cards)
 realtime   build the real-time assets: classifiers, Deja Vu library, replay file (B4)
+user-add   create a local user for jwt auth mode (B5)
 """
 
 import json
@@ -326,6 +327,41 @@ def index(
                 mark_failed(session, doc_id, f"{type(exc).__name__}: {exc}")
             typer.echo(f"[index] document {doc_id}: FAILED {type(exc).__name__}: {exc}")
     typer.echo(f"[index] {len(ids)} document(s) {'queued' if queue else f'processed, {done} ok'}")
+
+
+@cli.command(name="user-add")
+def user_add(
+    username: Annotated[str, typer.Option(help="Login name (lowercase)")],
+    name: Annotated[str, typer.Option(help="Display name")],
+    role: Annotated[list[str], typer.Option(help="Repeat for several roles")],
+    password_env: Annotated[
+        str, typer.Option(help="Environment variable holding the password (never an argument)")
+    ] = "SMRITI_NEW_USER_PASSWORD",  # noqa: S107 (a variable name, not a password)
+) -> None:
+    """Create a local user for jwt auth mode (the first admin is created this way)."""
+    import os
+
+    from pydantic import ValidationError
+
+    from app.api.v1.schemas.auth import UserCreate
+    from app.core.auth import DEV_USER
+    from app.core.users import create_user
+    from app.db.session import session_scope
+
+    configure_logging(json_output=False)
+    password = os.environ.get(password_env) or typer.prompt(
+        "Password", hide_input=True, confirmation_prompt=True
+    )
+    try:
+        body = UserCreate.model_validate(
+            {"username": username, "name": name, "password": password, "roles": role}
+        )
+    except ValidationError as exc:
+        typer.echo(f"[user-add] invalid: {exc.errors()[0]['loc']} {exc.errors()[0]['msg']}")
+        raise typer.Exit(code=1) from exc
+    with session_scope() as session:
+        out = create_user(session, body, DEV_USER.model_copy(update={"user_id": "cli"}))
+    typer.echo(f"[user-add] created {out.username} ({', '.join(out.roles)})")
 
 
 if __name__ == "__main__":

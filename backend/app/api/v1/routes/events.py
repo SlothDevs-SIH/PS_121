@@ -24,7 +24,8 @@ from app.api.v1.schemas.events import (
     EventTimeline,
     EventVerify,
 )
-from app.core.auth import CurrentUser, get_current_user
+from app.core.audit import audit
+from app.core.auth import CurrentUser, get_current_user, require
 from app.db.session import get_session
 from app.db.vocab import EventType
 from app.extract import events_service
@@ -91,22 +92,25 @@ def get_event(event_id: int, session: DbSession) -> EventDetail:
 
 @router.post(
     "/events",
+    dependencies=[Depends(require("review"))],
     summary="Record an event manually",
     response_model=EventDetail,
     status_code=status.HTTP_201_CREATED,
     responses=NOT_FOUND,
 )
-def create_event(body: EventCreate, session: DbSession) -> EventDetail:
+def create_event(body: EventCreate, session: DbSession, user: User) -> EventDetail:
     """Stores the event with ``source='manual'``, ``verified=false``; depth references
     (``tvd_m``/``tvdss_m``) and the formation are derived from ``md_m`` when not given.
     404 if the well does not exist; 422 if evidence spans are not on the cited page."""
     detail = events_service.create_event(session, body)
+    audit(session, user, "event_create", "event", detail.id, well_id=body.well_id)
     session.commit()
     return detail
 
 
 @router.patch(
     "/events/{event_id}/verify",
+    dependencies=[Depends(require("review"))],
     summary="Verify, un-verify or reject an event",
     response_model=EventDetail,
     responses=NOT_FOUND,
@@ -124,6 +128,7 @@ def verify_event(
         note=body.note,
         user=user.user_id,
     )
+    audit(session, user, "event_verify", "event", event_id, verified=body.verified)
     session.commit()
     return detail
 

@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 
 from app.api.v1.params import CONFLICT, NOT_FOUND, Cursor, Limit
 from app.api.v1.schemas.review import ReviewDecision, ReviewItem, ReviewPage
-from app.core.auth import CurrentUser, get_current_user
+from app.core.audit import audit
+from app.core.auth import CurrentUser, get_current_user, require
 from app.db.session import get_session
 from app.db.vocab import ReviewKind, ReviewStatus
 from app.extract import review_service
@@ -19,6 +20,7 @@ User = Annotated[CurrentUser, Depends(get_current_user)]
 
 @router.get(
     "/review-queue",
+    dependencies=[Depends(require("review"))],
     summary="Low-confidence extractions awaiting review",
     response_model=ReviewPage,
 )
@@ -41,6 +43,7 @@ def list_review_queue(
 
 @router.post(
     "/review-queue/{item_id}",
+    dependencies=[Depends(require("review"))],
     summary="Accept, correct or reject",
     response_model=ReviewItem,
     responses={**NOT_FOUND, **CONFLICT},
@@ -51,5 +54,6 @@ def review_item(
     """Applies the decision to the target record (verified / corrected / rejected), records
     ``decided_by``/``decided_at`` and returns the updated item. 409 if already decided."""
     item = review_service.decide(session, item_id, decision, user.user_id)
+    audit(session, user, f"review_{decision.action}", "review_item", item_id)
     session.commit()
     return item

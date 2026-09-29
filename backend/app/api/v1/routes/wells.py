@@ -26,6 +26,7 @@ from app.api.v1.schemas.wells import (
     WellDetail,
     WellList,
 )
+from app.core.auth import require
 from app.core.errors import NOT_IMPLEMENTED, NotFoundError, NotImplementedYetError
 from app.db.models import Field, Formation
 from app.db.session import get_session
@@ -179,6 +180,7 @@ def get_trajectory_at_depth(
 
 @router.post(
     "/wells/{well_id}/trajectory",
+    dependencies=[Depends(require("ingest"))],
     tags=["wells"],
     summary="Upload survey stations and recompute the trajectory",
     response_model=TrajectoryOut,
@@ -215,6 +217,7 @@ class RiskMode(StrEnum):
 
 @router.get(
     "/wells/{well_id}/risk-profile",
+    dependencies=[Depends(require("read_risk"))],
     tags=["risk"],
     summary="Offset prior risk by formation",
     response_model=RiskProfile,
@@ -247,6 +250,7 @@ def get_risk_profile(
 
 @router.get(
     "/wells/{well_id}/cementing-check",
+    dependencies=[Depends(require("read_risk"))],
     tags=["risk"],
     summary="Cementing checklist from offsets",
     response_model=CementingCheck,
@@ -272,6 +276,7 @@ def get_cementing_check(
 
 @router.get(
     "/reports/offset-brief/{well_id}",
+    dependencies=[Depends(require("read_risk"))],
     tags=["reports"],
     summary="Offset Risk Brief (PDF)",
     responses=NOT_IMPLEMENTED,

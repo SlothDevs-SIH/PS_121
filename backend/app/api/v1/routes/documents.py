@@ -16,7 +16,8 @@ from app.api.v1.schemas.documents import (
     SpanOut,
     UploadResult,
 )
-from app.core.auth import CurrentUser, get_current_user
+from app.core.audit import audit
+from app.core.auth import CurrentUser, get_current_user, require
 from app.core.config import get_settings
 from app.core.errors import AppError, NotFoundError
 from app.db.models import Document, Event, EventEvidence, Page, TextSpan, Well
@@ -96,6 +97,7 @@ def _enqueue(document_ids: list[int]) -> None:
 
 @router.post(
     "/documents",
+    dependencies=[Depends(require("ingest"))],
     summary="Upload report files and start ingestion",
     response_model=list[UploadResult],
     status_code=status.HTTP_202_ACCEPTED,
@@ -121,6 +123,7 @@ def upload_documents(files: list[UploadFile], session: DbSession, user: User) ->
         )
         if not stored.duplicate:
             new_ids.append(doc.id)
+    audit(session, user, "document_upload", "document", None, files=len(files))
     session.commit()  # the worker must see the rows before it picks up the tasks
     _enqueue(new_ids)
     return results
@@ -169,8 +172,10 @@ def list_documents(
     summary="Document metadata and status",
     response_model=DocumentDetail,
 )
-def get_document(document_id: int, session: DbSession) -> DocumentDetail:
+def get_document(document_id: int, session: DbSession, user: User) -> DocumentDetail:
     doc = _get_doc(session, document_id)
+    audit(session, user, "document_view", "document", doc.id)
+    session.commit()
     well_name = session.get(Well, doc.well_id).canonical_name if doc.well_id else None  # type: ignore[union-attr]
     span_counts: dict[int, int] = dict(
         session.execute(  # type: ignore[arg-type]
@@ -255,8 +260,10 @@ def get_page_image(document_id: int, page_no: int, session: DbSession) -> Respon
     response_class=Response,
     responses={200: {"content": {"application/pdf": {}}}},
 )
-def get_file(document_id: int, session: DbSession) -> Response:
+def get_file(document_id: int, session: DbSession, user: User) -> Response:
     doc = _get_doc(session, document_id)
+    audit(session, user, "document_download", "document", doc.id)
+    session.commit()
     body = (
         get_s3_client()
         .get_object(Bucket=get_settings().s3_bucket_raw, Key=doc.object_key)["Body"]
@@ -271,13 +278,15 @@ def get_file(document_id: int, session: DbSession) -> Response:
 
 @router.post(
     "/documents/{document_id}/reprocess",
+    dependencies=[Depends(require("ingest"))],
     summary="Re-run ingestion for a document",
     response_model=DocumentSummary,
     status_code=status.HTTP_202_ACCEPTED,
 )
-def reprocess(document_id: int, session: DbSession) -> DocumentSummary:
+def reprocess(document_id: int, session: DbSession, user: User) -> DocumentSummary:
     doc = _get_doc(session, document_id)
     doc.ingest_status, doc.error = "queued", None
+    audit(session, user, "document_reprocess", "document", doc.id)
     session.commit()
     _enqueue([doc.id])
     return _summary(doc, None)

@@ -92,6 +92,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Audit log, newest first */
+        get: operations["audit_log_api_v1_audit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Log in (jwt auth mode): a bearer token for one shift */
+        post: operations["login_api_v1_auth_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/copilot/chat": {
         parameters: {
             query?: never;
@@ -101,7 +135,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Ask the copilot (SSE stream) */
+        /**
+         * Ask the copilot (SSE stream; ?stream=false for one JSON answer)
+         * @description Answers only from the read-only tools (search, events, offsets, risk profile, ledger,
+         *     well summary, alert explanation) the user's role allows. Every line cites a report page
+         *     or a database record as ``[n]``; when nothing is found the answer says so. Audited.
+         */
         post: operations["copilot_chat_api_v1_copilot_chat_post"];
         delete?: never;
         options?: never;
@@ -373,7 +412,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The authenticated user */
+        /** The authenticated user and what they may do */
         get: operations["me_api_v1_me_get"];
         put?: never;
         post?: never;
@@ -518,6 +557,41 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List users */
+        get: operations["list_users_api_v1_users_get"];
+        put?: never;
+        /** Create a user */
+        post: operations["create_user_api_v1_users_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change roles, name, password or deactivate */
+        patch: operations["update_user_api_v1_users__user_id__patch"];
         trace?: never;
     };
     "/api/v1/wells": {
@@ -948,6 +1022,40 @@ export interface components {
          * @enum {string}
          */
         Alignment: "TVDSS" | "FLATTEN_ON_TOP" | "FORMATION_RELATIVE";
+        /** AuditEntry */
+        AuditEntry: {
+            /** Action */
+            action: string;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Detail */
+            detail: {
+                [key: string]: unknown;
+            };
+            /** Id */
+            id: number;
+            /** Request Id */
+            request_id: string | null;
+            /** Target Id */
+            target_id: string | null;
+            /** Target Type */
+            target_type: string | null;
+            /** User Id */
+            user_id: string;
+        };
+        /** AuditPage */
+        AuditPage: {
+            /** Items */
+            items: components["schemas"]["AuditEntry"][];
+            /**
+             * Next Before Id
+             * @description Pass as before_id for the next (older) page
+             */
+            next_before_id: number | null;
+        };
         /** Body_upload_documents_api_v1_documents_post */
         Body_upload_documents_api_v1_documents_post: {
             /** Files */
@@ -1109,6 +1217,94 @@ export interface components {
             /** Ok */
             ok: boolean;
         };
+        /**
+         * CopilotAnswer
+         * @description The whole answer at once (``?stream=false``). The SSE stream sends the same pieces as
+         *     events: ``plan``, ``tool`` (one per call), ``token`` (one per line), ``citations``,
+         *     ``done``.
+         */
+        CopilotAnswer: {
+            /** Answer */
+            answer: string;
+            /** Citations */
+            citations: components["schemas"]["CopilotCitation"][];
+            /**
+             * Engine
+             * @description rules (deterministic planner) or llm
+             */
+            engine: string;
+            /** Intent */
+            intent: string;
+            /**
+             * Refused
+             * @description No record found, outside the records, or not allowed
+             */
+            refused: boolean;
+            /** Took Ms */
+            took_ms: number;
+            /** Tools */
+            tools: components["schemas"]["CopilotToolCall"][];
+        };
+        /** CopilotAsk */
+        CopilotAsk: {
+            /**
+             * Alert Id
+             * @description The alert on screen ('this alert')
+             */
+            alert_id?: number | null;
+            /** Message */
+            message: string;
+            /**
+             * Well Id
+             * @description The well on screen ('this well')
+             */
+            well_id?: number | null;
+        };
+        /** CopilotCitation */
+        CopilotCitation: {
+            /** Document Id */
+            document_id: number | null;
+            /** Filename */
+            filename: string | null;
+            /**
+             * Kind
+             * @description page (a report page) or record (a database row)
+             */
+            kind: string;
+            /** Label */
+            label: string;
+            /**
+             * N
+             * @description The [n] marker in the answer
+             */
+            n: number;
+            /** Page No */
+            page_no: number | null;
+            /** Record Id */
+            record_id: number | null;
+            /**
+             * Record Type
+             * @description event | well | alert | ledger | risk
+             */
+            record_type: string | null;
+            /** Span Ids */
+            span_ids: number[];
+        };
+        /** CopilotToolCall */
+        CopilotToolCall: {
+            /** Args */
+            args: {
+                [key: string]: unknown;
+            };
+            /** Denied */
+            denied: boolean;
+            /** Empty */
+            empty: string | null;
+            /** Facts */
+            facts: number;
+            /** Name */
+            name: string;
+        };
         /** CorrelationPanel */
         CorrelationPanel: {
             align: components["schemas"]["Alignment"];
@@ -1159,15 +1355,6 @@ export interface components {
             tracks: components["schemas"]["CorrelationTracks"];
             /** Well Id */
             well_id: number;
-        };
-        /** CurrentUser */
-        CurrentUser: {
-            /** Name */
-            name: string;
-            /** Roles */
-            roles: ("viewer" | "field_engineer" | "rtmac_engineer" | "drilling_engineer" | "data_steward" | "admin")[];
-            /** User Id */
-            user_id: string;
         };
         /** DataQuality */
         DataQuality: {
@@ -2153,6 +2340,29 @@ export interface components {
             /** Problem */
             problem: string;
         };
+        /** LoginIn */
+        LoginIn: {
+            /** Password */
+            password: string;
+            /** Username */
+            username: string;
+        };
+        /** Me */
+        Me: {
+            /** Auth Mode */
+            auth_mode: string;
+            /** Name */
+            name: string;
+            /**
+             * Permissions
+             * @description What the roles allow; the UI hides the rest
+             */
+            permissions: string[];
+            /** Roles */
+            roles: ("viewer" | "field_engineer" | "rtmac_engineer" | "drilling_engineer" | "data_steward" | "admin")[];
+            /** User Id */
+            user_id: string;
+        };
         /** Meta */
         Meta: {
             /** Backend Phase */
@@ -2937,6 +3147,22 @@ export interface components {
             /** Stations */
             stations: components["schemas"]["SurveyStationIn"][];
         };
+        /** TokenOut */
+        TokenOut: {
+            /** Access Token */
+            access_token: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Token Type
+             * @default bearer
+             */
+            token_type: string;
+            user: components["schemas"]["Me"];
+        };
         /**
          * TrajectoryAtDepth
          * @description Position at ``md_m``, interpolated along the minimum-curvature arc between stations.
@@ -3002,6 +3228,48 @@ export interface components {
             sha256: string;
             /** Status */
             status: string;
+        };
+        /** UserCreate */
+        UserCreate: {
+            /** Name */
+            name: string;
+            /** Password */
+            password: string;
+            /** Roles */
+            roles: ("viewer" | "field_engineer" | "rtmac_engineer" | "drilling_engineer" | "data_steward" | "admin")[];
+            /** Username */
+            username: string;
+        };
+        /** UserOut */
+        UserOut: {
+            /** Active */
+            active: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: number;
+            /** Last Login At */
+            last_login_at: string | null;
+            /** Name */
+            name: string;
+            /** Roles */
+            roles: ("viewer" | "field_engineer" | "rtmac_engineer" | "drilling_engineer" | "data_steward" | "admin")[];
+            /** Username */
+            username: string;
+        };
+        /** UserUpdate */
+        UserUpdate: {
+            /** Active */
+            active?: boolean | null;
+            /** Name */
+            name?: string | null;
+            /** Password */
+            password?: string | null;
+            /** Roles */
+            roles?: ("viewer" | "field_engineer" | "rtmac_engineer" | "drilling_engineer" | "data_steward" | "admin")[] | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -3368,9 +3636,14 @@ export interface operations {
             };
         };
     };
-    copilot_chat_api_v1_copilot_chat_post: {
+    audit_log_api_v1_audit_get: {
         parameters: {
-            query?: never;
+            query?: {
+                user_id?: string | null;
+                action?: string | null;
+                before_id?: number | null;
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3383,16 +3656,93 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AuditPage"];
                 };
             };
-            /** @description Planned, not implemented in this phase */
-            501: {
+            /** @description Validation Error */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    login_api_v1_auth_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenOut"];
+                };
+            };
+            /** @description Wrong username or password */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    copilot_chat_api_v1_copilot_chat_post: {
+        parameters: {
+            query?: {
+                /** @description false: one JSON answer instead of SSE */
+                stream?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CopilotAsk"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopilotAnswer"];
+                    "text/event-stream": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3977,7 +4327,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CurrentUser"];
+                    "application/json": components["schemas"]["Me"];
                 };
             };
         };
@@ -4268,6 +4618,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StreamStatus"];
+                };
+            };
+        };
+    };
+    list_users_api_v1_users_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"][];
+                };
+            };
+        };
+    };
+    create_user_api_v1_users_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_user_api_v1_users__user_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

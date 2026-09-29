@@ -1,5 +1,4 @@
-"""Real-time routes: replay control, stream status, a well's live window, alerts (B4).
-The copilot stays a skeleton until B5."""
+"""Real-time routes: replay control, stream status, a well's live window, alerts (B4)."""
 
 import json
 import time
@@ -21,8 +20,8 @@ from app.api.v1.schemas.realtime import (
     ReplaySessionOut,
     StreamStatus,
 )
-from app.core.auth import CurrentUser, get_current_user
-from app.core.errors import NOT_IMPLEMENTED, NotImplementedYetError
+from app.core.audit import audit
+from app.core.auth import CurrentUser, get_current_user, require
 from app.db.session import get_session
 from app.db.vocab import AlertSeverity, AlertStatus
 from app.risk import assets
@@ -52,7 +51,13 @@ def model_thresholds() -> dict[str, float]:
     return _thresholds[1]
 
 
-@router.get("/alerts", tags=["alerts"], summary="List alerts", response_model=AlertPage)
+@router.get(
+    "/alerts",
+    dependencies=[Depends(require("read_live"))],
+    tags=["alerts"],
+    summary="List alerts",
+    response_model=AlertPage,
+)
 def list_alerts(
     session: DbSession,
     well_id: int | None = None,
@@ -74,6 +79,7 @@ def list_alerts(
 
 @router.get(
     "/alerts/{alert_id}",
+    dependencies=[Depends(require("read_live"))],
     tags=["alerts"],
     summary="Alert detail with evidence and recommendations",
     response_model=AlertOut,
@@ -85,6 +91,7 @@ def get_alert(alert_id: int, session: DbSession) -> AlertOut:
 
 @router.post(
     "/alerts/{alert_id}/ack",
+    dependencies=[Depends(require("act_alerts"))],
     tags=["alerts"],
     summary="Acknowledge an alert",
     response_model=AlertOut,
@@ -92,12 +99,14 @@ def get_alert(alert_id: int, session: DbSession) -> AlertOut:
 )
 def ack_alert(alert_id: int, session: DbSession, user: User) -> AlertOut:
     out = alerts.ack(session, alert_id, user.user_id)
+    audit(session, user, "alert_ack", "alert", alert_id)
     session.commit()
     return out
 
 
 @router.post(
     "/alerts/{alert_id}/dismiss",
+    dependencies=[Depends(require("act_alerts"))],
     tags=["alerts"],
     summary="Dismiss an alert with reason",
     response_model=AlertOut,
@@ -107,12 +116,14 @@ def dismiss_alert(
     alert_id: int, body: Annotated[AlertDismiss, Body()], session: DbSession, user: User
 ) -> AlertOut:
     out = alerts.dismiss(session, alert_id, body.reason, user.user_id)
+    audit(session, user, "alert_dismiss", "alert", alert_id, reason=body.reason)
     session.commit()
     return out
 
 
 @router.post(
     "/alerts/{alert_id}/feedback",
+    dependencies=[Depends(require("act_alerts"))],
     tags=["alerts"],
     summary="Useful / not useful / false alarm",
     response_model=AlertFeedbackOut,
@@ -123,37 +134,33 @@ def alert_feedback(
     alert_id: int, body: Annotated[AlertFeedbackIn, Body()], session: DbSession, user: User
 ) -> AlertFeedbackOut:
     out = alerts.feedback(session, alert_id, body.verdict, body.comment, user.user_id)
+    audit(session, user, "alert_feedback", "alert", alert_id, verdict=body.verdict)
     session.commit()
     return out
 
 
 @router.post(
-    "/copilot/chat",
-    tags=["copilot"],
-    summary="Ask the copilot (SSE stream)",
-    responses=NOT_IMPLEMENTED,
-)
-def copilot_chat() -> None:
-    raise NotImplementedYetError("Copilot (S10)", "B5")
-
-
-@router.post(
     "/replay",
+    dependencies=[Depends(require("control_replay"))],
     tags=["replay"],
     summary="Start/pause/resume/stop/speed a replay session",
     response_model=ReplaySessionOut,
     responses={**NOT_FOUND, **CONFLICT},
 )
-def replay(body: Annotated[ReplayRequest, Body()], session: DbSession) -> ReplaySessionOut:
+def replay(
+    body: Annotated[ReplayRequest, Body()], session: DbSession, user: User
+) -> ReplaySessionOut:
     """``start`` replays the well's SYNTHETIC replay file from the beginning (replacing its
     earlier replayed samples; alerts are kept) at ``speed`` data seconds per second."""
     out = control.replay(session, body.well_id, body.action, body.speed)
+    audit(session, user, f"replay_{body.action}", "well", body.well_id, speed=body.speed)
     session.commit()
     return out
 
 
 @router.get(
     "/replay",
+    dependencies=[Depends(require("read_live"))],
     tags=["replay"],
     summary="Recent replay sessions",
     response_model=list[ReplaySessionOut],
@@ -163,9 +170,12 @@ def list_replays(session: DbSession) -> list[ReplaySessionOut]:
 
 
 @router.get(
-    "/stream/status", tags=["replay"], summary="Stream service heartbeat and sessions",
+    "/stream/status",
+    dependencies=[Depends(require("read_live"))],
+    tags=["replay"],
+    summary="Stream service heartbeat and sessions",
     response_model=StreamStatus,
-)  # fmt: skip
+)
 def stream_status(session: DbSession) -> StreamStatus:
     try:
         hb = get_redis().get(HEARTBEAT_KEY)
@@ -176,6 +186,7 @@ def stream_status(session: DbSession) -> StreamStatus:
 
 @router.get(
     "/wells/{well_id}/realtime",
+    dependencies=[Depends(require("read_live"))],
     tags=["replay"],
     summary="The last minutes of a well's stream (downsampled) with scores",
     response_model=RealtimeWindow,

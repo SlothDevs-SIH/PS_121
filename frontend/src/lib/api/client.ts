@@ -12,7 +12,7 @@ import type { components } from './schema'
 export type ErrorBody = components['schemas']['ErrorBody']
 export type ReadinessReport = components['schemas']['ReadinessReport']
 export type Meta = components['schemas']['Meta']
-export type CurrentUser = components['schemas']['CurrentUser']
+export type CurrentUser = components['schemas']['Me']
 export type WellSummary = components['schemas']['WellSummary']
 export type WellList = components['schemas']['WellList']
 export type WellDetail = components['schemas']['WellDetail']

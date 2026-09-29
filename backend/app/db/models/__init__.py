@@ -1,5 +1,6 @@
 """All ORM models, imported here so Alembic and the app see one metadata."""
 
+from app.db.models.auth import AppUser, AuditLog
 from app.db.models.documents import Chunk, Document, Page, TextSpan
 from app.db.models.engineering import (
     CasingString,
@@ -34,6 +35,8 @@ __all__ = [
     "Alert",
     "AlertFeedback",
     "AliasCandidate",
+    "AppUser",
+    "AuditLog",
     "CasingString",
     "CementJob",
     "ChannelMapping",

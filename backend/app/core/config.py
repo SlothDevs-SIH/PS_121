@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     llm_model: str = "qwen2.5:7b-instruct"  # model id sent to the LLM endpoint
     llm_timeout_s: float = Field(default=60.0, gt=0)  # per LLM request
     extract_llm_enabled: bool = False  # run the LLM pass (also needs llm_base_url)
+    # Copilot (S10, B5): "rules" = deterministic planner (default, offline); "llm" = an
+    # OpenAI-compatible model picks the tools (needs llm_base_url; falls back to rules).
+    copilot_engine: Literal["rules", "llm"] = "rules"
     # Record-level confidence below which an extraction goes to the review queue
     extract_confidence_threshold: float = Field(default=0.75, ge=0, le=1)
 
@@ -57,7 +60,11 @@ class Settings(BaseSettings):
     reranker_url: str | None = None  # optional cross-encoder rerank endpoint; unset = RRF only
 
     # Auth: "dev" returns a fixed local user; "oidc" (Keycloak) is planned for phase B6
-    auth_mode: Literal["dev", "oidc"] = "dev"
+    # dev = a fixed local admin (refused in prod); jwt = local users + signed tokens (B5);
+    # oidc = Keycloak (B6, not built).
+    auth_mode: Literal["dev", "jwt", "oidc"] = "dev"
+    jwt_secret: SecretStr | None = None  # required (>= 32 chars) in jwt mode
+    jwt_ttl_minutes: int = Field(default=480, gt=0, le=7 * 24 * 60)  # one shift + margin
 
     # Per-dependency timeout used by /readyz checks
     readiness_timeout_s: float = 2.0
