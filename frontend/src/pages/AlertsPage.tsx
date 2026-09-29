@@ -441,10 +441,7 @@ function AlertDetail({ id }: { id: number }) {
             )}
             <p className="text-xs text-muted" data-testid="alert-caveat">
               {caveat ?? 'Observational records: associated with success, not proven to cause it.'}{' '}
-              <Link
-                to={`/ledger?type=${a.event_type}`}
-                className="text-accent hover:underline"
-              >
+              <Link to={`/ledger?type=${a.event_type}`} className="text-accent hover:underline">
                 Open the ledger
               </Link>
             </p>
