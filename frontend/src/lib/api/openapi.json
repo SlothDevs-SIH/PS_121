@@ -1,6 +1,642 @@
 {
   "components": {
     "schemas": {
+      "AlertDismiss": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "AlertDismiss",
+        "type": "object"
+      },
+      "AlertDriver": {
+        "properties": {
+          "contribution": {
+            "description": "Drop in probability when reset to typical",
+            "title": "Contribution",
+            "type": "number"
+          },
+          "feature": {
+            "title": "Feature",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "typical": {
+            "title": "Typical",
+            "type": "number"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "feature",
+          "label",
+          "value",
+          "typical",
+          "contribution"
+        ],
+        "title": "AlertDriver",
+        "type": "object"
+      },
+      "AlertEvidence": {
+        "description": "One piece of evidence: a window of the well's own stream, or a past event (an offset\nwell's in this formation, or the one a D\u00e9j\u00e0 Vu match preceded) with its report pages.",
+        "properties": {
+          "channels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Channels",
+            "type": "array"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "event_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Type"
+          },
+          "formation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formation"
+          },
+          "kind": {
+            "enum": [
+              "stream",
+              "offset_event",
+              "matched_event"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Md M"
+          },
+          "refs": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Refs",
+            "type": "array"
+          },
+          "t_from": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "T From"
+          },
+          "t_to": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "T To"
+          },
+          "well_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Well Id"
+          },
+          "well_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Well Name"
+          },
+          "wellbore_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wellbore Id"
+          }
+        },
+        "required": [
+          "kind",
+          "wellbore_id",
+          "t_from",
+          "t_to",
+          "channels",
+          "event_id",
+          "well_id",
+          "well_name",
+          "event_type",
+          "md_m",
+          "formation",
+          "refs"
+        ],
+        "title": "AlertEvidence",
+        "type": "object"
+      },
+      "AlertFeedbackIn": {
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "verdict": {
+            "enum": [
+              "useful",
+              "not_useful",
+              "false_alarm"
+            ],
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "verdict"
+        ],
+        "title": "AlertFeedbackIn",
+        "type": "object"
+      },
+      "AlertFeedbackOut": {
+        "properties": {
+          "alert_id": {
+            "title": "Alert Id",
+            "type": "integer"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          },
+          "verdict": {
+            "enum": [
+              "useful",
+              "not_useful",
+              "false_alarm"
+            ],
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "alert_id",
+          "verdict",
+          "comment",
+          "user_id",
+          "created_at"
+        ],
+        "title": "AlertFeedbackOut",
+        "type": "object"
+      },
+      "AlertOut": {
+        "properties": {
+          "acked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acked At"
+          },
+          "acked_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acked By"
+          },
+          "alert_type": {
+            "enum": [
+              "LOOKAHEAD",
+              "ANOMALY_ML",
+              "PHYSICS",
+              "DEJA_VU",
+              "PLAN_CHECK",
+              "FUSED"
+            ],
+            "title": "Alert Type",
+            "type": "string"
+          },
+          "budget_exempt": {
+            "title": "Budget Exempt",
+            "type": "boolean"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "title": "Detail",
+            "type": "object"
+          },
+          "dismiss_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dismiss Reason"
+          },
+          "drivers": {
+            "items": {
+              "$ref": "#/components/schemas/AlertDriver"
+            },
+            "title": "Drivers",
+            "type": "array"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/AlertEvidence"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "feedback": {
+            "items": {
+              "$ref": "#/components/schemas/AlertFeedbackOut"
+            },
+            "title": "Feedback",
+            "type": "array"
+          },
+          "formation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formation"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Md M"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "recommendations": {
+            "items": {
+              "$ref": "#/components/schemas/AlertRecommendation"
+            },
+            "title": "Recommendations",
+            "type": "array"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "score_kind": {
+            "description": "probability (classifier) | similarity (D\u00e9j\u00e0 Vu, not a probability) | indicator (physics rule value) | prior (offset prior probability)",
+            "title": "Score Kind",
+            "type": "string"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "severity": {
+            "enum": [
+              "info",
+              "warning",
+              "critical"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "new",
+              "ack",
+              "actioned",
+              "dismissed",
+              "closed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "t_data": {
+            "description": "Data time the alert was raised at",
+            "format": "date-time",
+            "title": "T Data",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "tvdss_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tvdss M"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          },
+          "well_name": {
+            "title": "Well Name",
+            "type": "string"
+          },
+          "wellbore_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wellbore Id"
+          }
+        },
+        "required": [
+          "id",
+          "well_id",
+          "well_name",
+          "synthetic",
+          "wellbore_id",
+          "session_id",
+          "alert_type",
+          "event_type",
+          "severity",
+          "status",
+          "title",
+          "message",
+          "score",
+          "score_kind",
+          "md_m",
+          "tvdss_m",
+          "formation",
+          "t_data",
+          "created_at",
+          "sources",
+          "evidence",
+          "drivers",
+          "recommendations",
+          "detail",
+          "budget_exempt",
+          "acked_by",
+          "acked_at",
+          "dismiss_reason",
+          "feedback"
+        ],
+        "title": "AlertOut",
+        "type": "object"
+      },
+      "AlertPage": {
+        "properties": {
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Alerts by status in the filtered scope",
+            "title": "Counts",
+            "type": "object"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AlertOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items",
+          "counts"
+        ],
+        "title": "AlertPage",
+        "type": "object"
+      },
+      "AlertRecommendation": {
+        "properties": {
+          "action_code": {
+            "title": "Action Code",
+            "type": "string"
+          },
+          "action_label": {
+            "title": "Action Label",
+            "type": "string"
+          },
+          "ci90_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci90 High"
+          },
+          "ci90_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci90 Low"
+          },
+          "insufficient": {
+            "description": "Fewer uses than the ledger's minimum: not ranked",
+            "title": "Insufficient",
+            "type": "boolean"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "posterior_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Posterior Mean"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_code",
+          "action_label",
+          "summary",
+          "n",
+          "posterior_mean",
+          "ci90_low",
+          "ci90_high",
+          "insufficient"
+        ],
+        "title": "AlertRecommendation",
+        "type": "object"
+      },
       "Alignment": {
         "enum": [
           "TVDSS",
@@ -5267,6 +5903,327 @@
         "title": "ReadinessReport",
         "type": "object"
       },
+      "RealtimeWindow": {
+        "description": "The last minutes of a well's stream, downsampled, for the live view's first paint\n(then /ws/wells/{well_id}/live pushes frames).",
+        "properties": {
+          "channels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Channels",
+            "type": "array"
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The most recent scoring frame",
+            "title": "Latest"
+          },
+          "rig_state": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Rig State",
+            "type": "array"
+          },
+          "scores": {
+            "additionalProperties": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "description": "Classifier probability per event type, one value per scored minute",
+            "title": "Scores",
+            "type": "object"
+          },
+          "scores_ts": {
+            "items": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "title": "Scores Ts",
+            "type": "array"
+          },
+          "session": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReplaySessionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stale": {
+            "description": "No sample for over 60 s of wall time while a replay runs",
+            "title": "Stale",
+            "type": "boolean"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "thresholds": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "Alert threshold per event type",
+            "title": "Thresholds",
+            "type": "object"
+          },
+          "ts": {
+            "items": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "title": "Ts",
+            "type": "array"
+          },
+          "units": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Units",
+            "type": "object"
+          },
+          "values": {
+            "additionalProperties": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            "title": "Values",
+            "type": "object"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          },
+          "well_name": {
+            "title": "Well Name",
+            "type": "string"
+          },
+          "wellbore_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wellbore Id"
+          }
+        },
+        "required": [
+          "well_id",
+          "well_name",
+          "wellbore_id",
+          "synthetic",
+          "session",
+          "channels",
+          "units",
+          "ts",
+          "values",
+          "rig_state",
+          "scores_ts",
+          "scores",
+          "thresholds",
+          "latest",
+          "stale"
+        ],
+        "title": "RealtimeWindow",
+        "type": "object"
+      },
+      "ReplayRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "default": "start",
+            "enum": [
+              "start",
+              "pause",
+              "resume",
+              "stop",
+              "speed"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "speed": {
+            "default": 60.0,
+            "description": "Data seconds per wall second",
+            "maximum": 2000.0,
+            "minimum": 1.0,
+            "title": "Speed",
+            "type": "number"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "well_id"
+        ],
+        "title": "ReplayRequest",
+        "type": "object"
+      },
+      "ReplaySessionOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "data_now": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Timestamp of the last published row",
+            "title": "Data Now"
+          },
+          "data_start": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Start"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "position": {
+            "description": "Rows published so far",
+            "title": "Position",
+            "type": "integer"
+          },
+          "source_uri": {
+            "title": "Source Uri",
+            "type": "string"
+          },
+          "speed": {
+            "title": "Speed",
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "running",
+              "paused",
+              "stopped",
+              "finished",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "total_rows": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Rows"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          },
+          "well_name": {
+            "title": "Well Name",
+            "type": "string"
+          },
+          "wellbore_id": {
+            "title": "Wellbore Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "well_id",
+          "well_name",
+          "wellbore_id",
+          "source_uri",
+          "speed",
+          "status",
+          "position",
+          "total_rows",
+          "data_start",
+          "data_now",
+          "error",
+          "synthetic",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ReplaySessionOut",
+        "type": "object"
+      },
       "ReviewAccept": {
         "additionalProperties": false,
         "description": "The proposed values are right: the target becomes verified.",
@@ -5647,6 +6604,24 @@
             "title": "Offsets",
             "type": "array"
           },
+          "prognosed": {
+            "default": false,
+            "description": "Below a drilling well's current TD: the top is the offsets' inverse-distance-weighted estimate, not a pick",
+            "title": "Prognosed",
+            "type": "boolean"
+          },
+          "prognosis_spread_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Weighted spread of the offsets' tops around the prognosed top",
+            "title": "Prognosis Spread M"
+          },
           "risks": {
             "description": "Highest probability first",
             "items": {
@@ -5675,6 +6650,8 @@
           "base_md_m",
           "top_tvdss_m",
           "base_tvdss_m",
+          "prognosed",
+          "prognosis_spread_m",
           "offsets",
           "risks"
         ],
@@ -5968,6 +6945,41 @@
           "dls_deg_30m"
         ],
         "title": "StationOut",
+        "type": "object"
+      },
+      "StreamStatus": {
+        "properties": {
+          "heartbeat": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heartbeat"
+          },
+          "service_alive": {
+            "description": "The stream service sent a heartbeat in the last 15 s",
+            "title": "Service Alive",
+            "type": "boolean"
+          },
+          "sessions": {
+            "items": {
+              "$ref": "#/components/schemas/ReplaySessionOut"
+            },
+            "title": "Sessions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "service_alive",
+          "heartbeat",
+          "sessions"
+        ],
+        "title": "StreamStatus",
         "type": "object"
       },
       "SurveyStationIn": {
@@ -6653,6 +7665,7 @@
   "paths": {
     "/api/v1/alerts": {
       "get": {
+        "description": "Newest first (by data time). ``counts`` covers the scope before the status filter.",
         "operationId": "list_alerts_api_v1_alerts_get",
         "parameters": [
           {
@@ -6678,7 +7691,17 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "items": {
+                    "enum": [
+                      "new",
+                      "ack",
+                      "actioned",
+                      "dismissed",
+                      "closed"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
                 },
                 {
                   "type": "null"
@@ -6686,13 +7709,67 @@
               ],
               "title": "Status"
             }
+          },
+          {
+            "in": "query",
+            "name": "severity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "enum": [
+                      "info",
+                      "warning",
+                      "critical"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severity"
+            }
+          },
+          {
+            "in": "query",
+            "name": "session_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
           }
         ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AlertPage"
+                }
               }
             },
             "description": "Successful Response"
@@ -6706,8 +7783,40 @@
               }
             },
             "description": "Validation Error"
+          }
+        },
+        "summary": "List alerts",
+        "tags": [
+          "alerts"
+        ]
+      }
+    },
+    "/api/v1/alerts/{alert_id}": {
+      "get": {
+        "operationId": "get_alert_api_v1_alerts__alert_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "alert_id",
+            "required": true,
+            "schema": {
+              "title": "Alert Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertOut"
+                }
+              }
+            },
+            "description": "Successful Response"
           },
-          "501": {
+          "404": {
             "content": {
               "application/json": {
                 "schema": {
@@ -6715,10 +7824,20 @@
                 }
               }
             },
-            "description": "Planned, not implemented in this phase"
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
-        "summary": "List alerts",
+        "summary": "Alert detail with evidence and recommendations",
         "tags": [
           "alerts"
         ]
@@ -6742,10 +7861,25 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AlertOut"
+                }
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "description": "The alert or replay is not in a state that allows this"
           },
           "422": {
             "content": {
@@ -6756,16 +7890,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Acknowledge an alert",
@@ -6788,14 +7912,39 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertDismiss"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AlertOut"
+                }
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "description": "The alert or replay is not in a state that allows this"
           },
           "422": {
             "content": {
@@ -6806,16 +7955,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Dismiss an alert with reason",
@@ -6838,14 +7977,36 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertFeedbackIn"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
-          "200": {
+          "201": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AlertFeedbackOut"
+                }
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
           },
           "422": {
             "content": {
@@ -6856,19 +8017,9 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
-        "summary": "Useful / not useful",
+        "summary": "Useful / not useful / false alarm",
         "tags": [
           "alerts"
         ]
@@ -8199,18 +9350,54 @@
       }
     },
     "/api/v1/replay": {
-      "post": {
-        "operationId": "replay_api_v1_replay_post",
+      "get": {
+        "operationId": "list_replays_api_v1_replay_get",
         "responses": {
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReplaySessionOut"
+                  },
+                  "title": "Response List Replays Api V1 Replay Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Recent replay sessions",
+        "tags": [
+          "replay"
+        ]
+      },
+      "post": {
+        "description": "``start`` replays the well's SYNTHETIC replay file from the beginning (replacing its\nearlier replayed samples; alerts are kept) at ``speed`` data seconds per second.",
+        "operationId": "replay_api_v1_replay_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplaySessionOut"
+                }
               }
             },
             "description": "Successful Response"
           },
-          "501": {
+          "404": {
             "content": {
               "application/json": {
                 "schema": {
@@ -8218,10 +9405,23 @@
                 }
               }
             },
-            "description": "Planned, not implemented in this phase"
+            "description": "Not found"
+          },
+          "409": {
+            "description": "The alert or replay is not in a state that allows this"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
-        "summary": "Start/stop/speed a replay session",
+        "summary": "Start/pause/resume/stop/speed a replay session",
         "tags": [
           "replay"
         ]
@@ -8703,6 +9903,27 @@
         ]
       }
     },
+    "/api/v1/stream/status": {
+      "get": {
+        "operationId": "stream_status_api_v1_stream_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Stream service heartbeat and sessions",
+        "tags": [
+          "replay"
+        ]
+      }
+    },
     "/api/v1/wells": {
       "get": {
         "operationId": "get_wells_api_v1_wells_get",
@@ -9156,6 +10377,82 @@
         "summary": "Offset wells within a radius",
         "tags": [
           "wells"
+        ]
+      }
+    },
+    "/api/v1/wells/{well_id}/realtime": {
+      "get": {
+        "operationId": "realtime_window_api_v1_wells__well_id__realtime_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "well_id",
+            "required": true,
+            "schema": {
+              "title": "Well Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "minutes",
+            "required": false,
+            "schema": {
+              "default": 120,
+              "maximum": 1440,
+              "minimum": 1,
+              "title": "Minutes",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "max_points",
+            "required": false,
+            "schema": {
+              "default": 720,
+              "maximum": 5000,
+              "minimum": 10,
+              "title": "Max Points",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RealtimeWindow"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "The last minutes of a well's stream (downsampled) with scores",
+        "tags": [
+          "replay"
         ]
       }
     },

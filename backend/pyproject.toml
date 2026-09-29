@@ -24,6 +24,7 @@ dependencies = [
     "fpdf2>=2.8.8",
     "pyproj>=3.7.2",
     "scipy>=1.14",
+    "scikit-learn>=1.5",
 ]
 
 [dependency-groups]
@@ -79,5 +80,5 @@ plugins = ["pydantic.mypy"]
 exclude = ["app/db/migrations/"]
 
 [[tool.mypy.overrides]]
-module = ["celery.*", "kombu.*", "pypdfium2.*", "pytesseract.*"]
+module = ["celery.*", "kombu.*", "pypdfium2.*", "pytesseract.*", "sklearn.*", "joblib.*"]
 ignore_missing_imports = true

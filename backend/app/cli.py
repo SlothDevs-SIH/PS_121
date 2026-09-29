@@ -5,13 +5,14 @@ check      print the readiness report (and optionally round-trip a Celery task)
 seed       generate the synthetic field and ingest its reports
 extract    (re-)run S2 extraction over ingested reports
 index      (re-)run S5 search indexing (embeddings + lesson cards)
+realtime   build the real-time assets: classifiers, Deja Vu library, replay file (B4)
 """
 
 import json
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import typer
 from alembic import command
@@ -22,6 +23,9 @@ from app.core.health import DEFAULT_CHECKS, check_redis, run_checks
 from app.core.logging import configure_logging
 from app.db.session import get_engine
 from app.storage.s3 import ensure_buckets, get_s3_client
+
+if TYPE_CHECKING:
+    from app.synthetic.generator import SyntheticField
 
 cli = typer.Typer(add_completion=False, no_args_is_help=True)
 
@@ -118,6 +122,7 @@ def seed(
     inline: Annotated[bool, typer.Option(help="Process here instead of via the worker")] = False,
     wait: Annotated[bool, typer.Option(help="Wait until queued reports are processed")] = False,
     timeout_s: Annotated[float, typer.Option(help="Max wait for --wait")] = 900.0,
+    realtime: Annotated[bool, typer.Option(help="Also build the real-time assets")] = True,
 ) -> None:
     """Idempotent: re-seeding updates wells in place and skips reports already ingested."""
     import tempfile
@@ -216,6 +221,28 @@ def seed(
             select(Document.ingest_status, func.count()).group_by(Document.ingest_status)
         ).all()
     typer.echo(f"[seed] document status: {dict((str(k), int(v)) for k, v in rows)}")
+    if realtime:
+        _build_realtime(data)
+
+
+def _build_realtime(data: "SyntheticField", train_wells: int = 120) -> None:
+    from app.db.session import session_scope
+    from app.risk.assets import build_all
+
+    with session_scope() as session:
+        build_all(session, data, train_wells=train_wells, log=typer.echo)
+
+
+@cli.command(name="realtime")
+def realtime_build(
+    wells: Annotated[int, typer.Option(help="Completed wells of the seeded field")] = 40,
+    train_wells: Annotated[int, typer.Option(help="Synthetic training-field wells")] = 120,
+) -> None:
+    """(Re)build the real-time assets over an already seeded database."""
+    from app.synthetic.generator import generate
+
+    configure_logging(json_output=False)
+    _build_realtime(generate(wells), train_wells)
 
 
 def _select_documents(document_id: int | None, all_: bool, status_col: str) -> list[int]:

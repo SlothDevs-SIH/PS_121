@@ -111,6 +111,14 @@ class RiskInterval(ResponseModel):
     base_md_m: float | None
     top_tvdss_m: float
     base_tvdss_m: float | None
+    prognosed: bool = Field(
+        False,
+        description="Below a drilling well's current TD: the top is the offsets' "
+        "inverse-distance-weighted estimate, not a pick",
+    )
+    prognosis_spread_m: float | None = Field(
+        None, description="Weighted spread of the offsets' tops around the prognosed top"
+    )
     offsets: list[RiskOffset]
     risks: list[EventRisk] = Field(description="Highest probability first")
 

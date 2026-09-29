@@ -91,6 +91,16 @@ ReviewStatus = Literal["pending", "accepted", "corrected", "rejected"]
 
 AzimuthReference = Literal["true", "grid", "magnetic"]
 
+# Real time (B4)
+RigState = Literal[
+    "DRILLING", "REAMING", "CIRCULATING", "TRIP_IN", "TRIP_OUT", "IN_SLIPS", "STUCK", "STATIONARY"
+]
+AlertType = Literal["LOOKAHEAD", "ANOMALY_ML", "PHYSICS", "DEJA_VU", "PLAN_CHECK", "FUSED"]
+AlertSeverity = Literal["info", "warning", "critical"]
+AlertStatus = Literal["new", "ack", "actioned", "dismissed", "closed"]
+AlertVerdict = Literal["useful", "not_useful", "false_alarm"]
+ReplayStatus = Literal["pending", "running", "paused", "stopped", "finished", "failed"]
+
 EVENT_TYPES: tuple[str, ...] = get_args(EventType)
 SEVERITIES: tuple[str, ...] = get_args(Severity)
 EVENT_SOURCES: tuple[str, ...] = get_args(EventSource)
@@ -103,6 +113,12 @@ FLUID_TYPES: tuple[str, ...] = get_args(FluidType)
 STAGE_STATUSES: tuple[str, ...] = get_args(StageStatus)
 REVIEW_KINDS: tuple[str, ...] = get_args(ReviewKind)
 REVIEW_STATUSES: tuple[str, ...] = get_args(ReviewStatus)
+RIG_STATES: tuple[str, ...] = get_args(RigState)
+ALERT_TYPES: tuple[str, ...] = get_args(AlertType)
+ALERT_SEVERITIES: tuple[str, ...] = get_args(AlertSeverity)
+ALERT_STATUSES: tuple[str, ...] = get_args(AlertStatus)
+ALERT_VERDICTS: tuple[str, ...] = get_args(AlertVerdict)
+REPLAY_STATUSES: tuple[str, ...] = get_args(ReplayStatus)
 
 
 def in_list(column: str, values: tuple[str, ...]) -> str:

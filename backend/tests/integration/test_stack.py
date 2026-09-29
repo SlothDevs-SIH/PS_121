@@ -73,6 +73,6 @@ def test_celery_worker_round_trip() -> None:
 
 
 def test_skeleton_endpoint_through_real_server() -> None:
-    r = httpx.get(f"{API}/api/v1/alerts", timeout=10)
+    r = httpx.get(f"{API}/api/v1/reports/offset-brief/1", timeout=10)
     assert r.status_code == 501
-    assert r.json()["error"]["details"]["phase"] == "B4"
+    assert r.json()["error"]["details"]["phase"] == "B5"

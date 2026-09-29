@@ -11,8 +11,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List alerts */
+        /**
+         * List alerts
+         * @description Newest first (by data time). ``counts`` covers the scope before the status filter.
+         */
         get: operations["list_alerts_api_v1_alerts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alerts/{alert_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Alert detail with evidence and recommendations */
+        get: operations["get_alert_api_v1_alerts__alert_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -64,7 +84,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Useful / not useful */
+        /** Useful / not useful / false alarm */
         post: operations["alert_feedback_api_v1_alerts__alert_id__feedback_post"];
         delete?: never;
         options?: never;
@@ -387,9 +407,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Recent replay sessions */
+        get: operations["list_replays_api_v1_replay_get"];
         put?: never;
-        /** Start/stop/speed a replay session */
+        /**
+         * Start/pause/resume/stop/speed a replay session
+         * @description ``start`` replays the well's SYNTHETIC replay file from the beginning (replacing its
+         *     earlier replayed samples; alerts are kept) at ``speed`` data seconds per second.
+         */
         post: operations["replay_api_v1_replay_post"];
         delete?: never;
         options?: never;
@@ -470,6 +495,23 @@ export interface paths {
          *     ``no_record_found`` is true when nothing clears the relevance floor.
          */
         get: operations["search_api_v1_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stream/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stream service heartbeat and sessions */
+        get: operations["stream_status_api_v1_stream_status_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -569,6 +611,23 @@ export interface paths {
          *     every mode.
          */
         get: operations["get_offsets_api_v1_wells__well_id__offsets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wells/{well_id}/realtime": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The last minutes of a well's stream (downsampled) with scores */
+        get: operations["realtime_window_api_v1_wells__well_id__realtime_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -682,6 +741,208 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AlertDismiss */
+        AlertDismiss: {
+            /** Reason */
+            reason: string;
+        };
+        /** AlertDriver */
+        AlertDriver: {
+            /**
+             * Contribution
+             * @description Drop in probability when reset to typical
+             */
+            contribution: number;
+            /** Feature */
+            feature: string;
+            /** Label */
+            label: string;
+            /** Typical */
+            typical: number;
+            /** Value */
+            value: number | null;
+        };
+        /**
+         * AlertEvidence
+         * @description One piece of evidence: a window of the well's own stream, or a past event (an offset
+         *     well's in this formation, or the one a Déjà Vu match preceded) with its report pages.
+         */
+        AlertEvidence: {
+            /** Channels */
+            channels: string[];
+            /** Event Id */
+            event_id: number | null;
+            /** Event Type */
+            event_type: string | null;
+            /** Formation */
+            formation: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "stream" | "offset_event" | "matched_event";
+            /** Md M */
+            md_m: number | null;
+            /** Refs */
+            refs: components["schemas"]["EvidenceRef"][];
+            /** T From */
+            t_from: string | null;
+            /** T To */
+            t_to: string | null;
+            /** Well Id */
+            well_id: number | null;
+            /** Well Name */
+            well_name: string | null;
+            /** Wellbore Id */
+            wellbore_id: number | null;
+        };
+        /** AlertFeedbackIn */
+        AlertFeedbackIn: {
+            /** Comment */
+            comment?: string | null;
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "useful" | "not_useful" | "false_alarm";
+        };
+        /** AlertFeedbackOut */
+        AlertFeedbackOut: {
+            /** Alert Id */
+            alert_id: number;
+            /** Comment */
+            comment: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: number;
+            /** User Id */
+            user_id: string;
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "useful" | "not_useful" | "false_alarm";
+        };
+        /** AlertOut */
+        AlertOut: {
+            /** Acked At */
+            acked_at: string | null;
+            /** Acked By */
+            acked_by: string | null;
+            /**
+             * Alert Type
+             * @enum {string}
+             */
+            alert_type: "LOOKAHEAD" | "ANOMALY_ML" | "PHYSICS" | "DEJA_VU" | "PLAN_CHECK" | "FUSED";
+            /** Budget Exempt */
+            budget_exempt: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Detail */
+            detail: {
+                [key: string]: unknown;
+            };
+            /** Dismiss Reason */
+            dismiss_reason: string | null;
+            /** Drivers */
+            drivers: components["schemas"]["AlertDriver"][];
+            /** Event Type */
+            event_type: string;
+            /** Evidence */
+            evidence: components["schemas"]["AlertEvidence"][];
+            /** Feedback */
+            feedback: components["schemas"]["AlertFeedbackOut"][];
+            /** Formation */
+            formation: string | null;
+            /** Id */
+            id: number;
+            /** Md M */
+            md_m: number | null;
+            /** Message */
+            message: string;
+            /** Recommendations */
+            recommendations: components["schemas"]["AlertRecommendation"][];
+            /** Score */
+            score: number | null;
+            /**
+             * Score Kind
+             * @description probability (classifier) | similarity (Déjà Vu, not a probability) | indicator (physics rule value) | prior (offset prior probability)
+             */
+            score_kind: string;
+            /** Session Id */
+            session_id: number | null;
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "info" | "warning" | "critical";
+            /** Sources */
+            sources: string[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "new" | "ack" | "actioned" | "dismissed" | "closed";
+            /** Synthetic */
+            synthetic: boolean;
+            /**
+             * T Data
+             * Format: date-time
+             * @description Data time the alert was raised at
+             */
+            t_data: string;
+            /** Title */
+            title: string;
+            /** Tvdss M */
+            tvdss_m: number | null;
+            /** Well Id */
+            well_id: number;
+            /** Well Name */
+            well_name: string;
+            /** Wellbore Id */
+            wellbore_id: number | null;
+        };
+        /** AlertPage */
+        AlertPage: {
+            /**
+             * Counts
+             * @description Alerts by status in the filtered scope
+             */
+            counts: {
+                [key: string]: number;
+            };
+            /** Items */
+            items: components["schemas"]["AlertOut"][];
+        };
+        /** AlertRecommendation */
+        AlertRecommendation: {
+            /** Action Code */
+            action_code: string;
+            /** Action Label */
+            action_label: string;
+            /** Ci90 High */
+            ci90_high: number | null;
+            /** Ci90 Low */
+            ci90_low: number | null;
+            /**
+             * Insufficient
+             * @description Fewer uses than the ledger's minimum: not ranked
+             */
+            insufficient: boolean;
+            /** N */
+            n: number;
+            /** Posterior Mean */
+            posterior_mean: number | null;
+            /** Summary */
+            summary: string;
+        };
         /**
          * Alignment
          * @enum {string}
@@ -2213,6 +2474,129 @@ export interface components {
             status: "ready" | "not_ready";
         };
         /**
+         * RealtimeWindow
+         * @description The last minutes of a well's stream, downsampled, for the live view's first paint
+         *     (then /ws/wells/{well_id}/live pushes frames).
+         */
+        RealtimeWindow: {
+            /** Channels */
+            channels: string[];
+            /**
+             * Latest
+             * @description The most recent scoring frame
+             */
+            latest: {
+                [key: string]: unknown;
+            } | null;
+            /** Rig State */
+            rig_state: (string | null)[];
+            /**
+             * Scores
+             * @description Classifier probability per event type, one value per scored minute
+             */
+            scores: {
+                [key: string]: (number | null)[];
+            };
+            /** Scores Ts */
+            scores_ts: string[];
+            session: components["schemas"]["ReplaySessionOut"] | null;
+            /**
+             * Stale
+             * @description No sample for over 60 s of wall time while a replay runs
+             */
+            stale: boolean;
+            /** Synthetic */
+            synthetic: boolean;
+            /**
+             * Thresholds
+             * @description Alert threshold per event type
+             */
+            thresholds: {
+                [key: string]: number;
+            };
+            /** Ts */
+            ts: string[];
+            /** Units */
+            units: {
+                [key: string]: string;
+            };
+            /** Values */
+            values: {
+                [key: string]: (number | null)[];
+            };
+            /** Well Id */
+            well_id: number;
+            /** Well Name */
+            well_name: string;
+            /** Wellbore Id */
+            wellbore_id: number | null;
+        };
+        /** ReplayRequest */
+        ReplayRequest: {
+            /**
+             * Action
+             * @default start
+             * @enum {string}
+             */
+            action: "start" | "pause" | "resume" | "stop" | "speed";
+            /**
+             * Speed
+             * @description Data seconds per wall second
+             * @default 60
+             */
+            speed: number;
+            /** Well Id */
+            well_id: number;
+        };
+        /** ReplaySessionOut */
+        ReplaySessionOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Data Now
+             * @description Timestamp of the last published row
+             */
+            data_now: string | null;
+            /** Data Start */
+            data_start: string | null;
+            /** Error */
+            error: string | null;
+            /** Id */
+            id: number;
+            /**
+             * Position
+             * @description Rows published so far
+             */
+            position: number;
+            /** Source Uri */
+            source_uri: string;
+            /** Speed */
+            speed: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "running" | "paused" | "stopped" | "finished" | "failed";
+            /** Synthetic */
+            synthetic: boolean;
+            /** Total Rows */
+            total_rows: number | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Well Id */
+            well_id: number;
+            /** Well Name */
+            well_name: string;
+            /** Wellbore Id */
+            wellbore_id: number;
+        };
+        /**
          * ReviewAccept
          * @description The proposed values are right: the target becomes verified.
          */
@@ -2348,6 +2732,17 @@ export interface components {
             formation: string;
             /** Offsets */
             offsets: components["schemas"]["RiskOffset"][];
+            /**
+             * Prognosed
+             * @description Below a drilling well's current TD: the top is the offsets' inverse-distance-weighted estimate, not a pick
+             * @default false
+             */
+            prognosed: boolean;
+            /**
+             * Prognosis Spread M
+             * @description Weighted spread of the offsets' tops around the prognosed top
+             */
+            prognosis_spread_m: number | null;
             /**
              * Risks
              * @description Highest probability first
@@ -2488,6 +2883,20 @@ export interface components {
             tvd_m: number;
             /** Tvdss M */
             tvdss_m: number;
+        };
+        /** StreamStatus */
+        StreamStatus: {
+            /** Heartbeat */
+            heartbeat: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Service Alive
+             * @description The stream service sent a heartbeat in the last 15 s
+             */
+            service_alive: boolean;
+            /** Sessions */
+            sessions: components["schemas"]["ReplaySessionOut"][];
         };
         /** SurveyStationIn */
         SurveyStationIn: {
@@ -2736,7 +3145,10 @@ export interface operations {
         parameters: {
             query?: {
                 well_id?: number | null;
-                status?: string | null;
+                status?: ("new" | "ack" | "actioned" | "dismissed" | "closed")[] | null;
+                severity?: ("info" | "warning" | "critical")[] | null;
+                session_id?: number | null;
+                limit?: number;
             };
             header?: never;
             path?: never;
@@ -2750,7 +3162,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AlertPage"];
                 };
             };
             /** @description Validation Error */
@@ -2762,13 +3174,44 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Planned, not implemented in this phase */
-            501: {
+        };
+    };
+    get_alert_api_v1_alerts__alert_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertOut"];
+                };
+            };
+            /** @description Not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -2790,8 +3233,24 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AlertOut"];
                 };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The alert or replay is not in a state that allows this */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -2800,15 +3259,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2822,7 +3272,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlertDismiss"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -2830,8 +3284,24 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AlertOut"];
                 };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The alert or replay is not in a state that allows this */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -2840,15 +3310,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2862,15 +3323,28 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlertFeedbackIn"];
+            };
+        };
         responses: {
             /** @description Successful Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["AlertFeedbackOut"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2880,15 +3354,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -3527,7 +3992,7 @@ export interface operations {
             };
         };
     };
-    replay_api_v1_replay_post: {
+    list_replays_api_v1_replay_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -3542,16 +4007,56 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ReplaySessionOut"][];
                 };
             };
-            /** @description Planned, not implemented in this phase */
-            501: {
+        };
+    };
+    replay_api_v1_replay_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplayRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplaySessionOut"];
+                };
+            };
+            /** @description Not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The alert or replay is not in a state that allows this */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3737,6 +4242,26 @@ export interface operations {
             };
         };
     };
+    stream_status_api_v1_stream_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StreamStatus"];
+                };
+            };
+        };
+    };
     get_wells_api_v1_wells_get: {
         parameters: {
             query?: {
@@ -3917,6 +4442,49 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OffsetsOut"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    realtime_window_api_v1_wells__well_id__realtime_get: {
+        parameters: {
+            query?: {
+                minutes?: number;
+                max_points?: number;
+            };
+            header?: never;
+            path: {
+                well_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RealtimeWindow"];
                 };
             };
             /** @description Not found */

@@ -9,6 +9,7 @@ distances (SURFACE). The basin base rate of each event type (over every other dr
 well's penetrated formations) sets the Beta prior.
 """
 
+import math
 from collections import defaultdict
 from dataclasses import dataclass
 
@@ -67,6 +68,20 @@ class _Top:
     strat_order: int
     top_md: float
     top_tvdss: float
+
+
+PROGNOSIS_OFFSETS = 5
+
+
+def prognosed_top(points: list[tuple[float, float]]) -> tuple[float, float]:
+    """Expected top (TVDSS) of a formation not yet reached, from (surface distance m, top
+    TVDSS m) of the offsets that penetrated it: inverse-distance-squared weighting over the
+    nearest five (distance floored at 50 m). Returns (top, weighted spread)."""
+    pts = sorted(points)[:PROGNOSIS_OFFSETS]
+    w = [1 / max(d, 50.0) ** 2 for d, _ in pts]
+    z = sum(wi * zi for wi, (_, zi) in zip(w, pts, strict=True)) / sum(w)
+    var = sum(wi * (zi - z) ** 2 for wi, (_, zi) in zip(w, pts, strict=True)) / sum(w)
+    return z, var**0.5
 
 
 def _primary_wellbores(session: Session, well_ids: list[int]) -> dict[int, int]:
@@ -221,10 +236,10 @@ def risk_profile(
     names = {o.well_id: o.name for o in candidates}
     well_types = {o.well_id: o.well_type for o in candidates}
 
-    subject_tops = tops.get(subject_wb, []) if subject_wb else []
+    subject_tops = list(tops.get(subject_wb, [])) if subject_wb else []
     td = (
         session.execute(
-            select(SurveyStation.md_m, SurveyStation.tvdss_m)
+            select(SurveyStation.md_m, SurveyStation.tvdss_m, SurveyStation.inc_deg)
             .where(SurveyStation.wellbore_id == subject_wb)
             .order_by(SurveyStation.md_m.desc())
             .limit(1)
@@ -232,6 +247,26 @@ def risk_profile(
         if subject_wb
         else None
     )
+
+    # A drilling well has not reached its deeper formations: prognose their tops from the
+    # offsets that did, extrapolating MD along the last survey station.
+    prognosis: dict[int, float] = {}
+    if well.status == "drilling" and subject_tops and td is not None:
+        deepest = max(t.strat_order for t in subject_tops)
+        ahead: dict[int, list[tuple[float, _Top]]] = defaultdict(list)
+        for w in cand_ids:
+            for ot in tops.get(offset_wbs.get(w, -1), []):
+                if ot.strat_order > deepest:
+                    ahead[ot.formation_id].append((surface_d[w], ot))
+        cos_inc = max(math.cos(math.radians(float(td[2]))), 0.2)
+        for pts in sorted(ahead.values(), key=lambda p: p[0][1].strat_order):
+            z, spread = prognosed_top([(d, ot.top_tvdss) for d, ot in pts])
+            if z <= float(td[1]):
+                continue  # the offsets put it above TD: a thin or absent unit here
+            ref = pts[0][1]
+            md = float(td[0]) + (z - float(td[1])) / cos_inc
+            subject_tops.append(_Top(ref.formation_id, ref.name, ref.strat_order, md, z))
+            prognosis[ref.formation_id] = spread
 
     intervals: list[RiskInterval] = []
     for k, top in enumerate(subject_tops):
@@ -295,10 +330,20 @@ def risk_profile(
                 formation=top.name,
                 strat_order=top.strat_order,
                 top_md_m=round(top.top_md, 1),
-                base_md_m=round(nxt.top_md, 1) if nxt else (round(float(td[0]), 1) if td else None),
+                base_md_m=(
+                    round(nxt.top_md, 1)
+                    if nxt
+                    else (round(float(td[0]), 1) if td and not prognosis else None)
+                ),
                 top_tvdss_m=round(top.top_tvdss, 1),
                 base_tvdss_m=(
-                    round(nxt.top_tvdss, 1) if nxt else (round(float(td[1]), 1) if td else None)
+                    round(nxt.top_tvdss, 1)
+                    if nxt
+                    else (round(float(td[1]), 1) if td and not prognosis else None)
+                ),
+                prognosed=top.formation_id in prognosis,
+                prognosis_spread_m=(
+                    round(prognosis[top.formation_id], 1) if top.formation_id in prognosis else None
                 ),
                 offsets=offsets,
                 risks=risks,

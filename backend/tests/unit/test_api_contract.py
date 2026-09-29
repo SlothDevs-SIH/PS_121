@@ -1,14 +1,11 @@
 """Every endpoint in master plan §8 is exposed; routes of later phases answer a 501 envelope
-naming their phase. B2 and B3 routes are implemented: here they are checked for their
-declared response models and input validation (422); their behaviour is covered by
-tests/integration/test_b2.py and test_b3.py against the seeded stack.
+naming their phase. B2-B4 routes are implemented: here they are checked for their declared
+response models and input validation (422); their behaviour (and the WebSockets') is covered
+by tests/integration/test_b2.py, test_b3.py and test_b4.py against the seeded stack.
 """
 
 import pytest
 from fastapi.testclient import TestClient
-from starlette.websockets import WebSocketDisconnect
-
-from app.api.v1.routes.ws import WS_NOT_IMPLEMENTED
 
 PLANNED_HTTP = {
     ("post", "/api/v1/documents"),
@@ -51,6 +48,11 @@ PLANNED_HTTP = {
     ("post", "/api/v1/wells/{well_id}/trajectory"),
     # B3 risk and ledger (docs/SPEC_RECONCILIATION.md §6)
     ("get", "/api/v1/wells/{well_id}/cementing-check"),
+    # B4 real-time and alerts
+    ("get", "/api/v1/alerts/{alert_id}"),
+    ("get", "/api/v1/replay"),
+    ("get", "/api/v1/stream/status"),
+    ("get", "/api/v1/wells/{well_id}/realtime"),
 }
 
 # Response schema of every built route (the frontend's generated types depend on these names).
@@ -73,6 +75,15 @@ RESPONSE_MODELS = {
     ("get", "/api/v1/ledger"): "LedgerResponse",
     ("get", "/api/v1/wells/{well_id}/risk-profile"): "RiskProfile",
     ("get", "/api/v1/wells/{well_id}/cementing-check"): "CementingCheck",
+    # B4
+    ("get", "/api/v1/alerts"): "AlertPage",
+    ("get", "/api/v1/alerts/{alert_id}"): "AlertOut",
+    ("post", "/api/v1/alerts/{alert_id}/ack"): "AlertOut",
+    ("post", "/api/v1/alerts/{alert_id}/dismiss"): "AlertOut",
+    ("post", "/api/v1/alerts/{alert_id}/feedback"): "AlertFeedbackOut",
+    ("post", "/api/v1/replay"): "ReplaySessionOut",
+    ("get", "/api/v1/stream/status"): "StreamStatus",
+    ("get", "/api/v1/wells/{well_id}/realtime"): "RealtimeWindow",
 }
 
 EVENT_BODY = {
@@ -114,8 +125,6 @@ def test_built_routes_declare_their_response_model(
     ("method", "url", "body", "phase"),
     [
         # Later phases
-        ("get", "/api/v1/alerts", None, "B4"),
-        ("post", "/api/v1/replay", None, "B4"),
         ("post", "/api/v1/copilot/chat", None, "B5"),
         ("get", "/api/v1/reports/offset-brief/7", None, "B5"),
     ],
@@ -193,6 +202,19 @@ def test_validation_uses_error_envelope(client: TestClient) -> None:
         ("get", "/api/v1/wells/7/cementing-check?shoe_md_m=2000", None),
         ("get", "/api/v1/wells/7/cementing-check?shoe_md_m=2000&slurry_density_sg=3.1", None),
         ("get", "/api/v1/wells/7/cementing-check?shoe_md_m=-1&slurry_density_sg=1.5", None),
+        ("post", "/api/v1/replay", {"action": "start"}),
+        ("post", "/api/v1/replay", {"well_id": 41, "speed": 0}),
+        ("post", "/api/v1/replay", {"well_id": 41, "speed": 5000}),
+        ("post", "/api/v1/replay", {"well_id": 41, "action": "rewind"}),
+        ("post", "/api/v1/replay", {"well_id": 41, "extra": 1}),
+        ("get", "/api/v1/alerts?status=open", None),
+        ("get", "/api/v1/alerts?severity=high", None),
+        ("get", "/api/v1/alerts?limit=501", None),
+        ("post", "/api/v1/alerts/1/dismiss", {"reason": ""}),
+        ("post", "/api/v1/alerts/1/dismiss", {}),
+        ("post", "/api/v1/alerts/1/feedback", {"verdict": "great"}),
+        ("get", "/api/v1/wells/7/realtime?minutes=0", None),
+        ("get", "/api/v1/wells/7/realtime?max_points=5", None),
         # cross-parameter rules (app.api.v1.params)
         ("get", "/api/v1/events?radius_km=5", None),
         ("get", "/api/v1/events?tvdss_from_m=2000&tvdss_to_m=1000", None),
@@ -234,12 +256,3 @@ def test_request_id_is_echoed_or_generated(client: TestClient) -> None:
     )
     generated = client.get("/healthz").headers["X-Request-ID"]
     assert len(generated) == 32
-
-
-@pytest.mark.parametrize("path", ["/ws/alerts", "/ws/wells/3/live"])
-def test_websockets_close_with_not_implemented(client: TestClient, path: str) -> None:
-    with client.websocket_connect(path) as ws:
-        assert ws.receive_json()["error"]["code"] == "not_implemented"
-        with pytest.raises(WebSocketDisconnect) as closed:
-            ws.receive_json()
-    assert closed.value.code == WS_NOT_IMPLEMENTED

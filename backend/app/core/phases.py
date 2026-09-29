@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 Status = Literal["planned", "in_progress", "built"]
 
-CURRENT_PHASE = "B3"
+CURRENT_PHASE = "B4"
 
 
 class Component(BaseModel):
@@ -78,12 +78,12 @@ COMPONENTS: list[Component] = [
         stage="S7b",
         name="Rig state + real-time classifiers",
         phase="B4",
-        status="planned",
+        status="built",
     ),
     Component(
         key="physics",
         stage="S7c",
-        name="Physics indicators (formula library; live evaluation on the stream: B4)",
+        name="Physics indicators (formula library + live rules on the stream)",
         phase="B3",
         status="built",
     ),
@@ -92,7 +92,7 @@ COMPONENTS: list[Component] = [
         stage="S7d",
         name="Deja Vu pattern matching (USP 1)",
         phase="B4",
-        status="planned",
+        status="built",
     ),
     Component(
         key="ledger",
@@ -101,7 +101,7 @@ COMPONENTS: list[Component] = [
         phase="B3",
         status="built",
     ),
-    Component(key="alerts", stage="S9", name="Alert engine", phase="B4", status="planned"),
+    Component(key="alerts", stage="S9", name="Alert engine", phase="B4", status="built"),
     Component(
         key="copilot",
         stage="S10",
@@ -110,7 +110,11 @@ COMPONENTS: list[Component] = [
         status="planned",
     ),
     Component(
-        key="stream", stage="S12", name="eRTMAC adapter & replay", phase="B4", status="planned"
+        key="stream",
+        stage="S12",
+        name="eRTMAC adapter & replay (CSV replay, WITS0; WITSML/ETP: later)",
+        phase="B4",
+        status="built",
     ),
     Component(
         key="auth", stage="-", name="OIDC auth, RBAC, audit log", phase="B6", status="planned"

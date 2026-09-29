@@ -11,6 +11,15 @@ from app.db.models.engineering import (
     MudInterval,
     ReviewItem,
 )
+from app.db.models.realtime import (
+    Alert,
+    AlertFeedback,
+    ChannelMapping,
+    PatternSignature,
+    ReplaySession,
+    RtSample,
+    RtScore,
+)
 from app.db.models.wells import (
     AliasCandidate,
     Field,
@@ -22,9 +31,12 @@ from app.db.models.wells import (
 )
 
 __all__ = [
+    "Alert",
+    "AlertFeedback",
     "AliasCandidate",
     "CasingString",
     "CementJob",
+    "ChannelMapping",
     "Chunk",
     "DdrOperation",
     "Document",
@@ -36,7 +48,11 @@ __all__ = [
     "Mitigation",
     "MudInterval",
     "Page",
+    "PatternSignature",
+    "ReplaySession",
     "ReviewItem",
+    "RtSample",
+    "RtScore",
     "SurveyStation",
     "TextSpan",
     "Well",

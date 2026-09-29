@@ -241,8 +241,8 @@ export function DashboardPage() {
             <div className="flex items-center gap-3 rounded-lg border border-dashed border-border p-4 text-sm text-muted">
               <BellOff size={20} aria-hidden />
               <p>
-                Real-time alerts arrive with the replay stream and alert engine (Part 4–5). Nothing
-                here is simulated in the meantime.
+                The alert engine runs on the replay stream (backend B4); the alert feed arrives with
+                the Live Monitor in Part 5. Nothing here is simulated in the meantime.
               </p>
             </div>
           </Card>

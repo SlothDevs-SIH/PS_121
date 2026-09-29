@@ -44,30 +44,27 @@ test('every screen in the navigation loads without errors', async ({ page }) => 
 })
 
 test('planned screens probe the real backend and show its phase', async ({ page }) => {
+  // The alerts screen is F4 (Part 5), but its backend (B4) already answers.
   await page.goto('/alerts')
   await expect(page.getByTestId('planned-phase')).toHaveText('Planned · frontend phase F4')
-  await expect(page.getByTestId('endpoint-probes')).toContainText('501 · backend phase B4')
-  // The ledger screen is F3 (Part 4), but its backend (B3) already answers.
-  await page.goto('/ledger')
-  await expect(page.getByTestId('planned-phase')).toHaveText('Planned · frontend phase F3')
   await expect(page.getByTestId('endpoint-probes')).toContainText('200 ok')
 })
 
 test('WebSockets are proxied through nginx to the backend', async ({ page }) => {
   await page.goto('/system')
-  const result = await page.evaluate(
+  const message = await page.evaluate(
     () =>
-      new Promise<{ message: string; code: number }>((resolve, reject) => {
+      new Promise<string>((resolve, reject) => {
         const ws = new WebSocket(`${location.origin.replace(/^http/, 'ws')}/ws/alerts`)
-        let message = ''
-        ws.onmessage = (e) => (message = String(e.data))
-        ws.onclose = (e) => resolve({ message, code: e.code })
+        ws.onmessage = (e) => {
+          resolve(String(e.data))
+          ws.close()
+        }
         ws.onerror = () => reject(new Error('websocket error'))
         setTimeout(() => reject(new Error('timeout')), 5000)
       }),
   )
-  expect(result.code).toBe(4501)
-  expect(JSON.parse(result.message).error.code).toBe('not_implemented')
+  expect(JSON.parse(message).type).toBe('hello')
 })
 
 test('theme and field mode persist across reloads', async ({ page }) => {

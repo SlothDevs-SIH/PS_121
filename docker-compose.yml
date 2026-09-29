@@ -104,6 +104,22 @@ services:
       migrate: { condition: service_completed_successfully }
     restart: unless-stopped
 
+  stream:
+    # S12/S9: replay + WITS0 publishers, persistence, scoring and the alert engine.
+    image: smriti-backend:dev
+    command: ["python", "-m", "app.stream.run"]
+    environment: *backend-env
+    healthcheck:
+      # The service refreshes a heartbeat key in Redis every second (15 s expiry).
+      test: ["CMD", "python", "-c", "import os, sys, redis; sys.exit(0 if redis.Redis.from_url(os.environ['SMRITI_REDIS_URL']).exists('stream:heartbeat') else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend
