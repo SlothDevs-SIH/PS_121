@@ -3,13 +3,43 @@
 **Team:** Slothdevs · **Solution:** SMRITI (working name) · **Problem Statement:** PS 121 — eRTMAC-NWIS (Oil India Limited)
 **Parent documents:** [`SMRITI_MASTER_PLAN.md`](../SMRITI_MASTER_PLAN.md) (product) · [`BACKEND_PLAN.md`](BACKEND_PLAN.md) (API and data). This document is the source of truth for the web app. When they disagree, fix all of them in the same PR.
 **Document date:** 2026-09-28 (v1.0) · **updated 2026-09-29 (v1.1, Part 2):** the design-system revamp of `docs/SPEC_RECONCILIATION.md` §5 (themes, motion, shell, ⌘K palette, MapLibre, Documents Library, Dashboard) is built; see §0.1, §5, §8, §13, Appendix B3.
-**Frontend phase:** F0 ✅ · F1 ✅ (Part 1) · **Part 2 revamp (P2): ✅ COMPLETE (2026-09-29)**. Next: **F2 — Knowledge** screens (Well 360, Correlation Panel, Knowledge Search, Review queue, map proximity modes) in Part 3.
+**Updated 2026-09-29 (v1.2, Part 3):** F2 Knowledge screens built (Correlation Panel, Well 360 with a 3D trajectory, Knowledge Search, review queue, map proximity modes) with axe checks in e2e; see §0.0, the log (V-F14–V-F17), §5, §6, §9, §10, §13, Appendix B4.
+**Frontend phase:** F0 ✅ · F1 ✅ (Part 1) · P2 ✅ (Part 2) · **F2 — Knowledge: ✅ COMPLETE (2026-09-29, Part 3)**. Next: **F3 — Mitigation Ledger and risk curves** (Part 4), on the B3 API that is already live.
 
-> ⚠️ **Same honesty rule as the master and backend plans:** a "✅" must point to a file and a test that passed. Every number in §0 and Appendix B was measured in this repository on the date given. Everything from F2 onward is a **plan**.
+> ⚠️ **Same honesty rule as the master and backend plans:** a "✅" must point to a file and a test that passed. Every number in §0 and Appendix B was measured in this repository on the date given. Everything from F3 onward is a **plan**.
 
 ---
 
 ## 0. Where the frontend actually stands right now (2026-09-29)
+
+### 0.0 F2 — Knowledge screens (built in Part 3, 2026-09-29)
+
+**Built and verified** (evidence: Appendix B4):
+- **Correlation Panel** (`src/pages/CorrelationPage.tsx`, `components/correlation/*`, `lib/correlation.ts`), the screen judges will remember:
+  - Wells side by side on **one depth axis** in all three alignments: TVDSS, flattened on a chosen top, formation-relative. Axis labels always name the reference ("m TVDSS", "m from Tipam Sandstone", "position in formation").
+  - Per column: formations with lithology fill patterns, casing shoes (◣ + OD) and tops of cement (amber when returns were partial/none), mud weight and ECD on **one SG scale shared by all columns**, and event markers (shape + colour + code by type, size by NPT, dashed when unverified).
+  - The crosshair reads each well's **own TVDSS** at the cursor (inverse of the alignment, `tvdssAt`); zoom keeps the viewed depth centred; double-click a formation to zoom to it.
+  - Clicking an event shows what happened, the actions in the order tried with outcomes, and opens the cited report page. A well missing the chosen top is drawn on TVDSS **with a badge**, never interpolated.
+  - Formation statistics under the panel. Wells, alignment and top live in the URL; with none given it opens on the planned well and its five nearest drilled offsets.
+  - Rendered as React SVG, not D3 (ADR-F16).
+- **Well 360** (`src/pages/Well360Page.tsx`, `components/well360/*`): header with aliases, badges and the **data-quality score with its reasons**; Overview (wellbore sketch to scale: hole sections, casing, cement, mud-weight programme, events; cited casing/cement and mud tables; formation tops); Events (strip by date or by depth, rows that expand to parameters, actions and the lesson, DDR NPT lines); **Trajectory** (3D view, below); Lessons; Documents. Links to the map, the correlation panel with the nearest offsets, and search scoped to the well.
+- **3D trajectory** (`components/well360/Trajectory3D.tsx`, `lib/trajectory3d.ts`): an orthographic camera in plain SVG (no WebGL, no new dependency, ADR-F17). Drag, arrow keys or sliders turn and tilt it; Plan and Section are presets. It draws the well from its stations, up to 6 offsets within 3 km from their own surveys, formation tops and events (click → evidence), a wireframe box with a TVDSS scale and a north arrow. Horizontal and vertical scales are equal, and the fit doesn't change as the scene turns.
+- **Knowledge Search** (`src/pages/SearchPage.tsx`): filters in the URL (well + radius, formation, report type, dates, problem types). **Lessons cards first**, then report passages with the matched terms highlighted and a `[DDR:p.1]` citation that opens the page with those lines lit. "**No record found**" is said plainly; the `hash` embedder is labelled a stand-in, not a language model.
+- **Review queue** (Documents Library → Review queue tab, `components/review/ReviewQueue.tsx`, `lib/review.ts`): lowest confidence first; the item beside its **source page with the cited lines highlighted**; the reason it needs review; Accept / Edit / Reject with **A / E / R** and **J / K**. Corrections are typed per kind like the backend's models, in canonical units, and **only changed fields are sent**. `?item=` opens one item.
+- **Map proximity modes** (`WellMapPage.tsx`): At formation (formation picker from the well's tops) and Closest approach (optional TVDSS window), each with its distance label, a depth column, and the **wells left out with the reason** ("SYN-ASM-41: no Barail top").
+- **Accessibility:** `@axe-core/playwright` (WCAG 2.0/2.1/2.2 A + AA) runs in e2e on every new screen in the Deep Rig and Daylight themes and passes. Fixes it forced: 24 px hit areas for map markers, WAI-ARIA tabs (`components/ui/Tabs.tsx`), contrast of the sidebar's phase tags, highlight boxes that are not controls when they do nothing, a keyboard-scrollable source page.
+- **Tests:** 90 unit tests (+37: correlation maths 10, 3D camera 7, review corrections 3, Correlation 4, Well 360 5, Search 4, review queue 3, map modes 1) and `e2e/part3.spec.ts` (7 scenarios × 2 viewports, the review round trip on desktop only because it writes).
+
+**Measured** (solo run, sandbox, clean seed): 6-well correlation panel first render **699 ms including page load**; re-alignment **183 ms** click → redrawn (254–931 ms with four browsers running at once); review round trip (open item → corrected) **915 ms**. Bundles: shell **165.2 kB gzip** (budget 180); new screens 3.6–8.1 kB gzip each; CSS 9.7 kB.
+
+**Found while building F2:**
+1. **The `OFFSETS` test fixture lacked fields the API always returns** (`excluded`, `distance_label`), so the map crashed only in tests once it read them. Fixture fixed to the real shape.
+2. **A rerun of the review e2e merged its upload into the event an earlier run had corrected** (same well, date and depth: the B2 merge rule working as designed), so typing the "new" depth changed nothing. The test now corrects relative to whatever the form holds.
+3. **Timing with `expect()` polling overstated the re-alignment by up to a second**; it is now timed inside the page.
+
+**Not built in F2 (stated, not hidden):**
+- **No visual-regression screenshots** (V-F16): pixel baselines differ between this sandbox and CI runners. The correlation scale maths is unit-tested and the panel is checked functionally in e2e instead.
+- The hazard strip on the correlation panel and risk curves belong to F3 (Part 4).
 
 ### 0.1 Part 2 — Design system, shell, MapLibre, Documents Library, Dashboard (2026-09-29)
 
@@ -160,6 +190,10 @@
 | V-F11 | MapLibre needs WebGL2 and a worker | Headless Chromium 1194 here and on GitHub runners provides WebGL2 (SwiftShader); the default worker creation uses a `blob:` URL, which the CSP forbids | `?worker&url` + `setWorkerUrl` (same-origin module worker); e2e asserts markers render with no console errors. jsdom tests use a fake (`src/test/fakeMaplibre.ts`) | ✅ Resolved |
 | V-F12 | MapLibre chunk is ~283 kB gzip (+144 kB worker) | Over the 150 kB per-screen budget in §10 | Loaded only by pages with a map (Map Explorer, Dashboard mini map). Accepted for Part 2; revisit a lighter dashboard preview (static SVG) if the dashboard's first paint suffers on field tablets | ⚠️ Accepted |
 | V-F13 | "Framer Motion" in the spec is published as `motion` | Same library, renamed package | `motion` 13 (`motion/react`) | ✅ Decided |
+| V-F14 | Depth tracks in React SVG, not D3 | The spec named D3; scales, ticks and the inverse mapping are ~150 lines of tested code | ADR-F16. Add D3 only if brushing or canvas tracks need it | ✅ Decided |
+| V-F15 | 3D trajectory in SVG, not three.js | three.js would be a ~150 kB gzip chunk for a few polylines | ADR-F17; revisit if surfaces (horizons, uncertainty cones) are needed | ✅ Decided |
+| V-F16 | No visual-regression screenshots yet (§9 planned them from F2) | Baselines made here would not match CI's renderer | Generate baselines in CI (artifact) when the design settles; functional e2e + unit-tested maths meanwhile | ⏳ Open |
+| V-F17 | Map pins of wells on one pad overlap, so axe flags target size | WCAG 2.5.8 "equivalent" exception: every well can also be picked from the offset table and the well picker | e2e excludes `.maplibregl-marker` from axe with that reason in a comment; pins now have 24 px hit areas | ✅ Decided |
 
 ---
 
@@ -442,17 +476,21 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 8 | nginx image: SPA fallback, proxy (HTTP + WS), CSP/security headers, caching | F0 | ⚠️ ships source maps (V-F4) | `frontend/Dockerfile`, `frontend/nginx/default.conf.template` · e2e WebSocket test, curl header checks (App. B) |
 | 9 | Compose `frontend` service, health-gated | F0 | ✅ | `docker-compose.yml` · `up --wait` healthy |
 | 10 | CI: frontend-checks + e2e in integration | F0 | ✅ | `.github/workflows/ci.yml` · [run](https://github.com/SlothDevs-SIH/PS_121/actions/runs/36463537008) green |
-| 11 | Map Explorer on MapLibre (surface mode; other modes labelled Part 3) | F1 → P2 | ✅ | `src/pages/WellMapPage.tsx`, `src/components/map/WellMap.tsx`, `src/lib/maplibre.ts` · `WellMapPage.test.tsx` (4), `WellMap.test.tsx` (3), e2e map scenarios |
+| 11 | Map Explorer on MapLibre (surface, at-formation and closest-approach modes) | F1 → P2 → F2 | ✅ | `src/pages/WellMapPage.tsx`, `src/components/map/WellMap.tsx`, `src/lib/maplibre.ts` · `WellMapPage.test.tsx` (4), `WellMap.test.tsx` (3), e2e map scenarios |
 | 12 | Documents Library (upload, grid/list, pipeline timeline, deep links) | F1 → P2 | ✅ | `src/pages/IngestPage.tsx`, `src/components/documents/Pipeline.tsx`, `src/lib/documents.ts` · `IngestPage.test.tsx` (5), e2e upload + library scenarios |
 | 12a | Design system: 3 themes, well-type colours, z-index scale, fonts, motion, theme reveal | P2 | ✅ | `src/styles/index.css`, `src/lib/motion.ts`, `src/components/shell/ThemeSwitcher.tsx` · `AppShell.test.tsx` theme cycle, `ui.test.ts` (3), e2e theme persistence |
 | 12b | Shell: collapsible sidebar, top bar, well-type switcher, ⌘K palette, route transitions | P2 | ✅ | `src/components/shell/*`, `src/app/AppShell.tsx`, `src/stores/ui.ts` · `AppShell.test.tsx` (11), `CommandPalette.test.tsx` (2), e2e palette / switcher / collapse |
 | 12c | Dashboard shell (KPIs, mini map, recent events, alerts placeholder) | P2 | ✅ | `src/pages/DashboardPage.tsx`, `src/components/ui/KpiCard.tsx` · `DashboardPage.test.tsx` (2), e2e dashboard |
 | 13 | `EvidenceLink`, `PageViewer`, `ConfidenceValue`, `DataTable`, units formatter, units toggle, runtime config | F1 | ✅ | `src/components/**`, `src/lib/format/units.ts`, `src/lib/config.ts` · `PageViewer.test.tsx` (2), `DataTable.test.tsx` (2), `units.test.ts` (5) |
-| 14 | Review queue, Well 360, Correlation Panel, Knowledge Search | F2 | 📋 | §4.2–4.5 |
+| 14 | Correlation Panel | F2 | ✅ | `src/pages/CorrelationPage.tsx`, `components/correlation/*`, `lib/correlation.ts` · `correlation.test.ts` (10), `CorrelationPage.test.tsx` (4), e2e "correlation panel" |
+| 14a | Well 360 incl. 3D trajectory | F2 | ✅ | `src/pages/Well360Page.tsx`, `components/well360/*`, `lib/trajectory3d.ts` · `trajectory3d.test.ts` (7), `Well360Page.test.tsx` (5), e2e "well 360" |
+| 14b | Knowledge Search | F2 | ✅ | `src/pages/SearchPage.tsx`, `components/knowledge/LessonCardView.tsx`, `lib/highlight.tsx` · `SearchPage.test.tsx` (4), e2e "knowledge search" |
+| 14c | Review queue | F2 | ✅ | `components/review/ReviewQueue.tsx`, `lib/review.ts`, `components/evidence/PageImage.tsx` · `review.test.ts` (3), `ReviewQueue.test.tsx` (3), e2e "review queue" (uploads its own low-confidence DDR) |
+| 14d | Automated accessibility checks | F2 | ✅ | `e2e/part3.spec.ts` axe scenarios (2 themes × 2 viewports) |
 | 15 | Mitigation Ledger, risk curves on Map/Well 360 | F3 | 📋 | §4.6 |
 | 16 | Live Well Monitor, Alerts, Déjà Vu overlay | F4 | 📋 | §4.7–4.8 |
 | 17 | Copilot panel, Analytics, Offset Risk Brief button, PWA offline well pack | F5 | 📋 | §4.5, §4.9, §12 |
-| 18 | OIDC login (PKCE), role-aware UI, Admin, axe checks, hidden source maps, perf budget enforcement | F6 | 📋 | §4.10, §11 |
+| 18 | OIDC login (PKCE), role-aware UI, Admin, hidden source maps, perf budget enforcement | F6 | 📋 | §4.10, §11 |
 
 ---
 
@@ -465,7 +503,7 @@ Frontend phases follow the backend phases they depend on, typically starting a f
 | **F0 Skeleton** | B0 | P0 | Shell, theming, field mode, API layer, System Status, planned screens, nginx image, CI | ✅ **Met 2026-09-28**, including a green GitHub CI run — Appendix B |
 | **F1 Map & ingestion** | B1 | P1 | Well Map (surface mode), upload + job status, `EvidenceLink`/`PageViewer`, `ConfidenceValue`, `DataTable`, units formatter, route-level code splitting, tile decision | ✅ **Met 2026-09-28** on synthetic wells (no Volve data, see BACKEND_PLAN V-B13): radius search end to end in the browser; uploads tracked to `processed` and viewable with evidence; e2e covers both |
 | **P2 Revamp** (Part 2) | B2 | — | `SPEC_RECONCILIATION.md` §5: themes, motion, collapsible sidebar, top bar with well-type switcher, ⌘K palette, MapLibre map, Documents Library revamp, Dashboard shell | ✅ **Met 2026-09-29** — §0.1, Appendix B3 |
-| **F2 Knowledge** (Part 3) | B2 ✅ | P2 | Review queue, Well 360, **Correlation Panel**, Knowledge Search, at-formation/closest-approach modes on the map, axe checks in e2e | Correlation panel renders 6 wells < 1 s with evidence links; review round trip; search with citations |
+| **F2 Knowledge** (Part 3) | B2 ✅ | P2 | Review queue, Well 360, **Correlation Panel**, Knowledge Search, at-formation/closest-approach modes on the map, axe checks in e2e | ✅ **Met 2026-09-29 (Part 3):** 6 wells re-aligned in 183 ms (first render 699 ms incl. page load) with evidence links; review round trip in e2e; search with citations and "no record"; axe clean. No visual-regression baseline (V-F16). §0.0, Appendix B4 |
 | **F3 Risk & ledger** | B3 | P3a | Mitigation Ledger, `RiskCurve` on Map/Well 360/Correlation hazard strip | Ledger shows the planted ranking; risk curves show n and CI |
 | **F4 Real-time** | B4 | P3b | Live Well Monitor, Alerts list/detail, Déjà Vu overlay, WebSocket client with reconnect/stale handling | Replay → alerts appear in the UI ≤ 5 s after the backend emits them (measured); tablet smoothness target met |
 | **F5 Copilot & polish** | B5 | P4 | Copilot panel (SSE), Analytics, Offset Risk Brief download, PWA with an offline well pack | Copilot answers with clickable citations; field view usable offline for a cached well (knowledge views only) |
@@ -523,11 +561,11 @@ Per-viewer preferences in localStorage (guarded; not reliable state): `smriti.th
 
 | Layer | Tooling | Runs | F0 count |
 |---|---|---|---|
-| Unit / component | Vitest + Testing Library + jsdom; `mockBackend()` fetch table; `renderApp(path)` with the real router | every push (`frontend-checks`) | **21 ✅** |
+| Unit / component | Vitest + Testing Library + jsdom; `mockBackend()` fetch table; `renderApp(path)` with the real router | every push (`frontend-checks`) | **21 ✅** (F0) → **90 ✅** (F2) |
 | Contract | `check:api` (types regenerated = committed), backend export diff, `screens.test.ts` endpoint check | every push | **3 checks ✅** |
 | Browser e2e | Playwright (Chromium), desktop 1280×720 + tablet 800×1280 projects, against the Compose stack through nginx | `integration` job | **14 ✅** (7 scenarios × 2) |
-| Visual regression | Playwright screenshots of fixed synthetic views | from F2 (correlation panel) | 0 |
-| Accessibility | `@axe-core/playwright` on every screen | from F2 | 0 |
+| Visual regression | Playwright screenshots of fixed synthetic views | not yet (V-F16) | 0 |
+| Accessibility | `@axe-core/playwright`, WCAG 2.2 A/AA, two themes | `integration` job, from F2 | **4 ✅** (2 themes × 2 viewports, 7 screens each) |
 
 **E2E guarantees already enforced:**
 - No console errors on any screen (catches CSP violations and runtime errors). The only whitelisted message is the browser's own log line for deliberate 501 probe responses.
@@ -546,7 +584,7 @@ Per-viewer preferences in localStorage (guarded; not reliable state): `smriti.th
 | Initial JS (gzip) | ≤ 180 kB for the shell; each screen chunk ≤ 150 kB | **125 kB** (single chunk; `vite build`, 2026-09-28) |
 | CSS (gzip) | ≤ 20 kB | **4.1 kB** |
 | Largest Contentful Paint (office laptop, LAN) | ≤ 1.5 s | not measured |
-| Correlation panel render, 6 wells | ≤ 1 s | F2 |
+| Correlation panel render, 6 wells | ≤ 1 s | **183 ms** re-align, 699 ms first render incl. page load (F2, e2e) |
 | Live monitor update cost (tablet) | < 16 ms main-thread per 1 Hz update | F4 |
 | Alert shown after the backend emits it | ≤ 1 s (inside the 5 s end-to-end budget) | F4 |
 
@@ -597,6 +635,8 @@ Per-viewer preferences in localStorage (guarded; not reliable state): `smriti.th
 | ADR-F13 | Zustand for UI-only state; TanStack Query stays the only home of server data | Context providers per concern | Tiny, selector-based (no re-render cascades), testable outside React; never duplicates server data (FRONTEND_SPEC §6) |
 | ADR-F14 | cmdk's `Command` inside our own motion dialog, lazy-loaded | cmdk's Radix-based `Command.Dialog` | Our dialog gets the same motion and z-index rules; no Radix title warnings; cmdk stays out of the shell bundle |
 | ADR-F15 | CSS grid-column transition for the sidebar | Framer `width` animation | Spec §7 rule 4: the browser interpolates one property; no per-frame JS layout |
+| ADR-F16 | Depth tracks as React SVG with our own scale maths | D3 (ADR-F7's plan) | Linear scales, ticks and the alignment inverse are small and unit-tested; React owns the DOM, no second rendering model; memoised columns keep the crosshair cheap |
+| ADR-F17 | 3D trajectory as an orthographic SVG camera | three.js / react-three-fiber | A few polylines and markers need no WebGL; no new dependency or 150 kB chunk; works in jsdom tests, in screenshots and under the strict CSP |
 
 ---
 
@@ -638,11 +678,12 @@ One codebase serves office laptops, RTMAC wall screens and rig tablets, with no 
 
 ## 16. Immediate Next Actions (frontend)
 
-*(Updated 2026-09-29 after Part 2.)*
+*(Updated 2026-09-29 after Part 3.)*
 
-1. **Part 3 (F2 Knowledge):** the Correlation Panel first (highest-risk UI, RF1), on `/correlation` which now returns real panels in about 85 ms. Then Well 360 (with the 3D trajectory), Knowledge Search, the review queue, and at-formation / closest-approach on the map. The API for all of them is live (B2).
-2. **Self-hosted tile pack** for the demo area, so the map has a basemap offline (V-F10 follow-up) — UI eng. + infra.
-3. **`docker save`** the node/nginx base images for the finale machine (V-F8).
+1. **Part 4 (F3):** the Mitigation Ledger screen on `GET /api/v1/ledger` (live, B3): ranked table with `IntervalBar`s, "insufficient evidence" section, cases with evidence, the observational caveat. Then `RiskCurve` from `GET /wells/{id}/risk-profile` on Well 360, the map panel and the correlation hazard strip.
+2. **Visual-regression baselines** generated in CI (V-F16).
+3. **Self-hosted tile pack** for the demo area, so the map has a basemap offline (V-F10 follow-up) — UI eng. + infra.
+4. **`docker save`** the node/nginx base images for the finale machine (V-F8).
 
 ---
 
@@ -727,6 +768,21 @@ Clean run against the freshly seeded stack (BACKEND_PLAN Appendix B3).
 | Browser e2e | `npm run e2e` (Playwright 1.56.1, Chromium, through nginx) | **33 passed, 1 skipped** (desktop + tablet; the skip is the collapse test on tablet, where the rail is imposed) |
 | CSP | e2e console check on the dashboard and map | WebGL map rendered; zero CSP violations after the font fix |
 | Visual review | Playwright screenshots at 1440 px: Dashboard, Map Explorer and Documents Library in Deep Rig, Daylight Field and Command Blue; the palette open | Correct. The pipeline labels truncating, the dashboard map not filling its card and wrapped bearings were found here and fixed |
+
+## Appendix B4 — Part 3 (F2) Verification Record (2026-09-29)
+
+Clean run against the freshly seeded stack at commit `bce0acb` (BACKEND_PLAN Appendix B4).
+
+| Check | Command | Result |
+|---|---|---|
+| Unit/component tests | `npm test` (3 consecutive runs) | **90 passed** (20 files) each time |
+| Lint / format / types / contract | `npm run lint`, `format:check`, `typecheck`, `check:api` | clean; no schema drift |
+| Build | `npm run build` | shell **165.2 kB gzip** (budget 180); `Well360Page` 8.1 kB, `CorrelationPage` 7.8 kB, `TrajectoryTab` 5.0 kB, `SearchPage` 3.6 kB (all lazy); CSS 9.7 kB |
+| Browser e2e | `npm run e2e` through nginx with the strict CSP | **46 passed, 2 skipped** (desktop + tablet; skips: the collapse test on tablet, and the database-writing review test runs on desktop only) |
+| Accessibility | axe in `part3.spec.ts`, Deep Rig and Daylight | 0 violations on Correlation, Well 360 (overview, events, trajectory), Search, review queue, map modes (map pins excluded, V-F17) |
+| Timing | `part3.spec.ts` annotations | correlation first render 699 ms, re-align 183 ms; review round trip 915 ms |
+| Visual review | Playwright screenshots at 1440 px of every new screen | Found and fixed here: clipped cursor label, faint casing shoes, offset labels colliding at pad wellheads, clipped depth columns on the map panel |
+| CI | GitHub Actions on `bce0acb` | all three jobs green |
 
 ## Appendix C — Document Maintenance Rules
 

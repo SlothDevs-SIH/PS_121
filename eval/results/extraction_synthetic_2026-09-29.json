@@ -1,7 +1,7 @@
 {
   "what": "S2 extraction vs synthetic ground truth (NOT the \u00a713.1 real-report gold set)",
-  "measured_at": "2026-09-29T05:53:35+00:00",
-  "commit": "9a74d62",
+  "measured_at": "2026-09-29T08:58:58+00:00",
+  "commit": "bce0acb",
   "wells_scored": 41,
   "match_rule": "same well, |MD| <= 15.0 m, greedy nearest",
   "events": {

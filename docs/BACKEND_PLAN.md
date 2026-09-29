@@ -4,13 +4,44 @@
 **Parent document:** [`SMRITI_MASTER_PLAN.md`](../SMRITI_MASTER_PLAN.md). That is the product source of truth; **this** document is the source of truth for the backend. When the two disagree, fix both in the same PR.
 **Document date:** 2026-09-28 (v1.0) · **updated 2026-09-28 (v1.1):** frontend F0 landed (V-B4 resolved); new `app.cli openapi` command exports the API contract for the frontend (+1 unit test → 31); CI jobs restructured (`backend-checks`, `frontend-checks`, `integration`).
 **Updated 2026-09-29 (v1.2, Part 2):** B2 knowledge layer built on the contract drafted in `f621a3e` (data model, migrations 0005–0006, typed API); §0.1, §5, §6, §13, §16 and Appendix B3 record it.
-**Backend phase:** B0 ✅ · B1 ✅ (Part 1) · **B2 — Knowledge layer: ✅ COMPLETE (2026-09-29, Part 2)**. Next: **B3 — Batch intelligence** (Part 3).
+**Updated 2026-09-29 (v1.3, Part 3):** B3 batch intelligence built (offset prior risk, physics indicators, Mitigation Effectiveness Ledger) and evaluated; §0.0, the log (V-B19–V-B24), §5, §6, §16 and Appendix B4 record it.
+**Backend phase:** B0 ✅ · B1 ✅ (Part 1) · B2 ✅ (Part 2) · **B3 — Batch intelligence: ✅ COMPLETE (2026-09-29, Part 3)**, with the ledger's exit criterion met on the seeded field and a stated sample-size caveat (V-B19). Next: **B4 — Real-time** (Part 4).
 
-> ⚠️ **Same honesty rule as the master plan and DHRUVA:** a "✅" must point to a file and a test that passed. Every number in §0 was measured in this repository on the date given. Everything from B3 onward is a **plan**.
+> ⚠️ **Same honesty rule as the master plan and DHRUVA:** a "✅" must point to a file and a test that passed. Every number in §0 was measured in this repository on the date given. Everything from B4 onward is a **plan**.
 
 ---
 
 ## 0. Where the backend actually stands right now (2026-09-29)
+
+### 0.0 B3 — Batch intelligence (built in Part 3, 2026-09-29)
+
+**Built and verified** (evidence: Appendix B4):
+- **S8 Mitigation Effectiveness Ledger** (`app/ledger/core.py`, `service.py`, `GET /api/v1/ledger`):
+  - Outcome rule: a recorded success followed by the same problem in the same well within 50 m TVD and 24 h counts as *partial*; partial and fail count as not working; **unknown outcomes are never counted**, only reported.
+  - Beta(1,1) posterior mean and 90% equal-tailed credible interval per action; **ranked only with n ≥ 3** (`min_n` 1–50); the rest are listed as insufficient evidence with their cases.
+  - Severity strata, first-choice counts, median NPT and volume, and up to 25 cited cases per action (event, well, formation, recorded vs ledger outcome, report page).
+  - Scopes: formation (name or synonym), basin, `well_id` + `radius_km`, severity. Every response carries the outcome rule and the observational caveat ("associated with, not proven to cause; confounding by severity").
+- **S7a offset prior risk** (`app/risk/core.py`, `prior.py`, `GET /api/v1/wells/{id}/risk-profile`):
+  - Weighted Beta-Binomial per formation × event type, as master plan §Stage 7a states it: w = exp(−d²/2σ²) × similarity × recency; P = (Σw·y + α)/(Σw + α + β); α + β = 2 from the basin base rate; n_eff = (Σw)²/Σw²; 90% credible interval.
+  - Similarity 0.5–1.0: × 0.75 for another hole size, × 0.8 for another mud system, × 0.9 for another well type (unknown counts as a match). Recency 1.0 (V-B22).
+  - Distances: AT_FORMATION (3D between the two wells' entry points into the formation, falling back to surface distance when an entry point is missing) or SURFACE. Planned wells are never offsets; **the subject well's own events are never used** and the basin base rates exclude it.
+  - Base rate floored at 1% (V-B21). Labels read like the master plan's example: "Losses: 40% (17 of 40 offsets, n_eff 36.6, 90% CI 26%–55%)".
+- **S7c physics indicators** (`app/physics/indicators.py`): d-exponent (Jorden & Shirley), dc-exponent, Eaton pore pressure (dc form, exponent 1.2), ECD, MSE (Teale), pit gain, flow imbalance, kick/loss rule flags (flow out, SPP, pit volume), drilling break, torque & drag deviation from a per-rig-state rolling baseline and from offsets' values, the increasing-overpull run, and a hysteresis threshold detector. Inputs in canonical SI, converted with `core.units` so the published oilfield constants apply unchanged. A library for now: B4 evaluates it on the stream (V-B23).
+- **Cementing checklist** (`GET /api/v1/wells/{id}/cementing-check`): planned slurry density against the mud weights at which offsets lost circulation in the formation at the shoe, and the share of offsets that had losses while cementing there → low / medium / high with the reasons and the evidence events (V-B24).
+- **Evaluations** (`scripts/eval_ledger.py`, `scripts/eval_risk_prior.py` → `eval/results/`, commit `bce0acb`, clean seed), both on **SYNTHETIC** data:
+  - **Ledger vs planted success rates (master plan §13.7).** On the events and mitigations *extracted* from the seeded field (113 events, 165 mitigations, 17 action/event pairs with n ≥ 5): **Spearman ρ = 0.837** (0.858 with n ≥ 3); within an event type, 14 of 15 action pairs ordered as planted; the best action matches the planted best for 6 of 6 event types; the 90% intervals cover the planted rate for 24 of 24 pairs. Ranking by how often crews used an action (the baseline) gives ρ = −0.10.
+  - **Scale check.** The same maths on generator truth for 10 independent fields of the same size (41 wells each, outside the seeded field): ρ from 0.43 to 0.83, **median 0.65, only 2 of 10 fields reach 0.8**; interval coverage 215 of 236 = **91.1%** (nominal 90%). Pooled over the 410 wells: ρ = 0.956. So the method converges, but at one field's worth of records **ρ ≥ 0.8 is met by this seed, not guaranteed** (V-B19).
+  - **Offset prior, leave-one-well-out** (40 completed wells, 2,178 well × formation × event-type cells, 113 positive). Brier score: **served weighted estimate 0.0350**; unweighted fraction of offsets (the master plan's baseline) 0.0362; equal weights with the same basin prior 0.0361; formation frequency over the whole field 0.0366; basin base rate 0.0489. The paired bootstrap over wells puts every baseline's difference above zero (e.g. unweighted − weighted: 90% CI 0.0006–0.0018; the weighted estimate is better in 99.8% of resamples). The ablation shows the gain comes from **distance weighting**, not from the prior's smoothing. AT_FORMATION and SURFACE distances score the same here (difference CI straddles 0). σ = 2.5 / 5 / 10 km gives 0.0356 / 0.0350 / 0.0356; the default (radius/2) was fixed before this evaluation and not tuned.
+- **Tests:** 42 new unit tests (`test_ledger_core.py` 8 incl. hypothesis, `test_risk_core.py` 6 incl. a shrinkage property, `test_physics.py` 13, contract/422 cases) and `tests/integration/test_b3.py` (8), which recomputes every number through an independent API path: ledger counts from `/events`, posteriors and weights from the listed offsets, base rates from well tops and events (proving the subject's own events are excluded), cementing evidence from `/events/{id}`.
+
+**Found while building B3:**
+1. **A Beta posterior's mean can fall outside its own 90% interval.** The shrinkage property test found it: a base rate near 0 gives α ≈ 0.01, and Beta(0.01, β) is so skewed that its mean exceeds its 95th percentile ("P = 0.3%, CI 0–0.1%"). A grid check showed it never happens for α, β ≥ 0.02, hence the 1% floor (V-B21).
+2. The master plan lists torque & drag, drilling-break and SPP signatures among the S7c indicators; the first B3 cut had only the headline formulas. They were added with tests before B3 was marked built.
+
+**Not built in B3 (stated, not hidden):**
+- Intervals are formations; the 25 m TVDSS bins of §Stage 7a are not built (V-B20). Risk curves are drawn in F3.
+- No `risk.recompute_prior` / `ledger.recompute` batch tasks: both are computed per request (26–51 ms on the synthetic field), so there is nothing to precompute yet (V-B22).
+- The ledger stratifies by severity but does not adjust for it; confounding by severity is stated in every response, not corrected.
 
 ### 0.1 B2 — Knowledge layer (built in Part 2, 2026-09-29)
 
@@ -178,6 +209,12 @@
 | V-B16 | Wellbore recreation on re-seed cascaded away extracted data | Found while building B2 | Fixed: update in place (§0.1 bug 1) | ✅ Resolved |
 | V-B17 | LLM extraction pass not built | Rules suffice on synthetic reports | Build it when real reports show the rules' misses; the review queue measures them | ⏳ Open |
 | V-B18 | CLOSEST_APPROACH takes ~0.6 s at 5 km (20 candidate wells, numpy sampling) | Acceptable for an interactive request | If slow on real fields: sample only inside the window's bounding box, or pre-filter with `ST_3DDistance` per pair in SQL | ⏳ Watch |
+| V-B19 | Ledger ρ ≥ 0.8 is sample-size-limited | Seeded field ρ = 0.837, but 10 same-size fields give median 0.65 (2 of 10 ≥ 0.8); 410 wells give 0.956 | Quote the seeded number **with** the scale check. Real value depends on how many recorded outcomes OIL's archive yields; the credible intervals already show the uncertainty to users | ⏳ Stated |
+| V-B20 | Risk intervals are formations, not 25 m TVDSS bins | §Stage 7a allows either; formations are what offsets share reliably | Add TVDSS bins inside thick formations if F3's risk curves need finer steps | ⏳ Open |
+| V-B21 | Base rate floored at 1% (not the raw rate) | Keeps α, β ≥ 0.02 so the posterior mean stays inside its own 90% interval (property test + grid check) | A never-seen event type starts at a 1% prior; documented in the response's `method` text | ✅ Decided |
+| V-B22 | Recency factor fixed at 1.0; no batch recompute tasks | Synthetic wells span 2008–2027 with no practice change to model; per-request computation is 26–51 ms | Add a decay once real data shows practices changing; add Celery recompute only if requests get slow | ✅ Decided |
+| V-B23 | Physics indicators not yet on a live stream | They are pure functions with textbook tests; B4 brings the stream | B4 wires them into the alert engine (S9) | ⏳ B4 |
+| V-B24 | Cementing checklist uses offset loss mud weights as the fracture-gradient evidence | No LOT/FIT or fracture-gradient data in the synthetic field; centraliser/standoff/excess checks need data we don't extract | Advisory flags only; add FG/LOT and job-design checks when those fields are extracted | ⚠️ Limited |
 
 ---
 
@@ -536,7 +573,9 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 24 | S6 correlation + formation stats | B2 | ✅ | `app/correlation/service.py` · integration `test_correlation_alignments`, `test_formation_stats` |
 | 24a | Events API (filters, cursor, manual entry, verify/reject, timeline) | B2 | ✅ | `app/extract/events_service.py` · integration `test_event_cursor_pages_cover_the_list_once_in_order`, `test_manual_event_verify_and_reject`, `test_timeline_counts_and_npt_lines` |
 | 24b | Well 360 enrichment, `fluid_type`, map bbox filter | B2 | ✅ | `app/normalise/well360.py` · integration `test_well_360_enrichment`, `test_well_detail_and_offsets_have_b2_fields` |
-| 25 | S7a prior, S7c physics, S8 ledger | B3 | 📋 | §4.7–4.9 |
+| 25 | S8 Mitigation Effectiveness Ledger | B3 | ✅ | `app/ledger/*`, `routes/knowledge.py` · `test_ledger_core.py` (8), integration `test_ledger_recounts_from_the_events_api`, `test_ledger_rates_ranking_and_cases`, `test_ledger_scopes`; `eval/results/ledger_synthetic_2026-09-29.json` |
+| 25a | S7a offset prior risk | B3 | ✅ | `app/risk/*`, `routes/wells.py` · `test_risk_core.py` (6), integration `test_risk_profile_recomputes_from_its_offsets_and_excludes_the_subject`, `test_base_rates_exclude_the_subject_well`, `test_risk_profile_modes_and_planned_well`; `eval/results/risk_prior_synthetic_2026-09-29.json` |
+| 25b | S7c physics indicators + cementing checklist | B3 | ⚠️ library (live on the stream in B4, V-B23) | `app/physics/indicators.py` · `test_physics.py` (13), integration `test_cementing_check_reads_offsets_in_the_shoe_formation` |
 | 26 | S12 stream/replay, S7b, S7d, S9 alerts, WebSockets | B4 | 📋 | §4.10–4.12 |
 | 27 | S10 copilot, reports | B5 | 📋 | §4.13–4.14 |
 | 28 | OIDC/RBAC/audit, digests pinned, perf & security hardening | B6 | 📋 | §4.15, §12 |
@@ -553,7 +592,7 @@ Backend phases map onto master plan §18 (P0–P5). Durations assume ~7 weeks to
 | **B0 Skeleton** | P0 | Days 1–3 | Platform, Compose, migrations, CI, API contract | ✅ **Met 2026-09-28**, including a green GitHub CI run — see Appendix B |
 | **B1 Data foundation** | P1 | W1–W2 | S1 ingestion; S3 master data & datums; S4 min-curvature + surface offsets; migrations 0002–0004; OCR worker image | ✅ **Met 2026-09-28** with one substitution: 151 synthetic DDRs + 40 WCRs (58 DDRs and 7 WCRs scanned) instead of Volve DDRs (V-B13). Endpoints return real data; min-curvature closed-form tests pass; offsets p95 14.6 ms on 10k wells. See §0.1 and Appendix B2 |
 | **B2 Knowledge layer** | P2 | W2–W3 | S2 extraction + review queue + DDR parser; S5 search; S6 correlation; S4 other proximity modes; LLM service; migrations 0005–0006 | ✅ **Met 2026-09-29 (Part 2) with two gaps stated:** event F1 measured and saved, but on synthetic ground truth, not a gold set (V-B15); search Recall@5 **not measured** (needs labelled queries on real reports); correlation JSON for all 3 modes ✅; review round trip ✅. LLM pass deferred (V-B17). See §0.1 and Appendix B3 |
-| **B3 Batch intelligence** | P3 (first half) | W3–W4 | S7a prior, S7c physics, S8 ledger | Risk-profile endpoint live; physics formula tests pass; ledger recovers the planted ranking (ρ ≥ 0.8) |
+| **B3 Batch intelligence** | P3 (first half) | W3–W4 | S7a prior, S7c physics, S8 ledger | ✅ **Met 2026-09-29 (Part 3):** risk-profile endpoint live and beating every baseline on leave-one-well-out Brier; physics formula tests pass; ledger ρ = 0.837 on the seeded field (≥ 0.8), **with the caveat that same-size fields give a median of 0.65** (V-B19). See §0.0 and Appendix B4 |
 | **B4 Real-time** | P3 (second half) | W4–W5 | S12 stream + replay; rig state; S7b scoring; S7d Déjà Vu; S9 alerts; WebSockets; migrations 0007–0009 | Replay of a Volve well and a synthetic well produces the expected alerts over the WebSocket; alert latency p95 ≤ 5 s; every alert has evidence (property test) |
 | **B5 Copilot & reports** | P4 | W5–W6 | S10 copilot (SSE); Offset Risk Brief PDF; MLflow profile | Copilot answers the 50-question set with citations measured; unanswerable refusal rate measured; PDF renders |
 | **B6 Hardening** | P5 | W6–W7 | OIDC/RBAC/audit; image digests pinned; Prometheus metrics + Grafana; load test; security review; backups script | All master plan §9 targets measured and recorded in `eval/results/`; `SMRITI_AUTH_MODE=oidc` works end-to-end; no critical findings open |
@@ -807,9 +846,9 @@ MinIO's Docker Hub image wasn't available when we built. Our code speaks plain S
 
 ## 16. Immediate Next Actions (backend)
 
-*(Updated 2026-09-29 after Part 2. B0–B2 are done.)*
+*(Updated 2026-09-29 after Part 3. B0–B3 are done.)*
 
-1. **B3 (Part 3):** offset prior risk (S7a), physics indicators (S7c) and the **Mitigation Effectiveness Ledger** (S8). Ledger inputs already exist: 113 merged events with 165 ordered mitigations and outcomes, and planted success rates in `truth.json` to check the ranking against (exit criterion ρ ≥ 0.8).
+1. **B4 (Part 4):** replay stream (S12), real-time tables, rig state and classifiers (S7b), Déjà Vu (S7d), the alert engine (S9) evaluating the S7c indicators and S7a priors, WebSockets. The ledger ranks the recommended actions inside alerts.
 2. **Gold set (V-B15):** export the review queue's `(proposed, correction)` pairs, then add annotated real DDRs when data arrives.
 3. **Real data:** try to obtain Volve drilling folders (or OIL samples, V6) and run them through the same `import_field` + upload path (V-B13).
 4. **Save the pinned images** (`docker save`) for the finale machine (RB5) — Infra.
@@ -911,6 +950,22 @@ Clean run: every volume wiped (`docker compose down -v`), stack up, full seed wi
 | Lint / types | ruff, ruff format, `mypy --strict` | clean |
 | Latency (best of 5) | `curl` against the API container | search 24–27 ms · 6-well correlation 81–84 ms · events (500) 29 ms · AT_FORMATION 18 ms · CLOSEST_APPROACH 611 ms (5 km) |
 | Contract | `app.cli openapi` → `frontend/src/lib/api/openapi.json`, `npm run gen:api` | regenerated and committed; frontend typecheck clean |
+
+## Appendix B4 — B3 Verification Record (2026-09-29)
+
+Clean run at commit `bce0acb`: images rebuilt, every volume wiped (`docker compose down -v`), stack up, full seed with extraction and indexing.
+
+| Check | Command | Result |
+|---|---|---|
+| Full seed | `uv run python -m app.cli seed --inline` | 191 reports processed, extracted and indexed; 3 min 34 s |
+| Extraction (unchanged) | `scripts/eval_extraction.py` | event P = R = F1 = 1.000 on synthetic reports (V-B15) |
+| Ledger vs planted rates | `scripts/eval_ledger.py` | ρ = 0.837 (n ≥ 5, 17 pairs); coverage 24/24; scale check median ρ 0.65 (2 of 10 fields ≥ 0.8), coverage 91.1%, pooled ρ 0.956 → `eval/results/ledger_synthetic_2026-09-29.json` |
+| Offset prior, leave-one-well-out | `scripts/eval_risk_prior.py` | Brier weighted 0.0350 < unweighted offsets 0.0362 < formation frequency 0.0366 < base rate 0.0489; paired bootstrap CIs exclude 0 → `eval/results/risk_prior_synthetic_2026-09-29.json` |
+| Unit tests | `uv run pytest` | **244 passed** |
+| Integration tests | `uv run pytest -m integration` | **33 passed** (incl. `test_b3.py` 8) |
+| Lint / types | ruff, ruff format, `mypy --strict` | clean |
+| Latency (sandbox, via nginx) | `curl` | ledger (LOSS, all wells) 26 ms · risk profile of the planned well (6 formations, ~40 offsets) 50 ms · cementing check 38 ms |
+| CI | GitHub Actions on `f7ba585` (B3) and `bce0acb` (F2) | all three jobs green |
 
 ## Appendix C — Document Maintenance Rules
 

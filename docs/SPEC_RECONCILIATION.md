@@ -155,7 +155,7 @@ Kept from the existing app: React/TS/Vite, Tailwind 4 + shadcn-style components,
 | Part | Backend | Frontend |
 |---|---|---|
 | 2 ✅ | **B2** knowledge layer: extraction + DDR time log + review queue + events API; hybrid search + lessons cards; correlation (3 alignments + formation stats); at-formation and closest-approach offsets; Well 360 enrichment; `fluid_type` | Design-system revamp (themes, motion, collapsible sidebar, top bar with well-type switcher, ⌘K palette), MapLibre map, Documents Library revamp, Dashboard shell |
-| 3 | **B3** offset prior risk, physics indicators, Mitigation Effectiveness Ledger | **F2** Well Detail (incl. 3D trajectory), Correlation Panel, Knowledge Search, Review queue, map proximity modes |
+| 3 ✅ | **B3** offset prior risk, physics indicators, Mitigation Effectiveness Ledger (evaluated: `eval/results/`) | **F2** Well Detail (incl. 3D trajectory), Correlation Panel, Knowledge Search, Review queue, map proximity modes, axe checks |
 | 4 | **B4** replay stream, real-time tables, rig state, classifiers, anomaly, Déjà Vu, alert engine, WebSockets | **F3** Mitigation Ledger, risk curves |
 | 5 | **B5** copilot (SSE), Offset Risk Brief, analytics endpoints; JWT auth + RBAC + audit | **F4** Live Well Monitor, Alerts Center, Déjà Vu overlay, live dashboard |
 | 6 | Hardening | **F5/F6** copilot panel, Analytics, Login/Landing, Admin, role-aware UI, PWA well pack |

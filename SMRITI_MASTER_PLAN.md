@@ -479,7 +479,7 @@ Four complementary components. Each produces a score **and** evidence; S9 fuses 
 
 **PS mapping:** O-v, O-vi, G-iv, D6, D9.
 
-**Status (7a–7d):** 📋 Planned.
+**Status (7a–7d):** 7a ✅ built (B3) · 7c ⚠️ built as a library, live in B4 · 7b, 7d 📋 planned (B4). See §5 rows 10–14.
 
 ---
 
@@ -505,7 +505,7 @@ Four complementary components. Each produces a score **and** evidence; S9 fuses 
 
 **PS mapping:** O-iii ("mitigation measures"), O-vi ("recommendations"), D9.
 
-**Status:** 📋 Planned.
+**Status:** ✅ Built (B3, API); ledger screen in F3. See §5 row 15 for the measured ranking and its caveat.
 
 ---
 
@@ -634,16 +634,16 @@ This table is the project's heartbeat. Update it the same day something changes.
 | 6 | S4 Minimum-curvature trajectory + TVDSS | ✅ Built (B1) | `backend/app/geo/mincurv.py` · exact closed-form arc tests | |
 | 7 | S4 Three proximity modes | ✅ Built (surface B1; at-formation + closest-approach B2) | `backend/app/geo/service.py`, `proximity.py` · integration `test_at_formation_matches_independent_positions_and_bounds_closest_approach`; surface p95 14.6 ms on 10k wells; closest-approach 0.6 s at 5 km (BACKEND_PLAN V-B18) | Supporting differentiator: pad wells ~20 m apart at surface are ~830 m apart at the Barail entry |
 | 8 | S5 Hybrid search + reranker + lessons cards | ⚠️ Built (B2) without a reranker | `backend/app/search/*` · `test_search_units.py`, integration `test_hybrid_search_cites_passages_and_says_when_nothing_is_found`; search 24–27 ms | Offline `hash` embedder by default (labelled), Ollama BGE-M3 optional; relevance floor answers "no record found"; Recall@5 not yet measured |
-| 9 | S6 Correlation panel (3 alignment modes) | ⚠️ API built (B2); UI in Part 3 | `backend/app/correlation/service.py` · integration `test_correlation_alignments`; 6-well panel 81–84 ms | D3 component (F2) |
-| 10 | S7a Offset prior risk (weighted Beta-Binomial) | 📋 Planned | — | |
+| 9 | S6 Correlation panel (3 alignment modes) | ✅ Built (API B2, UI F2) | `backend/app/correlation/service.py`, `frontend/src/pages/CorrelationPage.tsx` · integration `test_correlation_alignments`, `CorrelationPage.test.tsx`, e2e; 6 wells re-aligned in 183 ms in the browser | React SVG tracks, not D3 (FRONTEND_PLAN ADR-F16); no hazard strip until F3 |
+| 10 | S7a Offset prior risk (weighted Beta-Binomial) | ✅ Built (B3) | `backend/app/risk/*` · `test_risk_core.py`, integration `test_b3.py`; **MEASURED** leave-one-well-out Brier on synthetic data: 0.0350 vs 0.0362 for the unweighted-offsets baseline (paired bootstrap CI excludes 0) (`eval/results/risk_prior_synthetic_2026-09-29.json`) | Intervals are formations, not 25 m bins; risk curves UI in F3 |
 | 11 | S7b Rig-state detection | 📋 Planned | — | |
 | 12 | S7b LightGBM classifiers + SHAP + calibration | 📋 Planned | — | Grouped CV by well |
-| 13 | S7c Physics indicators (dc-exp, ECD, kick/loss, T&D, MSE, cementing check) | 📋 Planned | — | |
+| 13 | S7c Physics indicators (dc-exp, ECD, kick/loss, T&D, MSE, cementing check) | ⚠️ Built as a library (B3); live on the stream in B4 | `backend/app/physics/indicators.py` · `test_physics.py` (textbook values); cementing check endpoint + integration test | Cementing check uses offset loss mud weights as the fracture-gradient evidence (BACKEND_PLAN V-B24) |
 | 14 | S7d Déjà Vu matcher (USP 1) | 📋 Planned | — | |
-| 15 | S8 Mitigation Effectiveness Ledger (USP 2) | 📋 Planned | — | |
+| 15 | S8 Mitigation Effectiveness Ledger (USP 2) | ✅ Built (B3); UI in F3 | `backend/app/ledger/*` · `test_ledger_core.py`, integration `test_b3.py`; **MEASURED** on synthetic data: Spearman ρ = 0.837 vs planted rates, 90% CI coverage 24/24 (`eval/results/ledger_synthetic_2026-09-29.json`) | **Caveat:** 10 fields of the same size give a median ρ of 0.65 (410 wells: 0.956), so ρ ≥ 0.8 is sample-size-limited (BACKEND_PLAN V-B19) |
 | 16 | S9 Alert engine (fusion, hysteresis, budget, lifecycle, feedback) | 📋 Planned | — | |
 | 17 | S10 Copilot with read-only tools | 📋 Planned | — | |
-| 18 | S11 Office view | ⚠️ Shell (3 themes, collapsible sidebar, well-type switcher, ⌘K palette), **Dashboard, Map Explorer (MapLibre), Documents Library** and System Status built (F0–F1, Part 2); other screens planned F2–F6 | `frontend/src/app/*`, `frontend/src/components/shell/*`, `frontend/src/pages/*` · FRONTEND_PLAN §5, 53 unit + 33 e2e | |
+| 18 | S11 Office view | ⚠️ Shell, Dashboard, Map Explorer (3 proximity modes), Documents Library + review queue, **Well 360 (3D trajectory), Correlation Panel, Knowledge Search** and System Status built (F0–F2, Parts 1–3); Ledger, live and alert screens planned F3–F6 | `frontend/src/app/*`, `frontend/src/pages/*` · FRONTEND_PLAN §5, 90 unit + 46 e2e incl. axe WCAG 2.2 AA | |
 | 19 | S11 Field view + PWA well pack | ⚠️ Field view mode (larger type, reduced nav) built in F0; PWA well pack planned F5 | `frontend/src/app/theme.tsx`, `screens.ts` · `AppShell.test.tsx`, e2e | |
 | 20 | S12 Replay adapter (CSV/Parquet → Redis Streams) | 📋 Planned | — | Demo path |
 | 21 | S12 WITSML 1.4.1.x / ETP / WITS0 adapters | 📋 Planned | — | At least one real protocol adapter tested against a mock server; others "designed" |
