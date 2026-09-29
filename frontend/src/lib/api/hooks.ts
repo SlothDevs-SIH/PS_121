@@ -4,6 +4,7 @@ import {
   api,
   type Alignment,
   type DocumentSummary,
+  type LedgerParams,
   type OffsetOptions,
   type ProximityMode,
   type ReviewDecision,
@@ -33,6 +34,8 @@ export const queryKeys = {
     ['correlation', wells, align, top] as const,
   formationStats: (wells: number[]) => ['formation-stats', wells] as const,
   search: (params: SearchParams) => ['search', params] as const,
+  ledger: (params: LedgerParams) => ['ledger', params] as const,
+  riskProfile: (id: number) => ['risk-profile', id] as const,
 }
 
 /** Polled so the header status pill reflects outages within ~15 s. */
@@ -223,5 +226,25 @@ export function useUpload() {
   return useMutation({
     mutationFn: api.upload,
     onSuccess: () => client.invalidateQueries({ queryKey: ['documents'] }),
+  })
+}
+
+export function useLedger(params: LedgerParams | null) {
+  return useQuery({
+    queryKey: queryKeys.ledger(params ?? { event_type: '' }),
+    queryFn: () => api.ledger(params as LedgerParams),
+    enabled: Boolean(params?.event_type),
+    placeholderData: keepPreviousData,
+    retry: false,
+  })
+}
+
+export function useRiskProfile(id: number | null) {
+  return useQuery({
+    queryKey: queryKeys.riskProfile(id ?? 0),
+    queryFn: () => api.riskProfile(id as number),
+    enabled: id !== null,
+    staleTime: 300_000,
+    retry: false,
   })
 }

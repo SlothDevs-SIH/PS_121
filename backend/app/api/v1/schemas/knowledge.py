@@ -128,6 +128,8 @@ class RiskProfile(ResponseModel):
     name: str
     status: str
     synthetic: bool
+    td_md_m: float | None = Field(description="Deepest survey station (MD)")
+    td_tvdss_m: float | None = Field(description="Deepest survey station (TVDSS)")
     mode: str = Field(description="Distance used for weights: AT_FORMATION or SURFACE")
     radius_km: float
     sigma_km: float

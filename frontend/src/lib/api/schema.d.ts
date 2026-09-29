@@ -2819,6 +2819,16 @@ export interface components {
             status: string;
             /** Synthetic */
             synthetic: boolean;
+            /**
+             * Td Md M
+             * @description Deepest survey station (MD)
+             */
+            td_md_m: number | null;
+            /**
+             * Td Tvdss M
+             * @description Deepest survey station (TVDSS)
+             */
+            td_tvdss_m: number | null;
             /** Well Id */
             well_id: number;
         };

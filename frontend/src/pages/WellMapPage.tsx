@@ -4,12 +4,13 @@ import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useState } from '
 import { Link, useSearchParams } from 'react-router'
 
 import { useTheme } from '../app/themeContext'
+import { RiskCurve } from '../components/risk/RiskCurve'
 import { SyntheticBadge } from '../components/SyntheticBadge'
 import { Badge } from '../components/ui/Badge'
 import { DataTable, type Column } from '../components/ui/DataTable'
 import { SkeletonBlock } from '../components/ui/Skeleton'
 import type { OffsetOut, ProximityMode } from '../lib/api/client'
-import { useOffsets, useTrajectory, useWell, useWells } from '../lib/api/hooks'
+import { useOffsets, useRiskProfile, useTrajectory, useWell, useWells } from '../lib/api/hooks'
 import { cn } from '../lib/cn'
 import { formatBearing, formatDepth, formatDistance } from '../lib/format/units'
 import { panelSlide } from '../lib/motion'
@@ -91,6 +92,7 @@ export function WellMapPage() {
   const radiusKm = useDeferredValue(radiusDraft ?? radiusParam)
 
   const well = useWell(wellId)
+  const risk = useRiskProfile(wellId)
   const trajectory = useTrajectory(wellId)
   const tops = well.data?.formation_tops ?? []
   const fmParam = params.get('fm')
@@ -511,6 +513,26 @@ export function WellMapPage() {
                   >
                     Open Well 360 <ArrowRight size={14} aria-hidden />
                   </Link>
+                  <details className="rounded-lg border border-border px-3 py-2" open>
+                    <summary className="cursor-pointer text-sm font-semibold text-text">
+                      Offset prior risk by depth
+                    </summary>
+                    {risk.data ? (
+                      <div className="mt-2">
+                        <RiskCurve profile={risk.data} compact width={370} height={280} />
+                        <Link
+                          to={`/wells/${well.data.id}?tab=risk`}
+                          className="mt-1 inline-flex items-center gap-1 text-xs text-accent hover:underline"
+                        >
+                          Numbers and mitigations <ArrowRight size={12} aria-hidden />
+                        </Link>
+                      </div>
+                    ) : risk.isError ? (
+                      <p className="mt-2 text-sm text-muted">No risk profile for this well.</p>
+                    ) : (
+                      <SkeletonBlock className="mt-2 h-40 w-full" />
+                    )}
+                  </details>
                 </>
               ) : (
                 <SkeletonBlock className="h-24 w-full" />

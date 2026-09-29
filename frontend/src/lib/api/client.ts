@@ -41,6 +41,10 @@ export type FormationStats = components['schemas']['FormationStats']
 export type SearchResponse = components['schemas']['SearchResponse']
 export type Passage = components['schemas']['Passage']
 export type Alignment = components['schemas']['Alignment']
+export type LedgerResponse = components['schemas']['LedgerResponse']
+export type LedgerEntry = components['schemas']['LedgerEntry']
+export type LedgerCase = components['schemas']['LedgerCase']
+export type RiskProfile = components['schemas']['RiskProfile']
 export type EventType = EventSummary['event_type']
 export type ProximityMode = 'SURFACE' | 'AT_FORMATION' | 'CLOSEST_APPROACH'
 
@@ -61,6 +65,14 @@ export interface SearchParams {
   date_from?: string | null
   date_to?: string | null
   limit?: number
+}
+
+export interface LedgerParams {
+  event_type: string
+  formation?: string | null
+  severity?: string | null
+  well_id?: number | null
+  radius_km?: number | null
 }
 
 export type ReviewDecision =
@@ -201,6 +213,8 @@ export const api = {
     apiFetch<FormationStats>(`/api/v1/correlation/formation-stats${qs({ wells })}`),
   search: ({ event_type, ...rest }: SearchParams) =>
     apiFetch<SearchResponse>(`/api/v1/search${qs({ ...rest, event_type })}`),
+  ledger: (params: LedgerParams) => apiFetch<LedgerResponse>(`/api/v1/ledger${qs({ ...params })}`),
+  riskProfile: (wellId: number) => apiFetch<RiskProfile>(`/api/v1/wells/${wellId}/risk-profile`),
   pageImageUrl: (id: number, pageNo: number) => `/api/v1/documents/${id}/pages/${pageNo}/image`,
   upload: (files: File[]) => {
     const body = new FormData()

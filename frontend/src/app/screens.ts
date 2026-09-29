@@ -179,11 +179,11 @@ export const SCREENS: ScreenSpec[] = [
     navPath: '/ledger',
     title: 'Mitigation Ledger',
     purpose:
-      'Mitigations ranked by recorded outcome (success rate with credible interval, NPT hours, n) per event type and formation.',
+      'Mitigations ranked by recorded outcome (success rate with credible interval, NPT hours, n) per event type and formation, with every case and its report page. Observational, not causal.',
     audiences: ['office', 'field'],
     psRefs: ['O-iii', 'O-vi'],
     phase: 'F3',
-    status: 'planned',
+    status: 'built',
     endpoints: [{ method: 'GET', path: '/api/v1/ledger?event_type=LOSS' }],
     icon: Scale,
   },

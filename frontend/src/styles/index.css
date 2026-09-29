@@ -34,6 +34,13 @@
   --ev-cement: #94a3b8;
   --ev-other: #64748b;
 
+  /* Sequential risk scale (5 steps, the same in every theme; always paired with the number). */
+  --risk-0: #fff3b0;
+  --risk-1: #fdc55f;
+  --risk-2: #f98e3a;
+  --risk-3: #e8462c;
+  --risk-4: #b3001b;
+
   /* Formation fills on depth tracks, by stratigraphic order (translucent: any theme). */
   --fm-1: rgb(214 196 150 / 0.3);
   --fm-2: rgb(190 164 118 / 0.3);

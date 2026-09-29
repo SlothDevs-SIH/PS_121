@@ -23,7 +23,16 @@ import { DataTable, type Column } from '../components/ui/DataTable'
 import { Segmented } from '../components/ui/Segmented'
 import { SkeletonBlock } from '../components/ui/Skeleton'
 import type { Alignment, CorrelationWell, EventMarker } from '../lib/api/client'
-import { useCorrelation, useEvent, useFormationStats, useOffsets, useWells } from '../lib/api/hooks'
+import {
+  useCorrelation,
+  useEvent,
+  useFormationStats,
+  useOffsets,
+  useRiskProfile,
+  useWells,
+} from '../lib/api/hooks'
+import { peakRisk, riskColor } from '../lib/risk'
+
 import {
   COLUMN_WIDTH,
   formatAligned,
@@ -37,6 +46,14 @@ import {
 } from '../lib/correlation'
 import { EVENT_TYPES, eventMeta, markerPath } from '../lib/eventTypes'
 import { formatDepth, formatMudWeight, formatNumber } from '../lib/format/units'
+
+const RISK_LEGEND: [string, number][] = [
+  ['<5%', 0.02],
+  ['5–15%', 0.1],
+  ['15–30%', 0.2],
+  ['30–50%', 0.4],
+  ['≥50%', 0.6],
+]
 
 const BASE_HEIGHT = 640
 const AXIS_WIDTH = 64
@@ -125,6 +142,17 @@ export function CorrelationPage() {
   const panel = useCorrelation(ids, align, top)
   const stats = useFormationStats(ids)
   const data = panel.data
+  // Hazard strip on the first (subject) well: its offset prior's highest risk per formation.
+  const subjectRisk = useRiskProfile(data?.wells[0]?.well_id ?? null)
+  const hazard = useMemo(() => {
+    if (!subjectRisk.data) return null
+    const out: Record<string, { p: number; label: string }> = {}
+    for (const iv of subjectRisk.data.intervals) {
+      const r = peakRisk(iv)
+      if (r) out[iv.formation] = { p: r.probability, label: r.label }
+    }
+    return out
+  }, [subjectRisk.data])
 
   const [show, setShow] = useState<TrackToggles>({ casing: true, mud: true, events: true })
   const [zoom, setZoom] = useState(1)
@@ -471,6 +499,7 @@ export function CorrelationPage() {
                   selectedEventId={selected?.wellId === w.well_id ? selected.marker.event_id : null}
                   onSelectEvent={onSelectEvent}
                   onZoomTo={zoomTo}
+                  hazard={i === 0 ? hazard : null}
                 />
                 {hoverV !== null && (
                   <div
@@ -634,6 +663,20 @@ function Legend() {
         verified by an engineer. ◣ casing shoe with its OD · teal tick = top of cement (amber when
         returns were partial or none) · orange = mud weight, blue dotted = ECD, on one SG scale
         across columns. Double-click a formation to zoom to it.
+      </p>
+      <p className="mt-2 flex flex-wrap items-center gap-1.5" data-testid="hazard-legend">
+        Hazard strip (left of the first well): its highest offset prior risk per formation
+        {RISK_LEGEND.map(([lbl, p]) => (
+          <span key={lbl} className="inline-flex items-center gap-1">
+            <span
+              aria-hidden
+              className="inline-block h-3 w-2 rounded-sm"
+              style={{ background: riskColor(p) }}
+            />
+            {lbl}
+          </span>
+        ))}
+        · hover a band for the numbers.
       </p>
     </Card>
   )

@@ -238,6 +238,6 @@ def test_cementing_check_reads_offsets_in_the_shoe_formation() -> None:
 
 def test_meta_reports_b3_built() -> None:
     meta = _get("/api/v1/meta")
-    assert meta["backend_phase"] == "B3"
+    assert int(meta["backend_phase"].removeprefix("B")) >= 3  # B3 or a later phase
     status = {c["key"]: c["status"] for c in meta["components"]}
     assert status["risk_prior"] == status["physics"] == status["ledger"] == "built"

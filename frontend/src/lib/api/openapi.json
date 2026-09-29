@@ -6767,6 +6767,30 @@
             "title": "Synthetic",
             "type": "boolean"
           },
+          "td_md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Deepest survey station (MD)",
+            "title": "Td Md M"
+          },
+          "td_tvdss_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Deepest survey station (TVDSS)",
+            "title": "Td Tvdss M"
+          },
           "well_id": {
             "title": "Well Id",
             "type": "integer"
@@ -6777,6 +6801,8 @@
           "name",
           "status",
           "synthetic",
+          "td_md_m",
+          "td_tvdss_m",
           "mode",
           "radius_km",
           "sigma_km",

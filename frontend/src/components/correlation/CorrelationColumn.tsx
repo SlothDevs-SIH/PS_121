@@ -10,6 +10,7 @@ import {
 } from '../../lib/format/units'
 import { COLUMN_WIDTH, TRACK, type TrackToggles } from '../../lib/correlation'
 import { lithologyOf } from '../../lib/lithology'
+import { riskColor } from '../../lib/risk'
 
 const X_CASING = TRACK.fm + TRACK.gap
 const X_MUD = X_CASING + TRACK.casing + TRACK.gap
@@ -27,6 +28,8 @@ interface Props {
   selectedEventId: number | null
   onSelectEvent: (well: CorrelationWell, e: EventMarker) => void
   onZoomTo: (lo: number, hi: number) => void
+  /** Hazard strip: the highest offset prior per formation (S7a), for the subject well. */
+  hazard?: Record<string, { p: number; label: string }> | null
 }
 
 /** Spread markers that would overlap: alternate left/right within the event track. */
@@ -57,6 +60,7 @@ export const CorrelationColumn = memo(function CorrelationColumn({
   selectedEventId,
   onSelectEvent,
   onZoomTo,
+  hazard = null,
 }: Props) {
   const t = well.tracks
   const bottom = well.td_aligned ?? axisMax
@@ -134,6 +138,32 @@ export const CorrelationColumn = memo(function CorrelationColumn({
             </g>
           )
         })}
+
+        {/* Hazard strip: highest offset prior risk in each formation (left edge) */}
+        {hazard && (
+          <g data-testid="hazard-strip">
+            {t.formations.map((f) => {
+              const hz = hazard[f.name]
+              if (!hz) return null
+              const y0 = y(f.top)
+              const h = Math.max(0, y(f.base ?? bottom) - y0)
+              return (
+                <rect
+                  key={`hz-${f.name}`}
+                  x={-7}
+                  y={y0}
+                  width={5}
+                  height={h}
+                  rx={1}
+                  fill={riskColor(hz.p)}
+                  data-p={hz.p}
+                >
+                  <title>{`${f.name}: ${hz.label}`}</title>
+                </rect>
+              )
+            })}
+          </g>
+        )}
 
         {/* Casing shoes (◣ with OD) and cement tops (TOC tick) */}
         {show.casing &&

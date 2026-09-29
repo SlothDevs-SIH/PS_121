@@ -8,6 +8,7 @@ import {
   LESSON,
   OFFSETS,
   renderApp,
+  RISK_PROFILE,
   TIMELINE,
   TRAJECTORY_1,
   wellDetail,
@@ -98,6 +99,7 @@ function backend() {
     '/api/v1/wells/1/offsets': { status: 200, body: { ...OFFSETS.body, well_id: 1, offsets: [] } },
     '/api/v1/events/11': eventDetail(11),
     'GET /api/v1/documents': DOCUMENTS,
+    '/api/v1/wells/1/risk-profile': RISK_PROFILE,
   })
 }
 
@@ -163,11 +165,36 @@ describe('Well 360', () => {
     renderApp('/wells/1')
     const tab = await screen.findByRole('tab', { name: /Overview/ })
     tab.focus()
-    await userEvent.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}')
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}{ArrowRight}')
     expect(screen.getByRole('tab', { name: /Lessons/ })).toHaveAttribute('aria-selected', 'true')
     expect(await screen.findByTestId('lesson-card')).toHaveTextContent('Coarse LCM worked')
     await userEvent.click(screen.getByRole('tab', { name: /Documents/ }))
     expect(await screen.findByTestId('well-documents')).toHaveTextContent('SYN-ASM-01_DDR.pdf')
+  })
+
+  it('draws the offset prior by depth with prognosed intervals and ledger links', async () => {
+    backend()
+    renderApp('/wells/1?tab=risk')
+    const curve = await screen.findByTestId('risk-curve')
+    expect(
+      within(curve).getByRole('img', { name: /Tight hole peaks at 46% in Girujan Clay/ }),
+    ).toBeInTheDocument()
+    expect(within(curve).getByText(/prognosed from offsets/)).toBeInTheDocument()
+    expect(within(curve).queryByTestId('risk-bit')).toBeNull() // TD is marked on drilling wells only
+    // Legend toggles focus on one series
+    const loss = within(curve).getByRole('button', { name: /Lost circulation/ })
+    await userEvent.click(loss)
+    expect(loss).toHaveAttribute('aria-pressed', 'true')
+    const peaks = screen.getByTestId('risk-peaks')
+    expect(within(peaks).getByText(/What worked for lost circulation/)).toHaveAttribute(
+      'href',
+      '/ledger?type=LOSS&fm=Tipam%20Sandstone',
+    )
+    expect(within(peaks).getByText('(prognosed)')).toBeInTheDocument()
+    // The numbers are in a table as well as on the chart
+    const table = screen.getByTestId('risk-table')
+    expect(within(table).getByText(/prognosed ±4.6 m/)).toBeInTheDocument()
+    expect(within(table).getByRole('row', { name: /Tipam Sandstone/ })).toHaveTextContent('36%')
   })
 
   it('says plainly when the well does not exist', async () => {

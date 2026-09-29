@@ -354,6 +354,8 @@ def risk_profile(
         name=well.canonical_name,
         status=well.status,
         synthetic=well.synthetic,
+        td_md_m=round(float(td[0]), 1) if td else None,
+        td_tvdss_m=round(float(td[1]), 1) if td else None,
         mode=mode,
         radius_km=radius_km,
         sigma_km=sigma_km,

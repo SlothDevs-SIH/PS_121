@@ -787,3 +787,144 @@ export function reviewItem(id: number, extra: Record<string, unknown> = {}) {
     ...extra,
   }
 }
+
+// ─── Part 4 (F3) fixtures ────────────────────────────────────────────────────────────────
+
+function eventRisk(t: string, p: number, lo: number, hi: number, hits: number, total = 8) {
+  return {
+    event_type: t,
+    probability: p,
+    ci90_low: lo,
+    ci90_high: hi,
+    n_eff: 6.2,
+    offsets_with_event: hits,
+    offsets_total: total,
+    base_rate: 0.05,
+    label: `${t}: ${Math.round(p * 100)}% (${hits} of ${total} offsets)`,
+  }
+}
+
+export const RISK_PROFILE = {
+  status: 200,
+  body: {
+    well_id: 1,
+    name: 'SYN-ASM-01',
+    status: 'drilling',
+    synthetic: true,
+    td_md_m: 2300,
+    td_tvdss_m: 2100,
+    mode: 'AT_FORMATION',
+    radius_km: 10,
+    sigma_km: 5,
+    prior_strength: 2,
+    method: 'Weighted Beta-Binomial per formation and event type.',
+    intervals: [
+      {
+        formation: 'Girujan Clay',
+        strat_order: 3,
+        top_md_m: 1300,
+        base_md_m: 2260,
+        top_tvdss_m: 1200,
+        base_tvdss_m: 2150,
+        prognosed: false,
+        prognosis_spread_m: null,
+        offsets: [],
+        risks: [eventRisk('TIGHT', 0.46, 0.3, 0.63, 4), eventRisk('LOSS', 0.04, 0, 0.13, 0)],
+      },
+      {
+        formation: 'Tipam Sandstone',
+        strat_order: 4,
+        top_md_m: 2260,
+        base_md_m: null,
+        top_tvdss_m: 2150,
+        base_tvdss_m: null,
+        prognosed: true,
+        prognosis_spread_m: 4.6,
+        offsets: [],
+        risks: [eventRisk('LOSS', 0.36, 0.21, 0.53, 3), eventRisk('TIGHT', 0.02, 0, 0.1, 0)],
+      },
+    ],
+  },
+}
+
+function ledgerEntry(code: string, label: string, s: number, n: number, mean: number) {
+  return {
+    action_code: code,
+    action_label: label,
+    n,
+    successes: s,
+    partial: 0,
+    failures: n - s,
+    unknown: code === 'REDUCE_MW' ? 2 : 0,
+    first_choice: 1,
+    success_rate: s / n,
+    posterior_mean: mean,
+    ci90_low: Math.max(0, mean - 0.2),
+    ci90_high: Math.min(1, mean + 0.15),
+    median_npt_hours: 4.1,
+    median_volume_lost_m3: null,
+    by_severity: [
+      { severity: 'high', n: n - 1, successes: s - 1 },
+      { severity: 'low', n: 1, successes: 1 },
+    ],
+    summary: `${label}: worked ${s} of ${n}`,
+    cases: [
+      {
+        event_id: 29,
+        mitigation_id: 38 + n,
+        well_id: 8,
+        well_name: 'SYN-ASM-08',
+        synthetic: true,
+        event_date: '2010-04-08',
+        formation: 'Tipam Sandstone',
+        severity: 'high',
+        seq: 1,
+        outcome: 'success',
+        recorded_outcome: 'success',
+        recurred: false,
+        npt_hours_after: 4.8,
+        verified: false,
+        evidence: [EV_REF],
+      },
+      {
+        event_id: 30,
+        mitigation_id: 90 + n,
+        well_id: 9,
+        well_name: 'SYN-ASM-09',
+        synthetic: true,
+        event_date: '2011-01-02',
+        formation: 'Tipam Sandstone',
+        severity: 'high',
+        seq: 2,
+        outcome: 'partial',
+        recorded_outcome: 'success',
+        recurred: true,
+        npt_hours_after: null,
+        verified: true,
+        evidence: [],
+      },
+    ],
+  }
+}
+
+export const LEDGER = {
+  status: 200,
+  body: {
+    event_type: 'LOSS',
+    formation: null,
+    basin: null,
+    well_id: null,
+    radius_km: null,
+    min_n: 3,
+    outcome_rule: 'success = resolved with no recurrence',
+    caveat: 'Observational records: associated, not proven to cause.',
+    scope: { wells: 19, events: 23, mitigations: 35, unknown_outcomes: 2 },
+    ranked: [
+      ledgerEntry('LCM_PILL_COARSE', 'LCM pill (coarse)', 7, 8, 0.8),
+      ledgerEntry('LCM_PILL_FINE', 'LCM pill (fine)', 7, 12, 0.57),
+      ledgerEntry('REDUCE_MW', 'Reduce mud weight', 4, 10, 0.42),
+    ],
+    insufficient: [ledgerEntry('CEMENT_PLUG', 'Cement plug', 2, 2, 0.75)],
+    synthetic: true,
+  },
+}

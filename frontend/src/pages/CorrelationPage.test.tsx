@@ -9,6 +9,7 @@ import {
   OFFSETS,
   PAGE,
   renderApp,
+  RISK_PROFILE,
 } from '../test/utils'
 
 function backend(extra = {}) {
@@ -92,5 +93,17 @@ describe('Correlation Panel', () => {
     await waitFor(() =>
       expect(screen.queryByRole('button', { name: 'Remove SYN-ASM-03' })).toBeNull(),
     )
+  })
+
+  it('paints a hazard strip on the first well from its offset prior', async () => {
+    backend({ '/api/v1/wells/2/risk-profile': RISK_PROFILE })
+    renderApp('/correlation?wells=2,1,3')
+    const strip = await screen.findByTestId('hazard-strip')
+    const bands = strip.querySelectorAll('rect')
+    expect(Array.from(bands, (b) => b.getAttribute('data-p'))).toEqual(['0.46', '0.36'])
+    expect(bands[0]!.getAttribute('fill')).toBe('var(--risk-3)')
+    expect(strip.querySelector('title')?.textContent).toMatch(/^Girujan Clay: TIGHT: 46%/)
+    expect(screen.getAllByTestId('hazard-strip')).toHaveLength(1)
+    expect(screen.getByTestId('hazard-legend')).toHaveTextContent('≥50%')
   })
 })

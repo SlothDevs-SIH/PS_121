@@ -189,3 +189,10 @@ def test_replay_control_rules(replayed: dict[str, Any]) -> None:
     r = _req("POST", "/api/v1/replay", status=404, json={"well_id": wells[0]["id"]})
     assert "replay file" in r["error"]["message"]
     _req("POST", "/api/v1/replay", status=404, json={"well_id": 999999})
+
+
+def test_meta_reports_b4_built() -> None:
+    meta = _req("GET", "/api/v1/meta")
+    assert int(meta["backend_phase"].removeprefix("B")) >= 4
+    status = {c["key"]: c["status"] for c in meta["components"]}
+    assert {status[k] for k in ("risk_ml", "dejavu", "alerts", "stream")} == {"built"}

@@ -35,6 +35,11 @@ const SearchPage = lazy(() =>
   import('../pages/SearchPage').then((m) => ({ default: m.SearchPage })),
 )
 
+// oxlint-disable-next-line react/only-export-components
+const LedgerPage = lazy(() =>
+  import('../pages/LedgerPage').then((m) => ({ default: m.LedgerPage })),
+)
+
 /** Built screens map to real components; everything else renders its PlannedScreen. */
 const builtScreens: Record<string, ComponentType> = {
   dashboard: DashboardPage,
@@ -44,6 +49,7 @@ const builtScreens: Record<string, ComponentType> = {
   correlation: CorrelationPage,
   well360: Well360Page,
   search: SearchPage,
+  ledger: LedgerPage,
 }
 
 const loading = (

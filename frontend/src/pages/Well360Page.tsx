@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Columns3,
   FileStack,
+  Gauge,
   LayoutList,
   Map as MapIcon,
   Search,
@@ -24,6 +25,7 @@ import { DataTable, type Column } from '../components/ui/DataTable'
 import { SkeletonBlock } from '../components/ui/Skeleton'
 import { TabPanel, Tabs } from '../components/ui/Tabs'
 import { EventsTab } from '../components/well360/EventsTab'
+import { RiskTab } from '../components/well360/RiskTab'
 import { WellSchematic } from '../components/well360/WellSchematic'
 import {
   ApiError,
@@ -42,7 +44,7 @@ const PageViewer = lazy(() =>
   import('../components/evidence/PageViewer').then((m) => ({ default: m.PageViewer })),
 )
 
-const TABS = ['overview', 'events', 'trajectory', 'lessons', 'documents'] as const
+const TABS = ['overview', 'events', 'risk', 'trajectory', 'lessons', 'documents'] as const
 type Tab = (typeof TABS)[number]
 
 function Cite({ refs }: { refs: EvidenceRef[] }) {
@@ -442,6 +444,7 @@ export function Well360Page() {
             icon: <Activity size={14} aria-hidden />,
             count: eventTotal,
           },
+          { id: 'risk', label: 'Risk', icon: <Gauge size={14} aria-hidden /> },
           { id: 'trajectory', label: 'Trajectory', icon: <Waypoints size={14} aria-hidden /> },
           {
             id: 'lessons',
@@ -466,6 +469,7 @@ export function Well360Page() {
           ) : (
             <SkeletonBlock className="h-64 w-full" />
           ))}
+        {tab === 'risk' && <RiskTab well={w} />}
         {tab === 'trajectory' && (
           <Suspense fallback={<SkeletonBlock className="h-[30rem] w-full rounded-xl" />}>
             <TrajectoryTab well={w} events={tl.data?.events ?? w.recent_events} />
