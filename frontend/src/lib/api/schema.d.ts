@@ -92,6 +92,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/analytics/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Alert quality: precision from feedback, acknowledgement, alerts per 12 h */
+        get: operations["alerts_api_v1_analytics_alerts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics/npt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * NPT by problem, formation, year, well or field
+         * @description Events whose NPT was not recorded count as events but add no hours (they are
+         *     reported separately, never as zero).
+         */
+        get: operations["npt_api_v1_analytics_npt_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics/recurring": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Problems that recur across wells in one formation, or within one well */
+        get: operations["recurring_api_v1_analytics_recurring_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit": {
         parameters: {
             query?: never;
@@ -468,7 +523,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Offset Risk Brief (PDF) */
+        /**
+         * Offset Risk Brief (PDF)
+         * @description A PDF for a planning meeting: the well, offsets within ``radius_km`` with a plan
+         *     sketch, offset prior risk by formation with intervals, what worked nearby (ledger, with
+         *     its caveat) and the report pages behind every number. SYNTHETIC wells are watermarked.
+         */
         get: operations["offset_brief_api_v1_reports_offset_brief__well_id__get"];
         put?: never;
         post?: never;
@@ -994,6 +1054,54 @@ export interface components {
             };
             /** Items */
             items: components["schemas"]["AlertOut"][];
+        };
+        /** AlertQuality */
+        AlertQuality: {
+            acknowledged: components["schemas"]["Proportion"];
+            /** Alerts */
+            alerts: number;
+            /** Alerts Per 12H */
+            alerts_per_12h: number | null;
+            /** By Severity */
+            by_severity: {
+                [key: string]: number;
+            };
+            /**
+             * By Source
+             * @description Counts each source of fused alerts once
+             */
+            by_source: {
+                [key: string]: number;
+            };
+            /** By Status */
+            by_status: {
+                [key: string]: number;
+            };
+            /** By Type */
+            by_type: {
+                [key: string]: number;
+            };
+            /**
+             * Data Hours
+             * @description Hours of stream data scored (replays included)
+             */
+            data_hours: number;
+            /**
+             * Feedback
+             * @description useful / not_useful / false_alarm
+             */
+            feedback: {
+                [key: string]: number;
+            };
+            /**
+             * Median Minutes To Ack
+             * @description Wall time from raised to acked
+             */
+            median_minutes_to_ack: number | null;
+            /** Note */
+            note: string;
+            /** @description Alerts marked useful among alerts with feedback (latest verdict each) */
+            precision: components["schemas"]["Proportion"];
         };
         /** AlertRecommendation */
         AlertRecommendation: {
@@ -2496,6 +2604,51 @@ export interface components {
             /** Verified */
             verified: boolean;
         };
+        /** NptBreakdown */
+        NptBreakdown: {
+            /**
+             * Events Without Npt
+             * @description Events whose NPT was not recorded (not zero)
+             */
+            events_without_npt: number;
+            /**
+             * Group By
+             * @enum {string}
+             */
+            group_by: "event_type" | "formation" | "year" | "well" | "field";
+            /**
+             * Rows
+             * @description Largest NPT first
+             */
+            rows: components["schemas"]["NptRow"][];
+            /** Synthetic */
+            synthetic: boolean;
+            /** Total Events */
+            total_events: number;
+            /** Total Npt Hours */
+            total_npt_hours: number;
+        };
+        /** NptRow */
+        NptRow: {
+            /** Events */
+            events: number;
+            /**
+             * Key
+             * @description The group's value (event type code, formation, year…)
+             */
+            key: string;
+            /** Median Npt Hours */
+            median_npt_hours: number | null;
+            /** Npt Hours */
+            npt_hours: number;
+            /**
+             * Share Of Npt
+             * @description 0-1 share of the filtered total NPT
+             */
+            share_of_npt: number;
+            /** Wells */
+            wells: number;
+        };
         /** OffsetOut */
         OffsetOut: {
             /** Bearing Deg */
@@ -2660,6 +2813,22 @@ export interface components {
             tvdss_m: number;
         };
         /**
+         * Proportion
+         * @description k of n with the Beta(1,1) posterior mean and 90% credible interval (as the ledger).
+         */
+        Proportion: {
+            /** Ci90 High */
+            ci90_high: number | null;
+            /** Ci90 Low */
+            ci90_low: number | null;
+            /** K */
+            k: number;
+            /** Mean */
+            mean: number | null;
+            /** N */
+            n: number;
+        };
+        /**
          * ProximityMode
          * @enum {string}
          */
@@ -2740,6 +2909,58 @@ export interface components {
             well_name: string;
             /** Wellbore Id */
             wellbore_id: number | null;
+        };
+        /** RecurringProblems */
+        RecurringProblems: {
+            /**
+             * Across Wells
+             * @description Same problem in the same formation in at least min_wells wells
+             */
+            across_wells: components["schemas"]["RecurringRow"][];
+            /** Min Wells */
+            min_wells: number;
+            /** Synthetic */
+            synthetic: boolean;
+            /**
+             * Within Wells
+             * @description Same problem 2+ times in one well
+             */
+            within_wells: components["schemas"]["RepeatInWell"][];
+        };
+        /** RecurringRow */
+        RecurringRow: {
+            /**
+             * Event Ids
+             * @description Up to 10, for click-through
+             */
+            event_ids: number[];
+            /** Event Type */
+            event_type: string;
+            /** Events */
+            events: number;
+            /** First Year */
+            first_year: number | null;
+            /** Formation */
+            formation: string;
+            /** Last Year */
+            last_year: number | null;
+            /** Npt Hours */
+            npt_hours: number;
+            /** Wells */
+            wells: number;
+        };
+        /** RepeatInWell */
+        RepeatInWell: {
+            /** Event Type */
+            event_type: string;
+            /** Events */
+            events: number;
+            /** Npt Hours */
+            npt_hours: number;
+            /** Well Id */
+            well_id: number;
+            /** Well Name */
+            well_name: string;
         };
         /** ReplayRequest */
         ReplayRequest: {
@@ -3636,6 +3857,101 @@ export interface operations {
             };
         };
     };
+    alerts_api_v1_analytics_alerts_get: {
+        parameters: {
+            query?: {
+                well_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertQuality"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    npt_api_v1_analytics_npt_get: {
+        parameters: {
+            query?: {
+                group_by?: "event_type" | "formation" | "year" | "well" | "field";
+                event_type?: ("LOSS" | "KICK" | "STUCK" | "TIGHT" | "TORQUE" | "INSTAB" | "BALLING" | "OVERP" | "GAS" | "CEMENT" | "CASING" | "FISH" | "EQUIP" | "WAIT" | "OTHER_NPT") | null;
+                formation?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NptBreakdown"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    recurring_api_v1_analytics_recurring_get: {
+        parameters: {
+            query?: {
+                min_wells?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecurringProblems"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     audit_log_api_v1_audit_get: {
         parameters: {
             query?: {
@@ -4423,7 +4739,9 @@ export interface operations {
     };
     offset_brief_api_v1_reports_offset_brief__well_id__get: {
         parameters: {
-            query?: never;
+            query?: {
+                radius_km?: number;
+            };
             header?: never;
             path: {
                 well_id: number;
@@ -4438,7 +4756,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/pdf": unknown;
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Validation Error */
@@ -4448,15 +4775,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

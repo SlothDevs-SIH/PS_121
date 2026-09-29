@@ -72,7 +72,8 @@ def test_celery_worker_round_trip() -> None:
     assert "pong" in ping.delay().get(timeout=20)
 
 
-def test_skeleton_endpoint_through_real_server() -> None:
-    r = httpx.get(f"{API}/api/v1/reports/offset-brief/1", timeout=10)
-    assert r.status_code == 501
-    assert r.json()["error"]["details"]["phase"] == "B5"
+def test_built_endpoint_through_real_server() -> None:
+    # The last skeleton (the Offset Risk Brief) was built in B5: a PDF through the real server.
+    well = httpx.get(f"{API}/api/v1/wells", params={"limit": 1}, timeout=10).json()["items"][0]
+    r = httpx.get(f"{API}/api/v1/reports/offset-brief/{well['id']}", timeout=60)
+    assert r.status_code == 200 and r.content.startswith(b"%PDF")

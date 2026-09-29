@@ -76,10 +76,10 @@ def test_trajectory_and_well_detail() -> None:
     assert _get("/api/v1/formations").json()[0]["strat_order"] == 1
 
 
-def test_unknown_well_is_404_and_unbuilt_route_is_501() -> None:
+def test_unknown_well_is_404() -> None:
+    # Every HTTP route is built since B5, so no route answers 501 any more.
     assert _get("/api/v1/wells/999999").json()["error"]["code"] == "not_found"
-    r = _get("/api/v1/reports/offset-brief/1")
-    assert r.status_code == 501 and r.json()["error"]["details"]["phase"] == "B5"
+    assert _get("/api/v1/reports/offset-brief/999999").status_code == 404
 
 
 def _unique_ddr() -> bytes:

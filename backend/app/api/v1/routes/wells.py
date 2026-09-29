@@ -7,7 +7,7 @@ Correlation lives in correlation.py."""
 from enum import StrEnum
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -26,8 +26,9 @@ from app.api.v1.schemas.wells import (
     WellDetail,
     WellList,
 )
-from app.core.auth import require
-from app.core.errors import NOT_IMPLEMENTED, NotFoundError, NotImplementedYetError
+from app.core.audit import audit
+from app.core.auth import CurrentUser, require
+from app.core.errors import NotFoundError
 from app.db.models import Field, Formation
 from app.db.session import get_session
 from app.db.vocab import EventType, FluidType
@@ -276,10 +277,29 @@ def get_cementing_check(
 
 @router.get(
     "/reports/offset-brief/{well_id}",
-    dependencies=[Depends(require("read_risk"))],
     tags=["reports"],
     summary="Offset Risk Brief (PDF)",
-    responses=NOT_IMPLEMENTED,
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}, **NOT_FOUND},
 )
-def offset_brief(well_id: int) -> None:
-    raise NotImplementedYetError("Offset Risk Brief export", "B5")
+def offset_brief(
+    well_id: int,
+    session: DbSession,
+    user: Annotated[CurrentUser, Depends(require("read_risk"))],
+    radius_km: Annotated[float, Query(gt=0, le=20)] = 5.0,
+) -> Response:
+    """A PDF for a planning meeting: the well, offsets within ``radius_km`` with a plan
+    sketch, offset prior risk by formation with intervals, what worked nearby (ledger, with
+    its caveat) and the report pages behind every number. SYNTHETIC wells are watermarked."""
+    from app.reports.brief import build
+
+    well = get_well_or_404(session, well_id)
+    body = build(session, well_id, radius_km)
+    audit(session, user, "brief_download", "well", well_id, radius_km=radius_km)
+    session.commit()
+    name = f"SMRITI_offset_risk_brief_{well.canonical_name}.pdf"
+    return Response(
+        content=body,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{name}"'},
+    )

@@ -567,6 +567,106 @@
         "title": "AlertPage",
         "type": "object"
       },
+      "AlertQuality": {
+        "properties": {
+          "acknowledged": {
+            "$ref": "#/components/schemas/Proportion"
+          },
+          "alerts": {
+            "title": "Alerts",
+            "type": "integer"
+          },
+          "alerts_per_12h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alerts Per 12H"
+          },
+          "by_severity": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Severity",
+            "type": "object"
+          },
+          "by_source": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Counts each source of fused alerts once",
+            "title": "By Source",
+            "type": "object"
+          },
+          "by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Status",
+            "type": "object"
+          },
+          "by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Type",
+            "type": "object"
+          },
+          "data_hours": {
+            "description": "Hours of stream data scored (replays included)",
+            "title": "Data Hours",
+            "type": "number"
+          },
+          "feedback": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "useful / not_useful / false_alarm",
+            "title": "Feedback",
+            "type": "object"
+          },
+          "median_minutes_to_ack": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Wall time from raised to acked",
+            "title": "Median Minutes To Ack"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "precision": {
+            "$ref": "#/components/schemas/Proportion",
+            "description": "Alerts marked useful among alerts with feedback (latest verdict each)"
+          }
+        },
+        "required": [
+          "alerts",
+          "by_type",
+          "by_source",
+          "by_severity",
+          "by_status",
+          "feedback",
+          "precision",
+          "acknowledged",
+          "median_minutes_to_ack",
+          "data_hours",
+          "alerts_per_12h",
+          "note"
+        ],
+        "title": "AlertQuality",
+        "type": "object"
+      },
       "AlertRecommendation": {
         "properties": {
           "action_code": {
@@ -5691,6 +5791,103 @@
         "title": "MudTrack",
         "type": "object"
       },
+      "NptBreakdown": {
+        "properties": {
+          "events_without_npt": {
+            "description": "Events whose NPT was not recorded (not zero)",
+            "title": "Events Without Npt",
+            "type": "integer"
+          },
+          "group_by": {
+            "enum": [
+              "event_type",
+              "formation",
+              "year",
+              "well",
+              "field"
+            ],
+            "title": "Group By",
+            "type": "string"
+          },
+          "rows": {
+            "description": "Largest NPT first",
+            "items": {
+              "$ref": "#/components/schemas/NptRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "total_events": {
+            "title": "Total Events",
+            "type": "integer"
+          },
+          "total_npt_hours": {
+            "title": "Total Npt Hours",
+            "type": "number"
+          }
+        },
+        "required": [
+          "group_by",
+          "rows",
+          "total_events",
+          "total_npt_hours",
+          "events_without_npt",
+          "synthetic"
+        ],
+        "title": "NptBreakdown",
+        "type": "object"
+      },
+      "NptRow": {
+        "properties": {
+          "events": {
+            "title": "Events",
+            "type": "integer"
+          },
+          "key": {
+            "description": "The group's value (event type code, formation, year\u2026)",
+            "title": "Key",
+            "type": "string"
+          },
+          "median_npt_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Npt Hours"
+          },
+          "npt_hours": {
+            "title": "Npt Hours",
+            "type": "number"
+          },
+          "share_of_npt": {
+            "description": "0-1 share of the filtered total NPT",
+            "title": "Share Of Npt",
+            "type": "number"
+          },
+          "wells": {
+            "title": "Wells",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "events",
+          "wells",
+          "npt_hours",
+          "share_of_npt",
+          "median_npt_hours"
+        ],
+        "title": "NptRow",
+        "type": "object"
+      },
       "OffsetOut": {
         "properties": {
           "bearing_deg": {
@@ -6210,6 +6407,61 @@
         "title": "PathPoint",
         "type": "object"
       },
+      "Proportion": {
+        "description": "k of n with the Beta(1,1) posterior mean and 90% credible interval (as the ledger).",
+        "properties": {
+          "ci90_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci90 High"
+          },
+          "ci90_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci90 Low"
+          },
+          "k": {
+            "title": "K",
+            "type": "integer"
+          },
+          "mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "k",
+          "n",
+          "mean",
+          "ci90_low",
+          "ci90_high"
+        ],
+        "title": "Proportion",
+        "type": "object"
+      },
       "ProximityMode": {
         "enum": [
           "SURFACE",
@@ -6427,6 +6679,141 @@
           "stale"
         ],
         "title": "RealtimeWindow",
+        "type": "object"
+      },
+      "RecurringProblems": {
+        "properties": {
+          "across_wells": {
+            "description": "Same problem in the same formation in at least min_wells wells",
+            "items": {
+              "$ref": "#/components/schemas/RecurringRow"
+            },
+            "title": "Across Wells",
+            "type": "array"
+          },
+          "min_wells": {
+            "title": "Min Wells",
+            "type": "integer"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "within_wells": {
+            "description": "Same problem 2+ times in one well",
+            "items": {
+              "$ref": "#/components/schemas/RepeatInWell"
+            },
+            "title": "Within Wells",
+            "type": "array"
+          }
+        },
+        "required": [
+          "min_wells",
+          "across_wells",
+          "within_wells",
+          "synthetic"
+        ],
+        "title": "RecurringProblems",
+        "type": "object"
+      },
+      "RecurringRow": {
+        "properties": {
+          "event_ids": {
+            "description": "Up to 10, for click-through",
+            "items": {
+              "type": "integer"
+            },
+            "title": "Event Ids",
+            "type": "array"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "events": {
+            "title": "Events",
+            "type": "integer"
+          },
+          "first_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Year"
+          },
+          "formation": {
+            "title": "Formation",
+            "type": "string"
+          },
+          "last_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Year"
+          },
+          "npt_hours": {
+            "title": "Npt Hours",
+            "type": "number"
+          },
+          "wells": {
+            "title": "Wells",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "event_type",
+          "formation",
+          "wells",
+          "events",
+          "npt_hours",
+          "first_year",
+          "last_year",
+          "event_ids"
+        ],
+        "title": "RecurringRow",
+        "type": "object"
+      },
+      "RepeatInWell": {
+        "properties": {
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "events": {
+            "title": "Events",
+            "type": "integer"
+          },
+          "npt_hours": {
+            "title": "Npt Hours",
+            "type": "number"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          },
+          "well_name": {
+            "title": "Well Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "well_id",
+          "well_name",
+          "event_type",
+          "events",
+          "npt_hours"
+        ],
+        "title": "RepeatInWell",
         "type": "object"
       },
       "ReplayRequest": {
@@ -8622,6 +9009,201 @@
         ]
       }
     },
+    "/api/v1/analytics/alerts": {
+      "get": {
+        "operationId": "alerts_api_v1_analytics_alerts_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "well_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Well Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertQuality"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Alert quality: precision from feedback, acknowledgement, alerts per 12 h",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/v1/analytics/npt": {
+      "get": {
+        "description": "Events whose NPT was not recorded count as events but add no hours (they are\nreported separately, never as zero).",
+        "operationId": "npt_api_v1_analytics_npt_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "group_by",
+            "required": false,
+            "schema": {
+              "default": "event_type",
+              "enum": [
+                "event_type",
+                "formation",
+                "year",
+                "well",
+                "field"
+              ],
+              "title": "Group By",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "event_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "LOSS",
+                    "KICK",
+                    "STUCK",
+                    "TIGHT",
+                    "TORQUE",
+                    "INSTAB",
+                    "BALLING",
+                    "OVERP",
+                    "GAS",
+                    "CEMENT",
+                    "CASING",
+                    "FISH",
+                    "EQUIP",
+                    "WAIT",
+                    "OTHER_NPT"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "formation",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Formation"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NptBreakdown"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "NPT by problem, formation, year, well or field",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/v1/analytics/recurring": {
+      "get": {
+        "operationId": "recurring_api_v1_analytics_recurring_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "min_wells",
+            "required": false,
+            "schema": {
+              "default": 3,
+              "maximum": 50,
+              "minimum": 2,
+              "title": "Min Wells",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurringProblems"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Problems that recur across wells in one formation, or within one well",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
     "/api/v1/audit": {
       "get": {
         "operationId": "audit_log_api_v1_audit_get",
@@ -10191,6 +10773,7 @@
     },
     "/api/v1/reports/offset-brief/{well_id}": {
       "get": {
+        "description": "A PDF for a planning meeting: the well, offsets within ``radius_km`` with a plan\nsketch, offset prior risk by formation with intervals, what worked nearby (ledger, with\nits caveat) and the report pages behind every number. SYNTHETIC wells are watermarked.",
         "operationId": "offset_brief_api_v1_reports_offset_brief__well_id__get",
         "parameters": [
           {
@@ -10201,16 +10784,36 @@
               "title": "Well Id",
               "type": "integer"
             }
+          },
+          {
+            "in": "query",
+            "name": "radius_km",
+            "required": false,
+            "schema": {
+              "default": 5.0,
+              "exclusiveMinimum": 0,
+              "maximum": 20,
+              "title": "Radius Km",
+              "type": "number"
+            }
           }
         ],
         "responses": {
           "200": {
             "content": {
-              "application/json": {
-                "schema": {}
-              }
+              "application/pdf": {}
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
           },
           "422": {
             "content": {
@@ -10221,16 +10824,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Offset Risk Brief (PDF)",

@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 Status = Literal["planned", "in_progress", "built"]
 
-CURRENT_PHASE = "B4"
+CURRENT_PHASE = "B5"
 
 
 class Component(BaseModel):
@@ -105,9 +105,16 @@ COMPONENTS: list[Component] = [
     Component(
         key="copilot",
         stage="S10",
-        name="Copilot with read-only tools",
+        name="Copilot with read-only tools (rules planner; optional LLM agent)",
         phase="B5",
-        status="planned",
+        status="built",
+    ),
+    Component(
+        key="reports",
+        stage="-",
+        name="Offset Risk Brief (PDF) and analytics endpoints",
+        phase="B5",
+        status="built",
     ),
     Component(
         key="stream",
@@ -117,6 +124,11 @@ COMPONENTS: list[Component] = [
         status="built",
     ),
     Component(
-        key="auth", stage="-", name="OIDC auth, RBAC, audit log", phase="B6", status="planned"
+        key="auth",
+        stage="-",
+        name="Local JWT auth, role-based permissions, append-only audit log",
+        phase="B5",
+        status="built",
     ),
+    Component(key="oidc", stage="-", name="Keycloak OIDC login", phase="B6", status="planned"),
 ]

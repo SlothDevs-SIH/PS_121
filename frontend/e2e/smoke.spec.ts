@@ -23,7 +23,7 @@ test('System Status shows a ready backend', async ({ page }) => {
     await expect(table.getByRole('row', { name: new RegExp(name) })).toContainText('ok')
   }
   await expect(page.getByTestId('backend-phase')).toHaveText(/^B\d$/)
-  await expect(page.getByTestId('component-list').getByRole('listitem')).toHaveCount(16)
+  await expect(page.getByTestId('component-list').getByRole('listitem')).toHaveCount(18)
   expect(errors).toEqual([])
 })
 

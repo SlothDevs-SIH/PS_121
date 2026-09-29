@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 
 from app.api.v1.routes import (
     admin,
+    analytics,
     copilot,
     correlation,
     documents,
@@ -31,6 +32,7 @@ for module in (
     wells,
     realtime,
     copilot,
+    analytics,
 ):
     api_router.include_router(module.router, dependencies=[Depends(require("read_knowledge"))])
 

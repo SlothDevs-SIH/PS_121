@@ -59,6 +59,9 @@ PLANNED_HTTP = {
     ("post", "/api/v1/users"),
     ("patch", "/api/v1/users/{user_id}"),
     ("get", "/api/v1/audit"),
+    ("get", "/api/v1/analytics/npt"),
+    ("get", "/api/v1/analytics/recurring"),
+    ("get", "/api/v1/analytics/alerts"),
 }
 
 # Response schema of every built route (the frontend's generated types depend on these names).
@@ -97,6 +100,9 @@ RESPONSE_MODELS = {
     ("patch", "/api/v1/users/{user_id}"): "UserOut",
     ("get", "/api/v1/audit"): "AuditPage",
     ("post", "/api/v1/copilot/chat"): "CopilotAnswer",
+    ("get", "/api/v1/analytics/npt"): "NptBreakdown",
+    ("get", "/api/v1/analytics/recurring"): "RecurringProblems",
+    ("get", "/api/v1/analytics/alerts"): "AlertQuality",
 }
 
 EVENT_BODY = {
@@ -134,21 +140,22 @@ def test_built_routes_declare_their_response_model(
     assert op.get("summary")
 
 
-@pytest.mark.parametrize(
-    ("method", "url", "body", "phase"),
-    [
-        # Later phases
-        ("get", "/api/v1/reports/offset-brief/7", None, "B5"),
-    ],
-)
-def test_skeleton_routes_return_501_with_phase(
-    client: TestClient, method: str, url: str, body: object, phase: str
-) -> None:
-    r = client.request(method, url, json=body)
+def test_not_implemented_envelope_names_its_phase() -> None:
+    """Every route is built since B5; the 501 envelope stays for future skeleton routes."""
+    from app.core.errors import NotImplementedYetError
+    from app.main import create_app
+
+    app = create_app()
+
+    @app.get("/api/v1/_future")
+    def _future() -> None:
+        raise NotImplementedYetError("Something later", "B7")
+
+    r = TestClient(app).get("/api/v1/_future")
     assert r.status_code == 501, r.text
     err = r.json()["error"]
     assert err["code"] == "not_implemented"
-    assert err["details"]["phase"] == phase
+    assert err["details"]["phase"] == "B7"
     assert err["request_id"] == r.headers["X-Request-ID"]
 
 
@@ -251,6 +258,10 @@ def test_validation_uses_error_envelope(client: TestClient) -> None:
         ("patch", "/api/v1/users/1", {"roles": ["viewer"], "extra": 1}),
         ("get", "/api/v1/audit?limit=0", None),
         ("post", "/api/v1/copilot/chat", {"message": ""}),
+        ("get", "/api/v1/analytics/npt?group_by=rig", None),
+        ("get", "/api/v1/analytics/npt?event_type=MUD_LOSS", None),
+        ("get", "/api/v1/analytics/recurring?min_wells=1", None),
+        ("get", "/api/v1/reports/offset-brief/7?radius_km=0", None),
         ("post", "/api/v1/copilot/chat", {"message": "x" * 1001}),
         ("post", "/api/v1/copilot/chat", {"message": "hi", "tools": ["sql"]}),
         # cross-parameter rules (app.api.v1.params)
