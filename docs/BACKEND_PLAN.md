@@ -37,7 +37,7 @@
 - **Copilot evaluation** (`scripts/eval_copilot.py` → `eval/results/copilot_synthetic_2026-09-29.json`; 60 questions: 20 lookup, 15 aggregation, 5 ledger, 10 unanswerable, plus a held-out 5 answerable + 5 unanswerable written after the rules were fixed):
   - Lookup correct **1.0**; aggregation exact **1.0**; the ledger answer's top action matches the ledger **1.0** and is the planted best **1.0**.
   - Retrieval Recall@5 **0.45** on raw question text; **0.90** once the planner's well/formation/type filters are applied, which is what the copilot does (§13.3 target 0.85).
-  - Citation faithfulness **1.0** over 216 citations (target 0.95); median latency about 19 ms, max 79 ms.
+  - Citation faithfulness **1.0** over 216 citations (target 0.95); median latency 17.8 ms, max 67.9 ms.
   - Correct refusal **1.0** on the 10 tuned questions but **0.6 on the 5 held-out**, so **13/15 = 0.87 combined, below the 0.90 target** (V-B34). The two misses: "rig cost per day on SYN-ASM-20" (a DDR passage mentions the well and the rig) and a cement-job question routed to cementing events by the word "cement". The held-out set was not used for tuning.
 - **Tests:** unit 351 (auth 17, copilot 22, and the updated contract/phase tests); integration `test_b5_auth.py` (4), `test_b5_copilot.py` (5), `test_b5_reports.py` (5) and the Déjà Vu overlay test in `test_b4.py` (now 8).
 
@@ -1089,6 +1089,20 @@ Clean run at commit `0ad33d4`: images rebuilt, every volume wiped (`docker compo
 | Browser e2e | `npx playwright test` | **56 passed**, 2 skipped (incl. `part4.spec.ts`, axe in 3 themes) |
 | Lint / types | ruff, ruff format, `mypy --strict` | clean |
 | CI | GitHub Actions on `f744792` (B4) and `0ad33d4` (F3) | B4: backend and frontend jobs green, integration red on one Part 3 test pinned to phase "B3" (fixed in `0ad33d4`); `0ad33d4`: all three jobs green |
+
+## Appendix B6 — B5 Verification Record (2026-09-29)
+
+Clean run at commit `49940bc` (code as pushed for Part 5; the later commits change only formatting and docs): images rebuilt, every volume wiped (`docker compose down -v`), stack up (7 services, all healthy), full seed with OCR on the host (V-B10).
+
+| Check | Command | Result |
+|---|---|---|
+| Full seed + real-time assets | `uv run python -m app.cli seed --inline` | 42 wells; 191 reports processed; model bundle (36,669 rows), 99 signatures (99 linked), τ = 1.073, replay file for SYN-ASM-41; **5 min 23 s** |
+| Copilot | `scripts/eval_copilot.py` (re-run on the clean seed at `fcedb54`) | same scores as the first run: lookup 1.0, aggregation 1.0, Recall@5 0.45 raw / 0.90 with filters, ledger 1.0 / 1.0, refusal 1.0 tuned / **0.6 held-out**, faithfulness 1.0 (216); latency median 17.8 ms, max 67.9 ms → `eval/results/copilot_synthetic_2026-09-29.json` |
+| Unit tests | `uv run pytest` | **351 passed** |
+| Integration tests | `uv run pytest -m integration` | **55 passed** (incl. `test_b5_auth.py` 4, `test_b5_copilot.py` 5, `test_b5_reports.py` 5, `test_b4.py` 8 with the Déjà Vu overlay reproducing its recorded similarity) |
+| Browser e2e | `npx playwright test` | **67 passed**, 3 skipped (incl. `part5.spec.ts`: replay → toast **2.33 s** after the alert was stored) |
+| Lint / types | ruff, ruff format, `mypy --strict` | clean |
+| CI | GitHub Actions | `1dba93f` (B5 brief/analytics) and `bef70de` (B5 overlay): all jobs green. `5383742` (F4): e2e red on two assertions about the replaced placeholder screens, fixed in `49940bc`; `49940bc`: frontend format check red on one file, fixed in `2b3a5e9` |
 
 ## Appendix C — Document Maintenance Rules
 

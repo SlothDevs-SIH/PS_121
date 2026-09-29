@@ -35,12 +35,12 @@
   - Acknowledge / dismiss (a reason is required) / useful · not useful · false alarm (optional comment), **optimistic in every cached list and rolled back when the backend refuses** (e.g. 409). Roles without `act_alerts` see why they can't act.
   - **"Why did this fire?"** asks the copilot (`?stream=false`) with the alert and well in context and shows its cited answer.
 - **Everywhere:** a **toast** for each alert pushed over `/ws/alerts` (critical ones stay until closed and are announced with `role="alert"`), and the **unseen count in the tab title**, cleared on the Alerts screen. The Dashboard's placeholder is now a **live-alerts card** (open alerts, pinned first).
-- **Latency, replay → UI:** in `e2e/part5.spec.ts` a real replay at ×1500 runs, and the first *newly created* alert's toast is timed against the alert's stored `created_at`: **2.96 s and 1.38 s** in two runs here (target ≤ 5 s). This includes the `/ws/alerts` reader's 1 s poll; it is two measurements on one machine, not a p95.
+- **Latency, replay → UI:** in `e2e/part5.spec.ts` a real replay at ×1500 runs, and the first *newly created* alert's toast is timed against the alert's stored `created_at`: **2.96 s, 1.38 s and 2.33 s** in three runs here (the last on the clean stack; target ≤ 5 s). This includes the `/ws/alerts` reader's 1 s poll; it is three measurements on one machine, not a p95.
 - **Accessibility:** axe (WCAG 2.2 AA) passes on the Live Monitor and on the Alerts detail with the Déjà Vu tab open, **in all three themes at both viewports**, on the first run.
 - **Bundle:** Live Monitor chunk 5.2 kB gzip, Alerts 6.0 kB (no chart library added).
 - **Tests:** 127 unit tests (+27: live socket backoff/final codes/stale 3 + helpers 3, live-view helpers 7, alert helpers 2, Live Monitor 5, Alerts Center 6, toasts 1) with a fake WebSocket in `src/test/`; `e2e/part5.spec.ts` (replay → UI with latency, alerts round trip, dashboard, axe × 3 themes; × 2 viewports, the stateful ones in one project).
 
-**Exit criterion "replay → alerts in the UI ≤ 5 s":** met in both measured runs (2.96 s, 1.38 s). **"Tablet smoothness" was not measured** on a real tablet (V-F20).
+**Exit criterion "replay → alerts in the UI ≤ 5 s":** met in all three measured runs (2.96 s, 1.38 s, 2.33 s). **"Tablet smoothness" was not measured** on a real tablet (V-F20).
 
 **Found while building F4:**
 1. **The Déjà Vu match vanished on fused alerts** (the backend dropped a fused source's detail), so the overlay had nothing to draw; fixed in the backend, and the overlay is rebuilt from stored samples and checked to reproduce the recorded similarity.
@@ -572,7 +572,7 @@ Frontend phases follow the backend phases they depend on, typically starting a f
 | **P2 Revamp** (Part 2) | B2 | — | `SPEC_RECONCILIATION.md` §5: themes, motion, collapsible sidebar, top bar with well-type switcher, ⌘K palette, MapLibre map, Documents Library revamp, Dashboard shell | ✅ **Met 2026-09-29** — §0.3, Appendix B3 |
 | **F2 Knowledge** (Part 3) | B2 ✅ | P2 | Review queue, Well 360, **Correlation Panel**, Knowledge Search, at-formation/closest-approach modes on the map, axe checks in e2e | ✅ **Met 2026-09-29 (Part 3):** 6 wells re-aligned in 183 ms (first render 699 ms incl. page load) with evidence links; review round trip in e2e; search with citations and "no record"; axe clean. No visual-regression baseline (V-F16). §0.2, Appendix B4 |
 | **F3 Risk & ledger** (Part 4) | B3 ✅ | P3a | Mitigation Ledger, `RiskCurve` on Map/Well 360/Correlation hazard strip | ✅ **Met 2026-09-29 (Part 4):** the ledger shows the API's ranking (whose agreement with the planted rates is the backend's ρ = 0.837); risk curves show n, n_eff in labels and the 90% CI; axe clean in three themes. §0.1, Appendix B5 |
-| **F4 Real-time** (Part 5) | B4 ✅ | P3b | Live Well Monitor, Alerts list/detail, Déjà Vu overlay, WebSocket client with reconnect/stale handling | ✅ **Met 2026-09-29 (Part 5) except tablet profiling:** replay → alert toast 2.96 s and 1.38 s after the alert is stored (≤ 5 s, e2e); axe clean in 3 themes. Tablet smoothness not measured (V-F20). §0.0, Appendix B6. *Original criterion:* replay → alerts appear in the UI ≤ 5 s after the backend emits them (measured); tablet smoothness target met |
+| **F4 Real-time** (Part 5) | B4 ✅ | P3b | Live Well Monitor, Alerts list/detail, Déjà Vu overlay, WebSocket client with reconnect/stale handling | ✅ **Met 2026-09-29 (Part 5) except tablet profiling:** replay → alert toast 1.38–2.96 s after the alert is stored (3 runs) (≤ 5 s, e2e); axe clean in 3 themes. Tablet smoothness not measured (V-F20). §0.0, Appendix B6. *Original criterion:* replay → alerts appear in the UI ≤ 5 s after the backend emits them (measured); tablet smoothness target met |
 | **F5 Copilot & polish** | B5 | P4 | Copilot panel (SSE), Analytics, Offset Risk Brief download, PWA with an offline well pack | Copilot answers with clickable citations; field view usable offline for a cached well (knowledge views only) |
 | **F6 Hardening** | B6 | P5 | OIDC PKCE login, role-aware UI, Admin, hidden source maps, bundle budget in CI, usability test (master plan §13.6) | SUS ≥ 70 measured; performance budgets (§10) met and recorded |
 
@@ -868,6 +868,17 @@ Clean run against the freshly seeded stack at commit `0ad33d4` (BACKEND_PLAN App
 | Small field | the same e2e against a 12-well field (CI's size) | 24 passed (`part4` + `smoke`) |
 | Visual review | Playwright screenshots at 1440 px (ledger, risk tab, map panel, correlation) | Found and fixed here: the risk tab's grid squeezed the side list; odd axis ticks (19%, 37%); TD marker on the prognosed top |
 | CI | GitHub Actions on `0ad33d4` | all three jobs green |
+
+## Appendix B6 — Part 5 (F4) Verification Record (2026-09-29)
+
+Clean stack (volumes wiped, images rebuilt at `49940bc`, full seed); see BACKEND_PLAN Appendix B6.
+
+| Check | Command | Result |
+|---|---|---|
+| Unit tests | `npm test` | **127 passed** (27 new) |
+| Types / lint / format / API drift | `tsc -b`, `npm run lint`, `npm run format:check`, `npm run check:api` | clean (format fixed in `2b3a5e9` after CI caught one file) |
+| Browser e2e | `npx playwright test` | **67 passed**, 3 skipped; `part5.spec.ts`: frames stream into `/live`, a new alert's toast **2.33 s** after it was stored, Déjà Vu overlay with 7 channel charts, ack round trip, axe clean in 3 themes × 2 viewports |
+| Bundle | `vite build` | Live Monitor 5.2 kB gzip, Alerts 6.0 kB |
 
 ## Appendix C — Document Maintenance Rules
 

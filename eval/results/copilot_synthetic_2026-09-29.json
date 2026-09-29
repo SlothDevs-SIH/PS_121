@@ -1,7 +1,7 @@
 {
   "what": "Copilot (S10, rules engine) on a question set generated from SYNTHETIC truth",
-  "measured_at": "2026-09-29T16:59:31+00:00",
-  "commit": "366876a",
+  "measured_at": "2026-09-29T19:24:53+00:00",
+  "commit": "fcedb54",
   "engine": "rules",
   "questions": 60,
   "scores": {
@@ -25,8 +25,8 @@
     "correct_refusal": 0.9
   },
   "latency_ms": {
-    "median": 19.0,
-    "max": 78.9
+    "median": 17.8,
+    "max": 67.9
   },
   "unfaithful_examples": [],
   "failures": [
@@ -65,7 +65,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 78.9,
+      "took_ms": 67.9,
       "correct": true,
       "recall_at_5": true,
       "recall_at_5_filtered": true
@@ -85,7 +85,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 38.7,
+      "took_ms": 27.1,
       "correct": true,
       "recall_at_5": false,
       "recall_at_5_filtered": true
@@ -105,7 +105,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 29.4,
+      "took_ms": 22.9,
       "correct": true,
       "recall_at_5": true,
       "recall_at_5_filtered": true
@@ -125,7 +125,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 32.6,
+      "took_ms": 23.5,
       "correct": true,
       "recall_at_5": false,
       "recall_at_5_filtered": true
@@ -145,7 +145,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 32.2,
+      "took_ms": 24.8,
       "correct": true,
       "recall_at_5": true,
       "recall_at_5_filtered": true
@@ -165,7 +165,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 37.1,
+      "took_ms": 22.0,
       "correct": true,
       "recall_at_5": true,
       "recall_at_5_filtered": true
@@ -185,7 +185,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 34.8,
+      "took_ms": 19.2,
       "correct": true,
       "recall_at_5": false,
       "recall_at_5_filtered": true
@@ -205,7 +205,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 29.5,
+      "took_ms": 20.5,
       "correct": true,
       "recall_at_5": false,
       "recall_at_5_filtered": true
@@ -225,7 +225,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 24.3,
+      "took_ms": 22.1,
       "correct": true,
       "recall_at_5": true,
       "recall_at_5_filtered": true
@@ -245,7 +245,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 36.5,
+      "took_ms": 23.4,
       "correct": true,
       "recall_at_5": false,
       "recall_at_5_filtered": true
@@ -265,7 +265,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 31.4,
+      "took_ms": 21.4,
       "correct": true,
       "recall_at_5": true,
       "recall_at_5_filtered": true
@@ -285,7 +285,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 43.0,
+      "took_ms": 18.3,
       "correct": true,
       "recall_at_5": false,
       "recall_at_5_filtered": true
@@ -305,7 +305,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 29.2,
+      "took_ms": 23.4,
       "correct": true,
       "recall_at_5": true,
       "recall_at_5_filtered": true
@@ -325,7 +325,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 32.1,
+      "took_ms": 26.7,
       "correct": true,
       "recall_at_5": false,
       "recall_at_5_filtered": true
@@ -345,7 +345,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 28.3,
+      "took_ms": 20.4,
       "correct": true,
       "recall_at_5": true,
       "recall_at_5_filtered": true
@@ -365,7 +365,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 25.7,
+      "took_ms": 20.1,
       "correct": true,
       "recall_at_5": false,
       "recall_at_5_filtered": true
@@ -384,7 +384,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 18.7,
+      "took_ms": 18.4,
       "correct": true,
       "recall_at_5": false,
       "recall_at_5_filtered": false
@@ -404,7 +404,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 25.7,
+      "took_ms": 21.2,
       "correct": true,
       "recall_at_5": true,
       "recall_at_5_filtered": true
@@ -424,7 +424,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 16.4,
+      "took_ms": 16.1,
       "correct": true,
       "recall_at_5": false,
       "recall_at_5_filtered": false
@@ -444,7 +444,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 23.5,
+      "took_ms": 31.0,
       "correct": true,
       "recall_at_5": false,
       "recall_at_5_filtered": true
@@ -475,7 +475,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 12.2,
+      "took_ms": 12.8,
       "precision": 1.0,
       "recall": 1.0,
       "correct": true
@@ -494,7 +494,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 10.4,
+      "took_ms": 10.9,
       "precision": 1.0,
       "recall": 1.0,
       "correct": true
@@ -519,7 +519,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 13.0,
+      "took_ms": 12.5,
       "precision": 1.0,
       "recall": 1.0,
       "correct": true
@@ -539,7 +539,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 11.6,
+      "took_ms": 10.1,
       "precision": 1.0,
       "recall": 1.0,
       "correct": true
@@ -558,7 +558,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 12.2,
+      "took_ms": 12.4,
       "precision": 1.0,
       "recall": 1.0,
       "correct": true
@@ -577,7 +577,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 11.0,
+      "took_ms": 8.0,
       "precision": 1.0,
       "recall": 1.0,
       "correct": true
@@ -593,7 +593,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 16.8,
+      "took_ms": 6.2,
       "precision": 1.0,
       "recall": 1.0,
       "correct": true
@@ -610,7 +610,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 10.7,
+      "took_ms": 7.0,
       "precision": 1.0,
       "recall": 1.0,
       "correct": true
@@ -627,7 +627,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 9.0,
+      "took_ms": 6.6,
       "precision": 1.0,
       "recall": 1.0,
       "correct": true
@@ -659,7 +659,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 11.6,
+      "took_ms": 9.0,
       "precision": 1.0,
       "recall": 1.0,
       "correct": true
@@ -681,7 +681,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 8.7,
+      "took_ms": 8.2,
       "precision": 1.0,
       "recall": 1.0,
       "correct": true
@@ -714,7 +714,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 12.8,
+      "took_ms": 11.7,
       "precision": 1.0,
       "recall": 1.0,
       "correct": true
@@ -747,7 +747,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 12.5,
+      "took_ms": 13.3,
       "precision": 1.0,
       "recall": 1.0,
       "correct": true
@@ -767,7 +767,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 11.0,
+      "took_ms": 7.9,
       "precision": 1.0,
       "recall": 1.0,
       "correct": true
@@ -796,7 +796,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 17.4,
+      "took_ms": 12.5,
       "precision": 1.0,
       "recall": 1.0,
       "correct": true
@@ -811,7 +811,7 @@
         "get_ledger"
       ],
       "refused": false,
-      "took_ms": 36.3,
+      "took_ms": 22.6,
       "correct": true,
       "top_is_planted_best_of_ranked": true
     },
@@ -825,7 +825,7 @@
         "get_ledger"
       ],
       "refused": false,
-      "took_ms": 24.6,
+      "took_ms": 19.8,
       "correct": true,
       "top_is_planted_best_of_ranked": true
     },
@@ -839,7 +839,7 @@
         "get_ledger"
       ],
       "refused": false,
-      "took_ms": 22.7,
+      "took_ms": 21.7,
       "correct": true,
       "top_is_planted_best_of_ranked": true
     },
@@ -853,7 +853,7 @@
         "get_ledger"
       ],
       "refused": false,
-      "took_ms": 19.1,
+      "took_ms": 16.5,
       "correct": true,
       "top_is_planted_best_of_ranked": true
     },
@@ -867,7 +867,7 @@
         "get_ledger"
       ],
       "refused": false,
-      "took_ms": 15.8,
+      "took_ms": 31.5,
       "correct": true,
       "top_is_planted_best_of_ranked": true
     },
@@ -877,7 +877,7 @@
       "intent": "refuse",
       "tools": [],
       "refused": true,
-      "took_ms": 3.0,
+      "took_ms": 2.2,
       "correct": true
     },
     {
@@ -886,7 +886,7 @@
       "intent": "refuse",
       "tools": [],
       "refused": true,
-      "took_ms": 2.8,
+      "took_ms": 2.1,
       "correct": true
     },
     {
@@ -895,7 +895,7 @@
       "intent": "refuse",
       "tools": [],
       "refused": true,
-      "took_ms": 2.4,
+      "took_ms": 2.1,
       "correct": true
     },
     {
@@ -904,7 +904,7 @@
       "intent": "refuse",
       "tools": [],
       "refused": true,
-      "took_ms": 2.5,
+      "took_ms": 2.0,
       "correct": true
     },
     {
@@ -915,7 +915,7 @@
         "search_documents"
       ],
       "refused": true,
-      "took_ms": 18.1,
+      "took_ms": 18.4,
       "correct": true
     },
     {
@@ -924,7 +924,7 @@
       "intent": "refuse",
       "tools": [],
       "refused": true,
-      "took_ms": 2.4,
+      "took_ms": 2.0,
       "correct": true
     },
     {
@@ -935,7 +935,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 20.5,
+      "took_ms": 17.3,
       "correct": true
     },
     {
@@ -946,7 +946,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 14.1,
+      "took_ms": 11.8,
       "correct": true
     },
     {
@@ -957,7 +957,7 @@
         "search_documents"
       ],
       "refused": true,
-      "took_ms": 20.0,
+      "took_ms": 16.1,
       "correct": true
     },
     {
@@ -968,7 +968,7 @@
         "search_documents"
       ],
       "refused": true,
-      "took_ms": 18.8,
+      "took_ms": 15.3,
       "correct": true
     },
     {
@@ -980,7 +980,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 30.9,
+      "took_ms": 29.9,
       "correct": true
     },
     {
@@ -992,7 +992,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 29.4,
+      "took_ms": 25.7,
       "correct": true
     },
     {
@@ -1004,7 +1004,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 35.2,
+      "took_ms": 29.4,
       "correct": true
     },
     {
@@ -1016,7 +1016,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 42.8,
+      "took_ms": 26.9,
       "correct": true
     },
     {
@@ -1028,7 +1028,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 42.3,
+      "took_ms": 27.0,
       "correct": true
     },
     {
@@ -1039,7 +1039,7 @@
         "search_documents"
       ],
       "refused": true,
-      "took_ms": 33.1,
+      "took_ms": 24.5,
       "correct": true
     },
     {
@@ -1050,7 +1050,7 @@
         "search_documents"
       ],
       "refused": false,
-      "took_ms": 15.8,
+      "took_ms": 15.2,
       "correct": false
     },
     {
@@ -1061,7 +1061,7 @@
         "search_documents"
       ],
       "refused": true,
-      "took_ms": 14.9,
+      "took_ms": 15.4,
       "correct": true
     },
     {
@@ -1072,7 +1072,7 @@
         "get_events"
       ],
       "refused": false,
-      "took_ms": 14.3,
+      "took_ms": 12.6,
       "correct": false
     },
     {
@@ -1083,7 +1083,7 @@
         "get_events"
       ],
       "refused": true,
-      "took_ms": 10.5,
+      "took_ms": 6.8,
       "correct": true
     }
   ],
