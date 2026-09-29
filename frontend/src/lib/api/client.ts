@@ -45,6 +45,21 @@ export type LedgerResponse = components['schemas']['LedgerResponse']
 export type LedgerEntry = components['schemas']['LedgerEntry']
 export type LedgerCase = components['schemas']['LedgerCase']
 export type RiskProfile = components['schemas']['RiskProfile']
+export type AlertOut = components['schemas']['AlertOut']
+export type AlertPage = components['schemas']['AlertPage']
+export type AlertEvidence = components['schemas']['AlertEvidence']
+export type AlertDriver = components['schemas']['AlertDriver']
+export type AlertRecommendation = components['schemas']['AlertRecommendation']
+export type AlertFeedbackOut = components['schemas']['AlertFeedbackOut']
+export type AlertStatus = AlertOut['status']
+export type AlertSeverity = AlertOut['severity']
+export type AlertVerdict = AlertFeedbackOut['verdict']
+export type RealtimeWindow = components['schemas']['RealtimeWindow']
+export type DejaVuOverlay = components['schemas']['DejaVuOverlay']
+export type ReplaySession = components['schemas']['ReplaySessionOut']
+export type StreamStatus = components['schemas']['StreamStatus']
+export type ReplayAction = 'start' | 'pause' | 'resume' | 'stop' | 'speed'
+export type CopilotAnswer = components['schemas']['CopilotAnswer']
 export type EventType = EventSummary['event_type']
 export type ProximityMode = 'SURFACE' | 'AT_FORMATION' | 'CLOSEST_APPROACH'
 
@@ -79,6 +94,13 @@ export type ReviewDecision =
   | { action: 'accept'; note?: string }
   | { action: 'correct'; fields: Record<string, unknown>; note?: string }
   | { action: 'reject'; reason: string }
+
+export interface AlertQuery {
+  well_id?: number | null
+  status?: AlertStatus[]
+  severity?: AlertSeverity[]
+  limit?: number
+}
 
 export class ApiError extends Error {
   readonly status: number
@@ -215,6 +237,27 @@ export const api = {
     apiFetch<SearchResponse>(`/api/v1/search${qs({ ...rest, event_type })}`),
   ledger: (params: LedgerParams) => apiFetch<LedgerResponse>(`/api/v1/ledger${qs({ ...params })}`),
   riskProfile: (wellId: number) => apiFetch<RiskProfile>(`/api/v1/wells/${wellId}/risk-profile`),
+  alerts: ({ status, severity, ...rest }: AlertQuery = {}) =>
+    apiFetch<AlertPage>(`/api/v1/alerts${qs({ limit: 200, ...rest, status, severity })}`),
+  alert: (id: number) => apiFetch<AlertOut>(`/api/v1/alerts/${id}`),
+  ackAlert: (id: number) => apiFetch<AlertOut>(`/api/v1/alerts/${id}/ack`, json({})),
+  dismissAlert: (id: number, reason: string) =>
+    apiFetch<AlertOut>(`/api/v1/alerts/${id}/dismiss`, json({ reason })),
+  alertFeedback: (id: number, verdict: AlertVerdict, comment?: string | null) =>
+    apiFetch<AlertFeedbackOut>(
+      `/api/v1/alerts/${id}/feedback`,
+      json({ verdict, comment: comment || null }),
+    ),
+  dejavu: (id: number) => apiFetch<DejaVuOverlay>(`/api/v1/alerts/${id}/dejavu`),
+  realtime: (
+    wellId: number,
+    params: { minutes?: number; max_points?: number; end?: string } = {},
+  ) => apiFetch<RealtimeWindow>(`/api/v1/wells/${wellId}/realtime${qs({ ...params })}`),
+  replays: () => apiFetch<ReplaySession[]>('/api/v1/replay'),
+  replay: (wellId: number, action: ReplayAction, speed?: number) =>
+    apiFetch<ReplaySession>('/api/v1/replay', json({ well_id: wellId, action, speed })),
+  askCopilot: (message: string, ctx: { well_id?: number; alert_id?: number } = {}) =>
+    apiFetch<CopilotAnswer>('/api/v1/copilot/chat?stream=false', json({ message, ...ctx })),
   pageImageUrl: (id: number, pageNo: number) => `/api/v1/documents/${id}/pages/${pageNo}/image`,
   upload: (files: File[]) => {
     const body = new FormData()

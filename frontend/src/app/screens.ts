@@ -45,7 +45,7 @@ export interface ScreenSpec {
   icon: LucideIcon
 }
 
-export const CURRENT_FRONTEND_PHASE: FrontendPhase = 'F2'
+export const CURRENT_FRONTEND_PHASE: FrontendPhase = 'F4'
 
 export const SCREENS: ScreenSpec[] = [
   {
@@ -55,7 +55,7 @@ export const SCREENS: ScreenSpec[] = [
     navPath: '/',
     title: 'Dashboard',
     purpose:
-      'Field at a glance: wells by fluid, wells drilling now, the document pipeline, extracted events and the review backlog. Live alerts join in Part 5.',
+      'Field at a glance: wells by fluid, wells drilling now, the document pipeline, extracted events, the review backlog and open live alerts.',
     audiences: ['office', 'field'],
     psRefs: [],
     phase: 'P2',
@@ -128,7 +128,7 @@ export const SCREENS: ScreenSpec[] = [
     audiences: ['field', 'office'],
     psRefs: ['O-vi', 'O-vii'],
     phase: 'F4',
-    status: 'planned',
+    status: 'built',
     endpoints: [
       { method: 'WS', path: '/ws/wells/1/live' },
       { method: 'GET', path: '/api/v1/wells/1/risk-profile' },
@@ -146,7 +146,7 @@ export const SCREENS: ScreenSpec[] = [
     audiences: ['field', 'office'],
     psRefs: ['O-vi'],
     phase: 'F4',
-    status: 'planned',
+    status: 'built',
     endpoints: [
       { method: 'GET', path: '/api/v1/alerts' },
       { method: 'WS', path: '/ws/alerts' },
@@ -218,7 +218,11 @@ export const SCREENS: ScreenSpec[] = [
     psRefs: ['O-vii'],
     phase: 'F5',
     status: 'planned',
-    endpoints: [],
+    endpoints: [
+      { method: 'GET', path: '/api/v1/analytics/npt?group_by=formation' },
+      { method: 'GET', path: '/api/v1/analytics/recurring' },
+      { method: 'GET', path: '/api/v1/analytics/alerts' },
+    ],
     icon: BarChart3,
   },
   {

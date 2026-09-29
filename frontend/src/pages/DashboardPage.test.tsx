@@ -28,7 +28,7 @@ describe('Dashboard', () => {
     const items = within(recent).getAllByRole('listitem')
     expect(items[0]).toHaveTextContent('Stuck pipe (differential)') // newest first
     expect(items[1]).toHaveTextContent('unverified')
-    expect(screen.getByText(/Nothing here is simulated/)).toBeInTheDocument()
+    expect(await screen.findByText(/nothing here is simulated/)).toBeInTheDocument()
   })
 
   it('follows the global well-type switcher', async () => {

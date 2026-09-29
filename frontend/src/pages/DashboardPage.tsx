@@ -17,12 +17,60 @@ import { Card, CardTitle } from '../components/ui/Card'
 import { KpiCard } from '../components/ui/KpiCard'
 import { SkeletonBlock } from '../components/ui/Skeleton'
 import { useTheme } from '../app/themeContext'
-import { useDocuments, useEvents, useReviewCounts, useWells } from '../lib/api/hooks'
+import { useAlerts, useDocuments, useEvents, useReviewCounts, useWells } from '../lib/api/hooks'
+import { sortAlerts } from '../lib/alerts'
 import { eventMeta } from '../lib/eventTypes'
 import { formatDepth } from '../lib/format/units'
 import { staggerContainer, staggerItem } from '../lib/motion'
 import { FLUID_ORDER, FLUIDS, fluidOf, matchesFilter } from '../lib/wellTypes'
 import { useUiStore } from '../stores/ui'
+
+const SEVERITY_TONE = { critical: 'danger', warning: 'warn', info: 'info' } as const
+
+/** Open alerts across the field, newest first with critical well control pinned (live via
+ * the global /ws/alerts feed, which refreshes this query). */
+function LiveAlertsCard() {
+  const q = useAlerts({ status: ['new', 'ack'], limit: 50 })
+  const items = sortAlerts(q.data?.items ?? []).slice(0, 5)
+  return (
+    <Card data-testid="dashboard-alerts">
+      <div className="mb-2 flex items-center justify-between">
+        <CardTitle className="mb-0">Live alerts</CardTitle>
+        <Link
+          to="/alerts"
+          className="inline-flex items-center gap-1 text-sm text-accent hover:underline"
+        >
+          All alerts <ArrowRight size={14} aria-hidden />
+        </Link>
+      </div>
+      {q.isLoading ? (
+        <SkeletonBlock className="h-24 w-full" />
+      ) : q.isError ? (
+        <p className="text-sm text-muted">Alerts unavailable: {q.error.message}</p>
+      ) : items.length === 0 ? (
+        <div className="flex items-center gap-3 rounded-lg border border-dashed border-border p-4 text-sm text-muted">
+          <BellOff size={20} aria-hidden />
+          <p>No open alerts. Alerts come only from the stream engine; nothing here is simulated.</p>
+        </div>
+      ) : (
+        <ul className="space-y-1.5">
+          {items.map((a) => (
+            <li key={a.id}>
+              <Link
+                to={`/alerts?id=${a.id}`}
+                className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-surface-2"
+              >
+                <Badge tone={SEVERITY_TONE[a.severity]}>{a.severity}</Badge>
+                <span className="truncate text-text">{a.title}</span>
+                <span className="ml-auto shrink-0 text-xs text-muted">{a.well_name}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  )
+}
 
 const WellMap = lazy(() => import('../components/map/WellMap'))
 
@@ -236,16 +284,7 @@ export function DashboardPage() {
               </motion.ul>
             )}
           </Card>
-          <Card>
-            <CardTitle>Live alerts</CardTitle>
-            <div className="flex items-center gap-3 rounded-lg border border-dashed border-border p-4 text-sm text-muted">
-              <BellOff size={20} aria-hidden />
-              <p>
-                The alert engine runs on the replay stream (backend B4); the alert feed arrives with
-                the Live Monitor in Part 5. Nothing here is simulated in the meantime.
-              </p>
-            </div>
-          </Card>
+          <LiveAlertsCard />
         </div>
       </div>
     </div>

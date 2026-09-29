@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useEffect } from 'react'
 import { useLocation } from 'react-router'
 
+import { AlertToaster } from '../components/shell/AlertToaster'
 import { AnimatedOutlet } from '../components/shell/AnimatedOutlet'
 import { CommandPaletteHost } from '../components/shell/CommandPaletteHost'
 import { Sidebar } from '../components/shell/Sidebar'
@@ -74,6 +75,7 @@ export function AppShell() {
         </main>
       </div>
       <CommandPaletteHost />
+      <AlertToaster />
     </div>
   )
 }

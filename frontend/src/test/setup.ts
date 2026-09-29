@@ -3,6 +3,7 @@ import { cleanup, configure } from '@testing-library/react'
 import { afterEach, vi } from 'vitest'
 
 import { resetUiStore } from '../stores/ui'
+import { FakeWebSocket } from './fakeWebSocket'
 
 // jsdom has no WebGL: MapLibre is replaced by a small fake that keeps the data flow
 // (sources, HTML markers, camera calls) observable. See src/test/fakeMaplibre.ts.
@@ -16,9 +17,13 @@ class NoopResizeObserver {
 globalThis.ResizeObserver ??= NoopResizeObserver as unknown as typeof ResizeObserver
 Element.prototype.scrollIntoView ??= function scrollIntoView() {}
 
+vi.stubGlobal('WebSocket', FakeWebSocket)
+
 afterEach(() => {
   cleanup()
+  FakeWebSocket.reset()
   vi.unstubAllGlobals()
+  vi.stubGlobal('WebSocket', FakeWebSocket)
   document.documentElement.removeAttribute('data-theme')
   document.documentElement.removeAttribute('data-mode')
   try {
