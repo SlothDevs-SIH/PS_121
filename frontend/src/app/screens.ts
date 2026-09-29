@@ -1,9 +1,25 @@
 /**
- * Registry of every screen in master plan §10, with its build status.
- * Keep in sync with docs/FRONTEND_PLAN.md §5 — update both in the same PR.
+ * Registry of every screen in master plan §10 (plus the Dashboard of FRONTEND_SPEC §4.2),
+ * with its build status. Keep in sync with docs/FRONTEND_PLAN.md §5 — update both together.
  */
+import {
+  Activity,
+  BarChart3,
+  Bell,
+  BookOpenText,
+  Columns3,
+  FileStack,
+  Gauge,
+  LayoutDashboard,
+  Map as MapIcon,
+  Scale,
+  Settings2,
+  Waypoints,
+  type LucideIcon,
+} from 'lucide-react'
 
-export type FrontendPhase = 'F0' | 'F1' | 'F2' | 'F3' | 'F4' | 'F5' | 'F6'
+/** F0–F6: frontend phases (FRONTEND_PLAN §9). P2: the Part 2 design-system revamp. */
+export type FrontendPhase = 'F0' | 'F1' | 'P2' | 'F2' | 'F3' | 'F4' | 'F5' | 'F6'
 export type ScreenStatus = 'planned' | 'in_progress' | 'built'
 export type Audience = 'office' | 'field'
 
@@ -26,17 +42,36 @@ export interface ScreenSpec {
   phase: FrontendPhase
   status: ScreenStatus
   endpoints: ProbeEndpoint[]
+  icon: LucideIcon
 }
 
 export const CURRENT_FRONTEND_PHASE: FrontendPhase = 'F1'
 
 export const SCREENS: ScreenSpec[] = [
   {
+    id: 'dashboard',
+    planNo: 0,
+    path: '/',
+    navPath: '/',
+    title: 'Dashboard',
+    purpose:
+      'Field at a glance: wells by fluid, wells drilling now, the document pipeline, extracted events and the review backlog. Live alerts join in Part 5.',
+    audiences: ['office', 'field'],
+    psRefs: [],
+    phase: 'P2',
+    status: 'built',
+    endpoints: [
+      { method: 'GET', path: '/api/v1/wells' },
+      { method: 'GET', path: '/api/v1/events' },
+    ],
+    icon: LayoutDashboard,
+  },
+  {
     id: 'map',
     planNo: 1,
     path: '/map',
     navPath: '/map',
-    title: 'Well Map',
+    title: 'Map Explorer',
     purpose:
       'Offset wells around the active well within a user-defined radius; surface, at-formation and closest-approach distance modes.',
     audiences: ['office', 'field'],
@@ -47,6 +82,7 @@ export const SCREENS: ScreenSpec[] = [
       { method: 'GET', path: '/api/v1/wells' },
       { method: 'GET', path: '/api/v1/wells/1/offsets?radius_km=5&mode=SURFACE' },
     ],
+    icon: MapIcon,
   },
   {
     id: 'well360',
@@ -64,6 +100,7 @@ export const SCREENS: ScreenSpec[] = [
       { method: 'GET', path: '/api/v1/wells/1' },
       { method: 'GET', path: '/api/v1/wells/1/trajectory' },
     ],
+    icon: Waypoints,
   },
   {
     id: 'correlation',
@@ -78,6 +115,7 @@ export const SCREENS: ScreenSpec[] = [
     phase: 'F2',
     status: 'planned',
     endpoints: [{ method: 'GET', path: '/api/v1/correlation?wells=1&wells=2&align=TVDSS' }],
+    icon: Columns3,
   },
   {
     id: 'live',
@@ -95,6 +133,7 @@ export const SCREENS: ScreenSpec[] = [
       { method: 'WS', path: '/ws/wells/1/live' },
       { method: 'GET', path: '/api/v1/wells/1/risk-profile' },
     ],
+    icon: Activity,
   },
   {
     id: 'alerts',
@@ -112,6 +151,7 @@ export const SCREENS: ScreenSpec[] = [
       { method: 'GET', path: '/api/v1/alerts' },
       { method: 'WS', path: '/ws/alerts' },
     ],
+    icon: Bell,
   },
   {
     id: 'search',
@@ -130,6 +170,7 @@ export const SCREENS: ScreenSpec[] = [
       { method: 'GET', path: '/api/v1/events?event_type=LOSS' },
       { method: 'POST', path: '/api/v1/copilot/chat' },
     ],
+    icon: BookOpenText,
   },
   {
     id: 'ledger',
@@ -144,24 +185,26 @@ export const SCREENS: ScreenSpec[] = [
     phase: 'F3',
     status: 'planned',
     endpoints: [{ method: 'GET', path: '/api/v1/ledger?event_type=LOSS' }],
+    icon: Scale,
   },
   {
-    id: 'ingest',
+    id: 'documents',
     planNo: 8,
-    path: '/ingest',
-    navPath: '/ingest',
-    title: 'Ingestion & Review',
+    path: '/documents',
+    navPath: '/documents',
+    title: 'Documents Library',
     purpose:
-      'Upload reports, follow ingestion jobs, review low-confidence extractions side by side with the page image.',
+      'Upload reports and follow each through text/OCR, extraction and indexing; open any page with its extracted lines. The review queue for low-confidence extractions joins in Part 3.',
     audiences: ['office'],
     psRefs: ['O-i'],
     phase: 'F1',
-    status: 'in_progress',
+    status: 'built',
     endpoints: [
       { method: 'POST', path: '/api/v1/documents' },
       { method: 'GET', path: '/api/v1/documents' },
       { method: 'GET', path: '/api/v1/review-queue' },
     ],
+    icon: FileStack,
   },
   {
     id: 'analytics',
@@ -176,6 +219,7 @@ export const SCREENS: ScreenSpec[] = [
     phase: 'F5',
     status: 'planned',
     endpoints: [],
+    icon: BarChart3,
   },
   {
     id: 'admin',
@@ -189,6 +233,7 @@ export const SCREENS: ScreenSpec[] = [
     phase: 'F6',
     status: 'planned',
     endpoints: [{ method: 'POST', path: '/api/v1/replay' }],
+    icon: Settings2,
   },
   {
     id: 'system',
@@ -206,6 +251,7 @@ export const SCREENS: ScreenSpec[] = [
       { method: 'GET', path: '/readyz' },
       { method: 'GET', path: '/api/v1/meta' },
     ],
+    icon: Gauge,
   },
 ]
 

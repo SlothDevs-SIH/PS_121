@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { api, type ProximityMode } from './client'
+import { api, type DocumentSummary, type ProximityMode } from './client'
 
 export const queryKeys = {
   readiness: ['readiness'] as const,
@@ -13,6 +13,8 @@ export const queryKeys = {
   documents: (status?: string) => ['documents', status ?? 'all'] as const,
   document: (id: number) => ['document', id] as const,
   page: (id: number, pageNo: number) => ['page', id, pageNo] as const,
+  events: (params: object) => ['events', params] as const,
+  reviewCounts: ['review-counts'] as const,
 }
 
 /** Polled so the header status pill reflects outages within ~15 s. */
@@ -64,15 +66,43 @@ export function useOffsets(id: number | null, radiusKm: number, mode: ProximityM
   })
 }
 
-const ACTIVE = new Set(['queued', 'processing'])
+const RECENT_MS = 15 * 60_000
 
-/** Polls every 3 s while any document is still being ingested. */
-export function useDocuments(status?: string) {
+/** True while a document is still moving through ingest → extraction → indexing. Stages
+ * left 'pending' long after upload (e.g. extraction switched off) don't keep us polling. */
+export function inPipeline(d: DocumentSummary, now = Date.now()): boolean {
+  if (d.ingest_status === 'queued' || d.ingest_status === 'processing') return true
+  if (d.ingest_status === 'failed') return false
+  if (d.extract_status === 'running' || d.index_status === 'running') return true
+  const recent = now - Date.parse(d.created_at) < RECENT_MS
+  return recent && (d.extract_status === 'pending' || d.index_status === 'pending')
+}
+
+/** Polls every 3 s while any document is still in the pipeline. */
+export function useDocuments(status?: string, enabled = true) {
   return useQuery({
     queryKey: queryKeys.documents(status),
     queryFn: () => api.documents(status ? { status } : {}),
-    refetchInterval: (q) =>
-      q.state.data?.items.some((d) => ACTIVE.has(d.ingest_status)) ? 3000 : false,
+    enabled,
+    refetchInterval: (q) => (q.state.data?.items.some((d) => inPipeline(d)) ? 3000 : false),
+  })
+}
+
+export function useEvents(params: { well_id?: number; event_type?: string } = {}) {
+  return useQuery({
+    queryKey: queryKeys.events(params),
+    queryFn: () => api.events(params),
+    staleTime: 60_000,
+  })
+}
+
+/** Items per review status (one tiny page request; the counts cover the whole queue). */
+export function useReviewCounts() {
+  return useQuery({
+    queryKey: queryKeys.reviewCounts,
+    queryFn: () => api.reviewQueue({ status: 'pending', limit: 1 }),
+    select: (page) => page.status_counts,
+    staleTime: 30_000,
   })
 }
 

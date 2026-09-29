@@ -13,10 +13,9 @@ function trackConsoleErrors(page: Page): string[] {
   return errors
 }
 
-test('home redirects to System Status and shows a ready backend', async ({ page }) => {
+test('System Status shows a ready backend', async ({ page }) => {
   const errors = trackConsoleErrors(page)
-  await page.goto('/')
-  await expect(page).toHaveURL(/\/system$/)
+  await page.goto('/system')
   await expect(page.getByRole('heading', { name: 'System Status' })).toBeVisible()
   await expect(page.getByTestId('backend-status')).toContainText('Backend ready')
   const table = page.getByTestId('readiness-table')
@@ -31,25 +30,22 @@ test('home redirects to System Status and shows a ready backend', async ({ page 
 test('every screen in the navigation loads without errors', async ({ page }) => {
   const errors = trackConsoleErrors(page)
   await page.goto('/system')
-  const links = page.getByRole('navigation', { name: 'Main' }).getByRole('link')
+  const links = page.getByRole('navigation', { name: 'Main' }).locator('a[data-screen]')
   const count = await links.count()
-  expect(count).toBe(11)
+  expect(count).toBe(12)
   for (let i = 0; i < count; i++) {
     const link = links.nth(i)
-    const title = (await link.locator('span').first().textContent()) ?? ''
+    const title = (await link.getAttribute('data-title')) ?? ''
     await link.click()
     await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible()
+    await expect(page.getByTestId('breadcrumb-current')).toHaveText(title)
   }
   expect(errors).toEqual([])
 })
 
 test('planned screens probe the real backend and show its phase', async ({ page }) => {
-  await page.goto('/correlation')
-  await expect(page.getByTestId('planned-phase')).toHaveText('Planned · frontend phase F2')
-  await expect(page.getByTestId('endpoint-probes').getByText('501 · backend phase B2')).toHaveCount(
-    1,
-  )
   await page.goto('/ledger')
+  await expect(page.getByTestId('planned-phase')).toHaveText('Planned · frontend phase F3')
   await expect(page.getByTestId('endpoint-probes')).toContainText('501 · backend phase B3')
 })
 
@@ -73,16 +69,18 @@ test('WebSockets are proxied through nginx to the backend', async ({ page }) => 
 test('theme and field mode persist across reloads', async ({ page }) => {
   await page.goto('/system')
   const html = page.locator('html')
-  await page.getByTestId('theme-toggle').click() // system → light
-  await page.getByTestId('theme-toggle').click() // light → dark
-  await expect(html).toHaveAttribute('data-theme', 'dark')
+  await expect(html).toHaveAttribute('data-theme', 'deep-rig')
+  await page.getByTestId('theme-toggle').click() // Deep Rig → Daylight Field
+  await expect(html).toHaveAttribute('data-theme', 'daylight')
+  await page.getByTestId('theme-toggle').click() // → Command Blue
+  await expect(html).toHaveAttribute('data-theme', 'command-blue')
   await page.getByTestId('mode-toggle').click()
   await expect(html).toHaveAttribute('data-mode', 'field')
   await page.reload()
-  await expect(html).toHaveAttribute('data-theme', 'dark')
+  await expect(html).toHaveAttribute('data-theme', 'command-blue')
   await expect(html).toHaveAttribute('data-mode', 'field')
   await expect(
-    page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: /Admin/ }),
+    page.getByRole('navigation', { name: 'Main' }).locator('a[data-screen="admin"]'),
   ).toHaveCount(0)
 })
 
@@ -93,7 +91,7 @@ test('unknown routes show the not-found page', async ({ page }) => {
 
 test('no horizontal scroll at phone width', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 800 })
-  for (const path of ['/system', '/map', '/correlation']) {
+  for (const path of ['/', '/system', '/map', '/documents', '/correlation']) {
     await page.goto(path)
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     const overflow = await page.evaluate(

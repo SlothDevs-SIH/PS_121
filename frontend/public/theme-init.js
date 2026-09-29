@@ -1,13 +1,18 @@
 // Apply the saved theme/mode before first paint (no light flash in dark control rooms).
 // Kept as an external file so the Content-Security-Policy can forbid inline scripts.
+// Mirrors initialTheme() in src/stores/ui.ts (including Part 1's saved 'light'/'dark').
 try {
   var t = localStorage.getItem('smriti.theme')
-  var dark =
-    t === 'dark' || (t !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+  var theme =
+    t === 'daylight' || t === 'light'
+      ? 'daylight'
+      : t === 'command-blue'
+        ? 'command-blue'
+        : 'deep-rig'
+  document.documentElement.dataset.theme = theme
   if (localStorage.getItem('smriti.mode') === 'field') {
     document.documentElement.dataset.mode = 'field'
   }
 } catch (e) {
-  // Storage blocked: the app falls back to defaults.
+  document.documentElement.dataset.theme = 'deep-rig'
 }

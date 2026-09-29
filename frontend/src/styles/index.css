@@ -1,19 +1,69 @@
 @import 'tailwindcss';
 
-/* Theme is driven by attributes on <html>, set by ThemeProvider:
-     data-theme="light" | "dark"      (resolved from the user's choice or the OS setting)
-     data-mode="office" | "field"     (field = larger type for rig-site tablets, master plan §Stage 11) */
-@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+/* Themes are CSS variables on <html>, set by the UI store (src/stores/ui.ts):
+     data-theme="deep-rig" | "daylight" | "command-blue"
+     data-mode="office" | "field"   (field = larger type for rig-site tablets, master plan §Stage 11)
+   Components reference tokens only (bg-surface, text-muted, …); no raw hex outside this file. */
+@custom-variant dark (&:where([data-theme='deep-rig'], [data-theme='deep-rig'] *, [data-theme='command-blue'], [data-theme='command-blue'] *));
 
 :root {
+  /* Fixed z-index scale (FRONTEND_SPEC §7 rule 9). */
+  --z-base: 0;
+  --z-map-overlay: 10;
+  --z-sticky: 20;
+  --z-sidebar: 30;
+  --z-popover: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+
+  /* Well-type colours (same in every theme so a colour always means one fluid). */
+  --well-oil: #ff6b35;
+  --well-gas: #f2c94c;
+  --well-water: #00b4d8;
+
+  --sidebar-full: 15rem;
+  --sidebar-rail: 4.5rem;
+  --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Deep Rig: dark ops-centre, rig orange (default). */
+:root,
+:root[data-theme='deep-rig'] {
+  --bg: #0a0e14;
+  --surface: #131826;
+  --surface-2: #1b2233;
+  --border: #263048;
+  --text: #e6eaf2;
+  --text-muted: #8a94a8;
+  --accent: #ff6b35;
+  --accent-contrast: #0a0e14;
+  --accent-2: #00d9c0;
+  --ok: #3ddc97;
+  --ok-bg: #0f2a22;
+  --warn: #f2c94c;
+  --warn-bg: #2e2610;
+  --danger: #ff7a7a;
+  --danger-bg: #3a1518;
+  --info: #8fb0ff;
+  --info-bg: #16203d;
+  --map-bg: #0d1220;
+  --map-grid: #1a2236;
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 8px 24px rgb(0 0 0 / 0.35);
+  --glass: rgb(19 24 38 / 0.72);
+  color-scheme: dark;
+}
+
+/* Daylight Field: light, printable, office use. */
+:root[data-theme='daylight'] {
   --bg: #f7f8fa;
   --surface: #ffffff;
-  --surface-2: #eef1f5;
-  --border: #d9dee6;
-  --text: #16202c;
-  --text-muted: #5a6778;
-  --accent: #0b6bcb;
+  --surface-2: #eef1f6;
+  --border: #d6dce5;
+  --text: #101522;
+  --text-muted: #556070;
+  --accent: #c2410c;
   --accent-contrast: #ffffff;
+  --accent-2: #0e8f8a;
   --ok: #117a3d;
   --ok-bg: #e3f4ea;
   --warn: #8a5a00;
@@ -22,26 +72,36 @@
   --danger-bg: #fde8e6;
   --info: #3b4b9e;
   --info-bg: #e8ebfb;
+  --map-bg: #eef1f6;
+  --map-grid: #dde2ea;
+  --shadow: 0 1px 2px rgb(16 21 34 / 0.06), 0 8px 24px rgb(16 21 34 / 0.06);
+  --glass: rgb(255 255 255 / 0.8);
   color-scheme: light;
 }
 
-:root[data-theme='dark'] {
-  --bg: #0e141b;
-  --surface: #151d27;
-  --surface-2: #1c2733;
-  --border: #2b3847;
-  --text: #e6edf5;
-  --text-muted: #9aa8b8;
-  --accent: #5aa9f5;
-  --accent-contrast: #0b1520;
-  --ok: #5fd08b;
-  --ok-bg: #133222;
-  --warn: #f2c14e;
-  --warn-bg: #3a2d0c;
-  --danger: #ff8a7a;
-  --danger-bg: #3d1713;
-  --info: #a9b6ff;
-  --info-bg: #1f2547;
+/* Command Blue: dark, blue-forward alternative. */
+:root[data-theme='command-blue'] {
+  --bg: #05080f;
+  --surface: #0d1320;
+  --surface-2: #152036;
+  --border: #1f2c47;
+  --text: #e3eaf6;
+  --text-muted: #8b9ab5;
+  --accent: #3b82f6;
+  --accent-contrast: #05080f;
+  --accent-2: #22d3ee;
+  --ok: #3ddc97;
+  --ok-bg: #0c2620;
+  --warn: #f2c94c;
+  --warn-bg: #2a2310;
+  --danger: #ff7a7a;
+  --danger-bg: #36141a;
+  --info: #93b4ff;
+  --info-bg: #111c38;
+  --map-bg: #080d18;
+  --map-grid: #131d31;
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 8px 24px rgb(0 0 0 / 0.45);
+  --glass: rgb(13 19 32 / 0.72);
   color-scheme: dark;
 }
 
@@ -54,6 +114,7 @@
   --color-muted: var(--text-muted);
   --color-accent: var(--accent);
   --color-accent-contrast: var(--accent-contrast);
+  --color-accent-2: var(--accent-2);
   --color-ok: var(--ok);
   --color-ok-bg: var(--ok-bg);
   --color-warn: var(--warn);
@@ -62,7 +123,13 @@
   --color-danger-bg: var(--danger-bg);
   --color-info: var(--info);
   --color-info-bg: var(--info-bg);
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --color-oil: var(--well-oil);
+  --color-gas: var(--well-gas);
+  --color-water: var(--well-water);
+  --color-glass: var(--glass);
+  --shadow-card: var(--shadow);
+  --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
 }
 
 html {
@@ -77,7 +144,14 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
+  font-feature-settings: 'cv11', 'ss01';
   -webkit-font-smoothing: antialiased;
+}
+
+/* Numbers that update in place keep their width (FRONTEND_SPEC §2.3). */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 :focus-visible {
@@ -85,17 +159,161 @@ body {
   outline-offset: 2px;
 }
 
-/* Map without a basemap (offline/air-gapped default): a quiet grid instead of blank grey. */
-.smriti-map.leaflet-container {
-  background-color: var(--surface-2);
-  background-image:
-    linear-gradient(var(--border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border) 1px, transparent 1px);
-  background-size: 48px 48px;
-  font-family: var(--font-sans);
+/* Theme change: the new theme sweeps in as a circle from the click point (View Transitions
+   API; browsers without it just switch). Only clip-path animates: no layout work. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
 }
-.smriti-map .leaflet-tooltip {
+::view-transition-new(root) {
+  animation: theme-reveal 480ms var(--ease-out-expo);
+}
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0 at var(--reveal-x, 50%) var(--reveal-y, 0%));
+  }
+  to {
+    clip-path: circle(var(--reveal-r, 150vmax) at var(--reveal-x, 50%) var(--reveal-y, 0%));
+  }
+}
+
+/* Shimmer for skeletons, reserved at the exact size of what they stand in for. */
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 0%, var(--border) 50%, var(--surface-2) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+/* Live things pulse: a ring that scales and fades behind the marker (transform + opacity). */
+@keyframes pulse-ring {
+  from {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* ── MapLibre ─────────────────────────────────────────────────────────────────────────── */
+.smriti-map {
+  background-color: var(--map-bg);
+  background-image:
+    linear-gradient(var(--map-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--map-grid) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.smriti-map .maplibregl-canvas {
+  outline: none;
+}
+.smriti-map .maplibregl-ctrl-group {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+.smriti-map .maplibregl-ctrl-group button + button {
+  border-top-color: var(--border);
+}
+.smriti-map .maplibregl-ctrl-icon {
+  filter: var(--map-ctrl-filter, none);
+}
+:root[data-theme='deep-rig'] .smriti-map,
+:root[data-theme='command-blue'] .smriti-map {
+  --map-ctrl-filter: invert(1) hue-rotate(180deg);
+}
+.smriti-map .maplibregl-ctrl-scale {
+  background: var(--glass);
+  color: var(--text-muted);
+  border-color: var(--text-muted);
+}
+.smriti-map .maplibregl-ctrl-attrib {
+  background: var(--glass);
+  color: var(--text-muted);
+}
+
+/* Well marker: a coloured pin; drilling wells get an expanding pulse ring. */
+.well-marker {
+  position: relative;
+  width: var(--size, 12px);
+  height: var(--size, 12px);
+  border-radius: 9999px;
+  background: var(--c);
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--c);
+  cursor: pointer;
+  transition: transform 160ms var(--ease-out-expo);
+}
+.well-marker:hover {
+  transform: scale(1.25);
+}
+.well-marker[data-role='active'] {
+  --size: 18px;
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 0 18px var(--c);
+}
+.well-marker[data-role='offset'] {
+  --size: 14px;
+}
+.well-marker[data-role='other'] {
+  opacity: 0.75;
+}
+.well-marker[data-dimmed='true'] {
+  opacity: 0.25;
+}
+.well-marker[data-live='true']::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  border: 2px solid var(--c);
+  animation: pulse-ring 1.6s ease-out infinite;
+  pointer-events: none;
+}
+.cluster-marker {
+  display: grid;
+  place-items: center;
+  width: var(--size, 36px);
+  height: var(--size, 36px);
+  border-radius: 9999px;
+  background: conic-gradient(
+    var(--well-oil) 0 var(--oil),
+    var(--well-gas) var(--oil) var(--gas),
+    var(--well-water) var(--gas) 100%
+  );
+  cursor: pointer;
+  transition: transform 160ms var(--ease-out-expo);
+}
+.cluster-marker:hover {
+  transform: scale(1.08);
+}
+.cluster-marker > span {
+  display: grid;
+  place-items: center;
+  width: calc(100% - 8px);
+  height: calc(100% - 8px);
+  border-radius: 9999px;
   background: var(--surface);
   color: var(--text);
-  border-color: var(--border);
+  font: 600 12px/1 var(--font-mono);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .well-marker[data-live='true']::before,
+  .skeleton {
+    animation: none;
+  }
+  ::view-transition-new(root) {
+    animation: none;
+  }
 }

@@ -1,4 +1,5 @@
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
+import { MotionConfig } from 'motion/react'
 import { useState, type ReactNode } from 'react'
 
 import { makeQueryClient } from './queryClient'
@@ -8,7 +9,9 @@ export function Providers({ children, client }: { children: ReactNode; client?: 
   const [queryClient] = useState(() => client ?? makeQueryClient())
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>{children}</ThemeProvider>
+      <MotionConfig reducedMotion="user">
+        <ThemeProvider>{children}</ThemeProvider>
+      </MotionConfig>
     </QueryClientProvider>
   )
 }

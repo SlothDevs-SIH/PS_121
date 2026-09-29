@@ -18,7 +18,15 @@ export default defineConfig({
       '/ws': { target: apiTarget.replace(/^http/, 'ws'), ws: true },
     },
   },
-  build: { sourcemap: true },
+  // MapLibre (~1 MB) is its own lazily loaded chunk, fetched only by pages with a map.
+  build: {
+    sourcemap: true,
+    chunkSizeWarningLimit: 1100,
+    // Fonts stay files: the CSP allows font-src 'self' only, so no data: URI inlining.
+    assetsInlineLimit: (file: string) => (/\.(woff2?|ttf|otf)$/.test(file) ? false : undefined),
+  },
+  // MapLibre's worker imports a shared chunk, so it is bundled as an ES module worker.
+  worker: { format: 'es' },
   test: {
     environment: 'jsdom',
     globals: true,

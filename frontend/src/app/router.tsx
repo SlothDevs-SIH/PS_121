@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ComponentType } from 'react'
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router'
 
+import { SkeletonBlock } from '../components/ui/Skeleton'
 import { NotFound } from '../pages/NotFound'
 import { PlannedScreen } from '../pages/PlannedScreen'
 import { SystemStatus } from '../pages/SystemStatus'
@@ -17,34 +18,44 @@ const WellMapPage = lazy(() =>
 const IngestPage = lazy(() =>
   import('../pages/IngestPage').then((m) => ({ default: m.IngestPage })),
 )
+// oxlint-disable-next-line react/only-export-components
+const DashboardPage = lazy(() =>
+  import('../pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
+)
 
 /** Built screens map to real components; everything else renders its PlannedScreen. */
 const builtScreens: Record<string, ComponentType> = {
+  dashboard: DashboardPage,
   system: SystemStatus,
   map: WellMapPage,
-  ingest: IngestPage,
+  documents: IngestPage,
 }
 
-const loading = <p className="text-sm text-muted">Loading…</p>
+const loading = (
+  <div className="space-y-4" aria-busy="true">
+    <SkeletonBlock className="h-8 w-56" />
+    <SkeletonBlock className="h-64 w-full" />
+  </div>
+)
 
 export const routes: RouteObject[] = [
   {
     path: '/',
     element: <AppShell />,
     children: [
-      { index: true, element: <Navigate to="/system" replace /> },
-      ...SCREENS.map((s) => {
+      // Part 1 links to the upload screen keep working.
+      { path: 'ingest', element: <Navigate to="/documents" replace /> },
+      ...SCREENS.map((s): RouteObject => {
         const Built = builtScreens[s.id]
-        return {
-          path: s.path.replace(/^\//, ''),
-          element: Built ? (
-            <Suspense fallback={loading}>
-              <Built />
-            </Suspense>
-          ) : (
-            <PlannedScreen screen={s} />
-          ),
-        }
+        const element = Built ? (
+          <Suspense fallback={loading}>
+            <Built />
+          </Suspense>
+        ) : (
+          <PlannedScreen screen={s} />
+        )
+        if (s.path === '/') return { index: true, element }
+        return { path: s.path.replace(/^\//, ''), element }
       }),
       { path: '*', element: <NotFound /> },
     ],

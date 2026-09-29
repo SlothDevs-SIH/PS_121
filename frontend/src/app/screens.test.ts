@@ -1,7 +1,7 @@
 import { SCREENS, screensFor } from './screens'
 import openapi from '../lib/api/openapi.json'
 
-const PHASES = new Set(['F0', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6'])
+const PHASES = new Set(['F0', 'F1', 'P2', 'F2', 'F3', 'F4', 'F5', 'F6'])
 
 describe('screen registry', () => {
   it('has unique ids and paths', () => {
@@ -16,10 +16,15 @@ describe('screen registry', () => {
     expect(numbers).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
   })
 
-  it('uses valid phases; F1 built the Map and started Ingestion', () => {
+  it('uses valid phases; Part 2 built the Dashboard, Map Explorer and Documents Library', () => {
     expect(SCREENS.every((s) => PHASES.has(s.phase))).toBe(true)
-    expect(SCREENS.filter((s) => s.status === 'built').map((s) => s.id)).toEqual(['map', 'system'])
-    expect(SCREENS.filter((s) => s.status === 'in_progress').map((s) => s.id)).toEqual(['ingest'])
+    expect(SCREENS.filter((s) => s.status === 'built').map((s) => s.id)).toEqual([
+      'dashboard',
+      'map',
+      'documents',
+      'system',
+    ])
+    expect(SCREENS.filter((s) => s.status === 'in_progress')).toEqual([])
   })
 
   it('only references endpoints that exist in the backend OpenAPI contract', () => {

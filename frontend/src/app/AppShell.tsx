@@ -1,102 +1,79 @@
-import { HardHat, Monitor, Moon, Ruler, Sun, SunMoon } from 'lucide-react'
-import { NavLink, Outlet } from 'react-router'
+import { AnimatePresence, motion } from 'motion/react'
+import { useEffect } from 'react'
+import { useLocation } from 'react-router'
 
-import { BackendStatus } from '../components/BackendStatus'
-import { Badge } from '../components/ui/Badge'
-import { Button } from '../components/ui/Button'
-import { cn } from '../lib/cn'
-import { CURRENT_FRONTEND_PHASE, screensFor } from './screens'
-import { useTheme, type ThemeChoice } from './themeContext'
+import { AnimatedOutlet } from '../components/shell/AnimatedOutlet'
+import { CommandPalette } from '../components/shell/CommandPalette'
+import { Sidebar } from '../components/shell/Sidebar'
+import { Topbar } from '../components/shell/Topbar'
+import { useMediaQuery } from '../hooks/useMediaQuery'
+import { easeOutExpo } from '../lib/motion'
+import { useUiStore } from '../stores/ui'
 
-const nextTheme: Record<ThemeChoice, ThemeChoice> = {
-  system: 'light',
-  light: 'dark',
-  dark: 'system',
-}
-const themeIcon = { system: SunMoon, light: Sun, dark: Moon } as const
-const themeLabel: Record<ThemeChoice, string> = {
-  system: 'Auto theme',
-  light: 'Light',
-  dark: 'Dark',
-}
-
+/**
+ * App shell (FRONTEND_SPEC §3): collapsible sidebar, sticky top bar, animated outlet.
+ * The sidebar column width changes through a CSS grid-template-columns transition (§7
+ * rule 4), never a per-frame JS width animation. Below `lg` it is a rail; below `md` it is
+ * an off-canvas drawer.
+ */
 export function AppShell() {
-  const { theme, setTheme, mode, setMode, units, setUnits } = useTheme()
-  const ThemeIcon = themeIcon[theme]
-  const nav = screensFor(mode)
+  const collapsedPref = useUiStore((s) => s.sidebarCollapsed)
+  const forceRail = useUiStore((s) => s.forceRail)
+  const mobileOpen = useUiStore((s) => s.mobileNavOpen)
+  const setMobileOpen = useUiStore((s) => s.setMobileNavOpen)
+  const wide = useMediaQuery('(min-width: 1024px)')
+  const location = useLocation()
+  const collapsed = collapsedPref || forceRail || !wide
+
+  useEffect(() => setMobileOpen(false), [location.pathname, setMobileOpen])
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
-      <aside className="border-b border-border bg-surface md:w-60 md:shrink-0 md:border-r md:border-b-0">
-        <div className="flex items-center justify-between px-4 py-3 md:block">
-          <div>
-            <div className="text-lg font-bold tracking-tight text-text">SMRITI</div>
-            <div className="text-xs text-muted">eRTMAC-NWIS · offset-well intelligence</div>
-          </div>
-        </div>
-        <nav aria-label="Main" className="overflow-x-auto px-2 pb-2">
-          <ul className="flex gap-1 md:flex-col">
-            {nav.map((s) => (
-              <li key={s.id}>
-                <NavLink
-                  to={s.navPath}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm whitespace-nowrap',
-                      isActive ? 'bg-accent text-accent-contrast' : 'text-text hover:bg-surface-2',
-                    )
-                  }
-                >
-                  <span>{s.title}</span>
-                  {s.status !== 'built' && (
-                    <span className="text-[0.7rem] opacity-70" aria-label={`planned ${s.phase}`}>
-                      {s.phase}
-                    </span>
-                  )}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
+    <div
+      className="grid min-h-screen bg-bg md:grid-cols-[var(--sidebar-w)_minmax(0,1fr)] md:transition-[grid-template-columns] md:duration-300 md:ease-[cubic-bezier(0.22,1,0.36,1)]"
+      style={{
+        ['--sidebar-w' as string]: collapsed ? 'var(--sidebar-rail)' : 'var(--sidebar-full)',
+      }}
+      data-sidebar={collapsed ? 'rail' : 'full'}
+      data-testid="app-shell"
+    >
+      <aside className="sticky top-0 z-(--z-sidebar) hidden h-screen border-r border-border bg-surface md:block">
+        <Sidebar collapsed={collapsed} canToggle={wide && !forceRail} />
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-surface px-4 py-2">
-          <div className="flex items-center gap-2">
-            <Badge tone="info">Frontend phase {CURRENT_FRONTEND_PHASE}</Badge>
-            <BackendStatus />
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              onClick={() => setMode(mode === 'office' ? 'field' : 'office')}
-              aria-label={`Switch to ${mode === 'office' ? 'field' : 'office'} view`}
-              data-testid="mode-toggle"
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            key="drawer"
+            className="fixed inset-0 z-(--z-modal) md:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <button
+              type="button"
+              aria-label="Close navigation"
+              className="absolute inset-0 bg-black/50"
+              onClick={() => setMobileOpen(false)}
+            />
+            <motion.aside
+              className="absolute inset-y-0 left-0 w-72 border-r border-border bg-surface"
+              initial={{ x: '-100%' }}
+              animate={{ x: 0, transition: { duration: 0.28, ease: easeOutExpo } }}
+              exit={{ x: '-100%', transition: { duration: 0.18 } }}
             >
-              {mode === 'office' ? <Monitor size={16} /> : <HardHat size={16} />}
-              {mode === 'office' ? 'Office view' : 'Field view'}
-            </Button>
-            <Button
-              onClick={() => setUnits(units === 'metric' ? 'oilfield' : 'metric')}
-              aria-label={`Units: ${units}. Switch to ${units === 'metric' ? 'oilfield' : 'metric'}`}
-              data-testid="units-toggle"
-            >
-              <Ruler size={16} />
-              {units === 'metric' ? 'Metric' : 'Oilfield'}
-            </Button>
-            <Button
-              onClick={() => setTheme(nextTheme[theme])}
-              aria-label={`Theme: ${theme}. Switch to ${nextTheme[theme]}`}
-              data-testid="theme-toggle"
-            >
-              <ThemeIcon size={16} />
-              <span>{themeLabel[theme]}</span>
-            </Button>
-          </div>
-        </header>
+              <Sidebar collapsed={false} drawer />
+            </motion.aside>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex min-w-0 flex-col">
+        <Topbar />
         <main className="min-w-0 flex-1 p-4 md:p-6">
-          <Outlet />
+          <AnimatedOutlet />
         </main>
       </div>
+      <CommandPalette />
     </div>
   )
 }

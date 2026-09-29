@@ -26,6 +26,9 @@ export type DocumentDetail = components['schemas']['DocumentDetail']
 export type PageOut = components['schemas']['PageOut']
 export type SpanOut = components['schemas']['SpanOut']
 export type UploadResult = components['schemas']['UploadResult']
+export type EventSummary = components['schemas']['EventSummary']
+export type EventPage = components['schemas']['EventPage']
+export type ReviewPage = components['schemas']['ReviewPage']
 export type ProximityMode = 'SURFACE' | 'AT_FORMATION' | 'CLOSEST_APPROACH'
 
 export class ApiError extends Error {
@@ -128,6 +131,11 @@ export const api = {
   document: (id: number) => apiFetch<DocumentDetail>(`/api/v1/documents/${id}`),
   page: (id: number, pageNo: number) =>
     apiFetch<PageOut>(`/api/v1/documents/${id}/pages/${pageNo}`),
+  events: (params: { well_id?: number; event_type?: string; limit?: number } = {}) =>
+    apiFetch<EventPage>(`/api/v1/events${qs({ limit: 500, ...params })}`),
+  reviewQueue: (params: { status?: string; limit?: number } = {}) =>
+    apiFetch<ReviewPage>(`/api/v1/review-queue${qs({ limit: 1, ...params })}`),
+  pageImageUrl: (id: number, pageNo: number) => `/api/v1/documents/${id}/pages/${pageNo}/image`,
   upload: (files: File[]) => {
     const body = new FormData()
     for (const f of files) body.append('files', f, f.name)

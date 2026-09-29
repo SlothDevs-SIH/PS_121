@@ -6,8 +6,8 @@ import { makePdf } from './pdf.ts'
 
 test('well map: offsets react to the radius and are shareable via the URL', async ({ page }) => {
   await page.goto('/map?well=')
-  await expect(page.getByRole('heading', { name: 'Well Map' })).toBeVisible()
-  await expect(page.getByTestId('synthetic-badge')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Map Explorer' })).toBeVisible()
+  await expect(page.getByTestId('synthetic-badge').first()).toBeVisible()
   await page.getByLabel('Active well').selectOption({ label: 'SYN-ASM-01 (completed)' })
   await expect(page).toHaveURL(/well=\d+/)
   const count = page.getByTestId('offset-count')
@@ -24,8 +24,8 @@ test('well map: offsets react to the radius and are shareable via the URL', asyn
   expect(after).toBeGreaterThanOrEqual(before)
   expect(after).toBeGreaterThan(0)
 
-  // Leaflet drew the wells as vector markers (no image assets, CSP-safe).
-  await expect(page.locator('.leaflet-interactive').first()).toBeVisible()
+  // MapLibre drew the wells (HTML markers or clusters; worker loaded under the CSP).
+  await expect(page.locator('.well-marker, .cluster-marker').first()).toBeVisible()
   const firstDistance = page
     .getByTestId('offset-table')
     .locator('tbody tr')
@@ -50,11 +50,13 @@ test('upload → OCR/text extraction → evidence viewer with highlighted lines'
     'Well: SYN-ASM-01    Rig: Rig SYN-1    Report No: 77    Date: 2021-03-04',
     `Browser test ${nonce}`,
   ])
-  await page.goto('/ingest')
+  await page.goto('/ingest') // Part 1 link: redirects to the Documents Library
+  await expect(page).toHaveURL(/\/documents$/)
   await page
     .getByTestId('file-input')
     .setInputFiles({ name: `${nonce}.pdf`, mimeType: 'application/pdf', buffer: pdf })
   await expect(page.getByTestId('upload-results')).toContainText('queued')
+  await page.getByRole('radio', { name: 'List' }).click()
 
   const row = page.getByTestId('documents-table').locator('tr', { hasText: `${nonce}.pdf` })
   await expect(row).toContainText('processed', { timeout: 60_000 })
