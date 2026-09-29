@@ -9,7 +9,7 @@ VALID_PHASES = {f"B{i}" for i in range(7)}
 
 def test_meta_reports_phase_and_components(client: TestClient) -> None:
     body = client.get("/api/v1/meta").json()
-    assert body["backend_phase"] == CURRENT_PHASE == "B2"
+    assert body["backend_phase"] == CURRENT_PHASE == "B3"
     assert len(body["components"]) == len(COMPONENTS)
 
 
@@ -18,7 +18,8 @@ def test_component_registry_is_consistent() -> None:
     assert len(keys) == len(set(keys))
     assert all(c.phase in VALID_PHASES for c in COMPONENTS)
     # Built so far: B0 platform, B1 ingestion/normalisation/geo, B2 extraction, search and
-    # correlation (Part 2). Nothing is half-built between parts.
+    # correlation (Part 2), B3 prior risk, physics and the ledger (Part 3). Nothing is
+    # half-built between parts.
     assert [c.key for c in COMPONENTS if c.status == "built"] == [
         "platform",
         "ingest",
@@ -27,6 +28,9 @@ def test_component_registry_is_consistent() -> None:
         "geo",
         "search",
         "correlation",
+        "risk_prior",
+        "physics",
+        "ledger",
     ]
     assert [c.key for c in COMPONENTS if c.status == "in_progress"] == []
 

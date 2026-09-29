@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 Status = Literal["planned", "in_progress", "built"]
 
-CURRENT_PHASE = "B2"
+CURRENT_PHASE = "B3"
 
 
 class Component(BaseModel):
@@ -67,7 +67,11 @@ COMPONENTS: list[Component] = [
         status="built",
     ),
     Component(
-        key="risk_prior", stage="S7a", name="Offset prior risk", phase="B3", status="planned"
+        key="risk_prior",
+        stage="S7a",
+        name="Offset prior risk + cementing checklist",
+        phase="B3",
+        status="built",
     ),
     Component(
         key="risk_ml",
@@ -76,7 +80,13 @@ COMPONENTS: list[Component] = [
         phase="B4",
         status="planned",
     ),
-    Component(key="physics", stage="S7c", name="Physics indicators", phase="B3", status="planned"),
+    Component(
+        key="physics",
+        stage="S7c",
+        name="Physics indicators (formula library; live evaluation on the stream: B4)",
+        phase="B3",
+        status="built",
+    ),
     Component(
         key="dejavu",
         stage="S7d",
@@ -89,7 +99,7 @@ COMPONENTS: list[Component] = [
         stage="S8",
         name="Mitigation Effectiveness Ledger (USP 2)",
         phase="B3",
-        status="planned",
+        status="built",
     ),
     Component(key="alerts", stage="S9", name="Alert engine", phase="B4", status="planned"),
     Component(

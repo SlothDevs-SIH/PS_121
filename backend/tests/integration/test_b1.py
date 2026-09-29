@@ -78,8 +78,8 @@ def test_trajectory_and_well_detail() -> None:
 
 def test_unknown_well_is_404_and_unbuilt_route_is_501() -> None:
     assert _get("/api/v1/wells/999999").json()["error"]["code"] == "not_found"
-    r = _get("/api/v1/wells/1/risk-profile")
-    assert r.status_code == 501 and r.json()["error"]["details"]["phase"] == "B3"
+    r = _get("/api/v1/reports/offset-brief/1")
+    assert r.status_code == 501 and r.json()["error"]["details"]["phase"] == "B5"
 
 
 def _unique_ddr() -> bytes:

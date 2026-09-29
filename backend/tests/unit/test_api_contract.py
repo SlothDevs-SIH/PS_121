@@ -1,7 +1,7 @@
 """Every endpoint in master plan §8 is exposed; routes of later phases answer a 501 envelope
-naming their phase. B2 routes are implemented: here they are checked for their declared
-response models and input validation (422); their behaviour is covered by
-tests/integration/test_b2.py against the seeded stack.
+naming their phase. B2 and B3 routes are implemented: here they are checked for their
+declared response models and input validation (422); their behaviour is covered by
+tests/integration/test_b2.py and test_b3.py against the seeded stack.
 """
 
 import pytest
@@ -49,10 +49,12 @@ PLANNED_HTTP = {
     ("get", "/api/v1/correlation/formation-stats"),
     ("get", "/api/v1/wells/{well_id}/trajectory/at-depth"),
     ("post", "/api/v1/wells/{well_id}/trajectory"),
+    # B3 risk and ledger (docs/SPEC_RECONCILIATION.md §6)
+    ("get", "/api/v1/wells/{well_id}/cementing-check"),
 }
 
-# Response schema of every B2 route (the frontend's generated types depend on these names).
-B2_RESPONSE_MODELS = {
+# Response schema of every built route (the frontend's generated types depend on these names).
+RESPONSE_MODELS = {
     ("get", "/api/v1/events"): "EventPage",
     ("get", "/api/v1/events/{event_id}"): "EventDetail",
     ("post", "/api/v1/events"): "EventDetail",
@@ -67,6 +69,10 @@ B2_RESPONSE_MODELS = {
     ("post", "/api/v1/wells/{well_id}/trajectory"): "TrajectoryOut",
     ("get", "/api/v1/wells/{well_id}/offsets"): "OffsetsOut",
     ("get", "/api/v1/wells/{well_id}"): "WellDetail",
+    # B3
+    ("get", "/api/v1/ledger"): "LedgerResponse",
+    ("get", "/api/v1/wells/{well_id}/risk-profile"): "RiskProfile",
+    ("get", "/api/v1/wells/{well_id}/cementing-check"): "CementingCheck",
 }
 
 EVENT_BODY = {
@@ -93,12 +99,14 @@ def test_openapi_contains_every_planned_endpoint(client: TestClient) -> None:
     assert not missing, f"missing endpoints: {sorted(missing)}"
 
 
-@pytest.mark.parametrize(("method", "path"), sorted(B2_RESPONSE_MODELS))
-def test_b2_routes_declare_their_response_model(client: TestClient, method: str, path: str) -> None:
+@pytest.mark.parametrize(("method", "path"), sorted(RESPONSE_MODELS))
+def test_built_routes_declare_their_response_model(
+    client: TestClient, method: str, path: str
+) -> None:
     op = client.get("/openapi.json").json()["paths"][path][method]
     ok = next(v for k, v in op["responses"].items() if k.startswith("2"))
     ref = ok["content"]["application/json"]["schema"]["$ref"]
-    assert ref == f"#/components/schemas/{B2_RESPONSE_MODELS[(method, path)]}"
+    assert ref == f"#/components/schemas/{RESPONSE_MODELS[(method, path)]}"
     assert op.get("summary")
 
 
@@ -106,11 +114,10 @@ def test_b2_routes_declare_their_response_model(client: TestClient, method: str,
     ("method", "url", "body", "phase"),
     [
         # Later phases
-        ("get", "/api/v1/wells/7/risk-profile", None, "B3"),
-        ("get", "/api/v1/ledger?event_type=LOSS", None, "B3"),
         ("get", "/api/v1/alerts", None, "B4"),
         ("post", "/api/v1/replay", None, "B4"),
         ("post", "/api/v1/copilot/chat", None, "B5"),
+        ("get", "/api/v1/reports/offset-brief/7", None, "B5"),
     ],
 )
 def test_skeleton_routes_return_501_with_phase(
@@ -174,6 +181,18 @@ def test_validation_uses_error_envelope(client: TestClient) -> None:
             "/api/v1/wells/7/trajectory",
             {"stations": [*STATIONS, {"md_m": 900, "inc_deg": 10, "azi_deg": 360}]},
         ),
+        ("get", "/api/v1/ledger", None),
+        ("get", "/api/v1/ledger?event_type=MUD_LOSS", None),
+        ("get", "/api/v1/ledger?event_type=LOSS&min_n=0", None),
+        ("get", "/api/v1/ledger?event_type=LOSS&severity=extreme", None),
+        ("get", "/api/v1/wells/7/risk-profile?radius_km=0", None),
+        ("get", "/api/v1/wells/7/risk-profile?sigma_km=51", None),
+        ("get", "/api/v1/wells/7/risk-profile?mode=CLOSEST_APPROACH", None),
+        ("get", "/api/v1/wells/7/risk-profile?event_type=MUD_LOSS", None),
+        ("get", "/api/v1/wells/7/cementing-check", None),
+        ("get", "/api/v1/wells/7/cementing-check?shoe_md_m=2000", None),
+        ("get", "/api/v1/wells/7/cementing-check?shoe_md_m=2000&slurry_density_sg=3.1", None),
+        ("get", "/api/v1/wells/7/cementing-check?shoe_md_m=-1&slurry_density_sg=1.5", None),
         # cross-parameter rules (app.api.v1.params)
         ("get", "/api/v1/events?radius_km=5", None),
         ("get", "/api/v1/events?tvdss_from_m=2000&tvdss_to_m=1000", None),
@@ -189,9 +208,10 @@ def test_validation_uses_error_envelope(client: TestClient) -> None:
         ("get", "/api/v1/wells?bbox=a,b,c,d", None),
         ("get", "/api/v1/wells?bbox=0,-91,1,1", None),
         ("get", "/api/v1/wells/7/offsets?mode=CLOSEST_APPROACH&tvdss_from_m=9&tvdss_to_m=1", None),
+        ("get", "/api/v1/ledger?event_type=LOSS&radius_km=5", None),
     ],
 )
-def test_b2_contract_rejects_invalid_input(
+def test_contract_rejects_invalid_input(
     client: TestClient, method: str, url: str, body: object
 ) -> None:
     r = client.request(method, url, json=body)

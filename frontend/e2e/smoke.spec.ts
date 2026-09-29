@@ -44,9 +44,13 @@ test('every screen in the navigation loads without errors', async ({ page }) => 
 })
 
 test('planned screens probe the real backend and show its phase', async ({ page }) => {
+  await page.goto('/alerts')
+  await expect(page.getByTestId('planned-phase')).toHaveText('Planned · frontend phase F4')
+  await expect(page.getByTestId('endpoint-probes')).toContainText('501 · backend phase B4')
+  // The ledger screen is F3 (Part 4), but its backend (B3) already answers.
   await page.goto('/ledger')
   await expect(page.getByTestId('planned-phase')).toHaveText('Planned · frontend phase F3')
-  await expect(page.getByTestId('endpoint-probes')).toContainText('501 · backend phase B3')
+  await expect(page.getByTestId('endpoint-probes')).toContainText('200 ok')
 })
 
 test('WebSockets are proxied through nginx to the backend', async ({ page }) => {

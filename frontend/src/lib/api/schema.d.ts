@@ -329,7 +329,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Mitigation effectiveness ranking (USP 2) */
+        /**
+         * Mitigation effectiveness ranking (USP 2)
+         * @description Actions against ``event_type`` ranked by recorded outcomes: Beta(1,1) posterior mean
+         *     and 90% credible interval per action, ranked only with at least ``min_n`` known
+         *     outcomes; the rest are listed as insufficient evidence with their cases. Scope with a
+         *     formation (name or synonym), a basin, or ``well_id`` + ``radius_km``; ``severity``
+         *     stratifies. Observational: associated with, not caused by.
+         */
         get: operations["ledger_api_v1_ledger_get"];
         put?: never;
         post?: never;
@@ -505,6 +512,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/wells/{well_id}/cementing-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cementing checklist from offsets
+         * @description Planned slurry density against the mud weights at which offsets lost circulation in
+         *     the formation at the shoe, and offsets' losses while cementing there.
+         */
+        get: operations["get_cementing_check_api_v1_wells__well_id__cementing_check_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/wells/{well_id}/events/timeline": {
         parameters: {
             query?: never;
@@ -556,7 +584,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Offset prior risk by depth */
+        /**
+         * Offset prior risk by formation
+         * @description For each formation of the well: P(event | formation) from offsets within
+         *     ``radius_km`` (weighted Beta-Binomial with a basin prior), its 90% credible interval,
+         *     n_eff and the contributing offsets. The well's own events are never used.
+         */
         get: operations["get_risk_profile_api_v1_wells__well_id__risk_profile_get"];
         put?: never;
         post?: never;
@@ -757,6 +790,33 @@ export interface components {
             toc_tvdss_m: number | null;
             /** Verified */
             verified: boolean;
+        };
+        /** CementingCheck */
+        CementingCheck: {
+            /** Evidence Event Ids */
+            evidence_event_ids: number[];
+            /** Flags */
+            flags: string[];
+            /** Formation */
+            formation: string | null;
+            /**
+             * Level
+             * @description low | medium | high
+             */
+            level: string;
+            /**
+             * Offset Loss Mw Sg
+             * @description Mud weights at offset losses here
+             */
+            offset_loss_mw_sg: number[];
+            /** Offsets Considered */
+            offsets_considered: number;
+            /** Shoe Md M */
+            shoe_md_m: number;
+            /** Slurry Density Sg */
+            slurry_density_sg: number;
+            /** Well Id */
+            well_id: number;
         };
         /** Component */
         Component: {
@@ -1328,6 +1388,39 @@ export interface components {
             /** Total Loss M3 */
             total_loss_m3?: number | null;
         };
+        /** EventRisk */
+        EventRisk: {
+            /**
+             * Base Rate
+             * @description Basin-wide prior rate for this event type
+             */
+            base_rate: number;
+            /** Ci90 High */
+            ci90_high: number;
+            /** Ci90 Low */
+            ci90_low: number;
+            /**
+             * Event Type
+             * @enum {string}
+             */
+            event_type: "LOSS" | "KICK" | "STUCK" | "TIGHT" | "TORQUE" | "INSTAB" | "BALLING" | "OVERP" | "GAS" | "CEMENT" | "CASING" | "FISH" | "EQUIP" | "WAIT" | "OTHER_NPT";
+            /** Label */
+            label: string;
+            /**
+             * N Eff
+             * @description (Σw)² / Σw²: how many offsets' worth of evidence
+             */
+            n_eff: number;
+            /** Offsets Total */
+            offsets_total: number;
+            /** Offsets With Event */
+            offsets_with_event: number;
+            /**
+             * Probability
+             * @description Weighted Beta-Binomial posterior mean
+             */
+            probability: number;
+        };
         /** EventSummary */
         EventSummary: {
             /** Confidence */
@@ -1581,6 +1674,163 @@ export interface components {
             detail?: components["schemas"]["ValidationError"][];
         };
         JsonValue: unknown;
+        /**
+         * LedgerCase
+         * @description One recorded use of an action: click-through to the event and its report pages.
+         */
+        LedgerCase: {
+            /** Event Date */
+            event_date: string | null;
+            /** Event Id */
+            event_id: number;
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRef"][];
+            /** Formation */
+            formation: string | null;
+            /** Mitigation Id */
+            mitigation_id: number;
+            /** Npt Hours After */
+            npt_hours_after: number | null;
+            /**
+             * Outcome
+             * @description Outcome as used by the ledger
+             * @enum {string}
+             */
+            outcome: "success" | "partial" | "fail" | "unknown";
+            /**
+             * Recorded Outcome
+             * @description Outcome as extracted
+             * @enum {string}
+             */
+            recorded_outcome: "success" | "partial" | "fail" | "unknown";
+            /**
+             * Recurred
+             * @description Same problem came back within the recurrence window
+             */
+            recurred: boolean;
+            /**
+             * Seq
+             * @description Order the action was tried in (1 = first)
+             */
+            seq: number;
+            /** Severity */
+            severity: string | null;
+            /** Synthetic */
+            synthetic: boolean;
+            /** Verified */
+            verified: boolean;
+            /** Well Id */
+            well_id: number;
+            /** Well Name */
+            well_name: string;
+        };
+        /** LedgerEntry */
+        LedgerEntry: {
+            /** Action Code */
+            action_code: string;
+            /** Action Label */
+            action_label: string;
+            /** By Severity */
+            by_severity: components["schemas"]["SeverityStratum"][];
+            /** Cases */
+            cases: components["schemas"]["LedgerCase"][];
+            /** Ci90 High */
+            ci90_high: number | null;
+            /** Ci90 Low */
+            ci90_low: number | null;
+            /** Failures */
+            failures: number;
+            /**
+             * First Choice
+             * @description Uses where it was the first action tried
+             */
+            first_choice: number;
+            /** Median Npt Hours */
+            median_npt_hours: number | null;
+            /** Median Volume Lost M3 */
+            median_volume_lost_m3: number | null;
+            /**
+             * N
+             * @description Uses with a known outcome (success + partial + fail)
+             */
+            n: number;
+            /** Partial */
+            partial: number;
+            /**
+             * Posterior Mean
+             * @description Beta(1,1) prior → posterior mean
+             */
+            posterior_mean: number | null;
+            /**
+             * Success Rate
+             * @description successes / n (raw)
+             */
+            success_rate: number | null;
+            /** Successes */
+            successes: number;
+            /**
+             * Summary
+             * @description One-line reading, e.g. 'worked 7 of 9 (78%, 90% CI …)'
+             */
+            summary: string;
+            /**
+             * Unknown
+             * @description Uses whose outcome was not recorded: excluded from n
+             */
+            unknown: number;
+        };
+        /** LedgerResponse */
+        LedgerResponse: {
+            /** Basin */
+            basin: string | null;
+            /** Caveat */
+            caveat: string;
+            /**
+             * Event Type
+             * @enum {string}
+             */
+            event_type: "LOSS" | "KICK" | "STUCK" | "TIGHT" | "TORQUE" | "INSTAB" | "BALLING" | "OVERP" | "GAS" | "CEMENT" | "CASING" | "FISH" | "EQUIP" | "WAIT" | "OTHER_NPT";
+            /** Formation */
+            formation: string | null;
+            /**
+             * Insufficient
+             * @description n < min_n: listed with their cases
+             */
+            insufficient: components["schemas"]["LedgerEntry"][];
+            /**
+             * Min N
+             * @description Entries with fewer known outcomes are not ranked
+             */
+            min_n: number;
+            /** Outcome Rule */
+            outcome_rule: string;
+            /** Radius Km */
+            radius_km: number | null;
+            /**
+             * Ranked
+             * @description n ≥ min_n, best posterior mean first
+             */
+            ranked: components["schemas"]["LedgerEntry"][];
+            scope: components["schemas"]["LedgerScope"];
+            /**
+             * Synthetic
+             * @description True when any contributing well is synthetic
+             */
+            synthetic: boolean;
+            /** Well Id */
+            well_id: number | null;
+        };
+        /** LedgerScope */
+        LedgerScope: {
+            /** Events */
+            events: number;
+            /** Mitigations */
+            mitigations: number;
+            /** Unknown Outcomes */
+            unknown_outcomes: number;
+            /** Wells */
+            wells: number;
+        };
         /**
          * LessonCard
          * @description Problem -> likely cause -> action taken -> outcome -> lesson for one event.
@@ -2088,6 +2338,95 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** RiskInterval */
+        RiskInterval: {
+            /** Base Md M */
+            base_md_m: number | null;
+            /** Base Tvdss M */
+            base_tvdss_m: number | null;
+            /** Formation */
+            formation: string;
+            /** Offsets */
+            offsets: components["schemas"]["RiskOffset"][];
+            /**
+             * Risks
+             * @description Highest probability first
+             */
+            risks: components["schemas"]["EventRisk"][];
+            /** Strat Order */
+            strat_order: number;
+            /** Top Md M */
+            top_md_m: number;
+            /** Top Tvdss M */
+            top_tvdss_m: number;
+        };
+        /**
+         * RiskMode
+         * @enum {string}
+         */
+        RiskMode: "AT_FORMATION" | "SURFACE";
+        /** RiskOffset */
+        RiskOffset: {
+            /**
+             * Distance Kind
+             * @description 'at_formation' (3D entry points) or 'surface'
+             */
+            distance_kind: string;
+            /** Distance M */
+            distance_m: number;
+            /**
+             * Events
+             * @description event_type → event ids in this interval
+             */
+            events: {
+                [key: string]: number[];
+            };
+            /** Name */
+            name: string;
+            /**
+             * Similarity
+             * @description 0.5–1.0: × 0.75 other hole size, × 0.8 other mud system, × 0.9 other well type
+             */
+            similarity: number;
+            /** Synthetic */
+            synthetic: boolean;
+            /**
+             * Weight
+             * @description exp(−d²/2σ²) × similarity × recency
+             */
+            weight: number;
+            /** Well Id */
+            well_id: number;
+        };
+        /** RiskProfile */
+        RiskProfile: {
+            /** Intervals */
+            intervals: components["schemas"]["RiskInterval"][];
+            /** Method */
+            method: string;
+            /**
+             * Mode
+             * @description Distance used for weights: AT_FORMATION or SURFACE
+             */
+            mode: string;
+            /** Name */
+            name: string;
+            /**
+             * Prior Strength
+             * @description α + β of the basin prior (pseudo-offsets)
+             */
+            prior_strength: number;
+            /** Radius Km */
+            radius_km: number;
+            /** Sigma Km */
+            sigma_km: number;
+            /** Status */
+            status: string;
+            /** Synthetic */
+            synthetic: boolean;
+            /** Well Id */
+            well_id: number;
+        };
         /** SearchResponse */
         SearchResponse: {
             /**
@@ -2108,6 +2447,15 @@ export interface components {
             query: string;
             /** Took Ms */
             took_ms: number;
+        };
+        /** SeverityStratum */
+        SeverityStratum: {
+            /** N */
+            n: number;
+            /** Severity */
+            severity: string;
+            /** Successes */
+            successes: number;
         };
         /** SpanOut */
         SpanOut: {
@@ -3094,9 +3442,15 @@ export interface operations {
     ledger_api_v1_ledger_get: {
         parameters: {
             query: {
-                event_type: string;
+                event_type: "LOSS" | "KICK" | "STUCK" | "TIGHT" | "TORQUE" | "INSTAB" | "BALLING" | "OVERP" | "GAS" | "CEMENT" | "CASING" | "FISH" | "EQUIP" | "WAIT" | "OTHER_NPT";
                 formation?: string | null;
                 basin?: string | null;
+                well_id?: number | null;
+                /** @description Radius around well_id's surface location (km) */
+                radius_km?: number | null;
+                severity?: ("low" | "medium" | "high") | null;
+                /** @description Rank only with ≥ min_n outcomes */
+                min_n?: number;
             };
             header?: never;
             path?: never;
@@ -3110,7 +3464,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["LedgerResponse"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Validation Error */
@@ -3120,15 +3483,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -3452,6 +3806,50 @@ export interface operations {
             };
         };
     };
+    get_cementing_check_api_v1_wells__well_id__cementing_check_get: {
+        parameters: {
+            query: {
+                shoe_md_m: number;
+                slurry_density_sg: number;
+                radius_km?: number;
+            };
+            header?: never;
+            path: {
+                well_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CementingCheck"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_event_timeline_api_v1_wells__well_id__events_timeline_get: {
         parameters: {
             query?: never;
@@ -3544,7 +3942,12 @@ export interface operations {
     get_risk_profile_api_v1_wells__well_id__risk_profile_get: {
         parameters: {
             query?: {
+                radius_km?: number;
+                /** @description Spatial scale; default radius_km / 2 */
                 sigma_km?: number | null;
+                mode?: components["schemas"]["RiskMode"];
+                /** @description Repeat for several; default: all seen */
+                event_type?: ("LOSS" | "KICK" | "STUCK" | "TIGHT" | "TORQUE" | "INSTAB" | "BALLING" | "OVERP" | "GAS" | "CEMENT" | "CASING" | "FISH" | "EQUIP" | "WAIT" | "OTHER_NPT")[] | null;
             };
             header?: never;
             path: {
@@ -3560,7 +3963,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["RiskProfile"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Validation Error */
@@ -3570,15 +3982,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

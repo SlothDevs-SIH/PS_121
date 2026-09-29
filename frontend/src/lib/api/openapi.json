@@ -471,6 +471,77 @@
         "title": "CementTopTrack",
         "type": "object"
       },
+      "CementingCheck": {
+        "properties": {
+          "evidence_event_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Evidence Event Ids",
+            "type": "array"
+          },
+          "flags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "formation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formation"
+          },
+          "level": {
+            "description": "low | medium | high",
+            "title": "Level",
+            "type": "string"
+          },
+          "offset_loss_mw_sg": {
+            "description": "Mud weights at offset losses here",
+            "items": {
+              "type": "number"
+            },
+            "title": "Offset Loss Mw Sg",
+            "type": "array"
+          },
+          "offsets_considered": {
+            "title": "Offsets Considered",
+            "type": "integer"
+          },
+          "shoe_md_m": {
+            "title": "Shoe Md M",
+            "type": "number"
+          },
+          "slurry_density_sg": {
+            "title": "Slurry Density Sg",
+            "type": "number"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "well_id",
+          "formation",
+          "shoe_md_m",
+          "slurry_density_sg",
+          "level",
+          "flags",
+          "offsets_considered",
+          "offset_loss_mw_sg",
+          "evidence_event_ids"
+        ],
+        "title": "CementingCheck",
+        "type": "object"
+      },
       "Component": {
         "properties": {
           "key": {
@@ -2554,6 +2625,79 @@
         "title": "EventParamsIn",
         "type": "object"
       },
+      "EventRisk": {
+        "properties": {
+          "base_rate": {
+            "description": "Basin-wide prior rate for this event type",
+            "title": "Base Rate",
+            "type": "number"
+          },
+          "ci90_high": {
+            "title": "Ci90 High",
+            "type": "number"
+          },
+          "ci90_low": {
+            "title": "Ci90 Low",
+            "type": "number"
+          },
+          "event_type": {
+            "enum": [
+              "LOSS",
+              "KICK",
+              "STUCK",
+              "TIGHT",
+              "TORQUE",
+              "INSTAB",
+              "BALLING",
+              "OVERP",
+              "GAS",
+              "CEMENT",
+              "CASING",
+              "FISH",
+              "EQUIP",
+              "WAIT",
+              "OTHER_NPT"
+            ],
+            "title": "Event Type",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "n_eff": {
+            "description": "(\u03a3w)\u00b2 / \u03a3w\u00b2: how many offsets' worth of evidence",
+            "title": "N Eff",
+            "type": "number"
+          },
+          "offsets_total": {
+            "title": "Offsets Total",
+            "type": "integer"
+          },
+          "offsets_with_event": {
+            "title": "Offsets With Event",
+            "type": "integer"
+          },
+          "probability": {
+            "description": "Weighted Beta-Binomial posterior mean",
+            "title": "Probability",
+            "type": "number"
+          }
+        },
+        "required": [
+          "event_type",
+          "probability",
+          "ci90_low",
+          "ci90_high",
+          "n_eff",
+          "offsets_with_event",
+          "offsets_total",
+          "base_rate",
+          "label"
+        ],
+        "title": "EventRisk",
+        "type": "object"
+      },
       "EventSummary": {
         "properties": {
           "confidence": {
@@ -3329,6 +3473,434 @@
         "type": "object"
       },
       "JsonValue": {},
+      "LedgerCase": {
+        "description": "One recorded use of an action: click-through to the event and its report pages.",
+        "properties": {
+          "event_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Date"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "integer"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "formation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formation"
+          },
+          "mitigation_id": {
+            "title": "Mitigation Id",
+            "type": "integer"
+          },
+          "npt_hours_after": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Npt Hours After"
+          },
+          "outcome": {
+            "description": "Outcome as used by the ledger",
+            "enum": [
+              "success",
+              "partial",
+              "fail",
+              "unknown"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "recorded_outcome": {
+            "description": "Outcome as extracted",
+            "enum": [
+              "success",
+              "partial",
+              "fail",
+              "unknown"
+            ],
+            "title": "Recorded Outcome",
+            "type": "string"
+          },
+          "recurred": {
+            "description": "Same problem came back within the recurrence window",
+            "title": "Recurred",
+            "type": "boolean"
+          },
+          "seq": {
+            "description": "Order the action was tried in (1 = first)",
+            "title": "Seq",
+            "type": "integer"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          },
+          "well_name": {
+            "title": "Well Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "mitigation_id",
+          "well_id",
+          "well_name",
+          "synthetic",
+          "event_date",
+          "formation",
+          "severity",
+          "seq",
+          "outcome",
+          "recorded_outcome",
+          "recurred",
+          "npt_hours_after",
+          "verified",
+          "evidence"
+        ],
+        "title": "LedgerCase",
+        "type": "object"
+      },
+      "LedgerEntry": {
+        "properties": {
+          "action_code": {
+            "title": "Action Code",
+            "type": "string"
+          },
+          "action_label": {
+            "title": "Action Label",
+            "type": "string"
+          },
+          "by_severity": {
+            "items": {
+              "$ref": "#/components/schemas/SeverityStratum"
+            },
+            "title": "By Severity",
+            "type": "array"
+          },
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/LedgerCase"
+            },
+            "title": "Cases",
+            "type": "array"
+          },
+          "ci90_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci90 High"
+          },
+          "ci90_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci90 Low"
+          },
+          "failures": {
+            "title": "Failures",
+            "type": "integer"
+          },
+          "first_choice": {
+            "description": "Uses where it was the first action tried",
+            "title": "First Choice",
+            "type": "integer"
+          },
+          "median_npt_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Npt Hours"
+          },
+          "median_volume_lost_m3": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Volume Lost M3"
+          },
+          "n": {
+            "description": "Uses with a known outcome (success + partial + fail)",
+            "title": "N",
+            "type": "integer"
+          },
+          "partial": {
+            "title": "Partial",
+            "type": "integer"
+          },
+          "posterior_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Beta(1,1) prior \u2192 posterior mean",
+            "title": "Posterior Mean"
+          },
+          "success_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "successes / n (raw)",
+            "title": "Success Rate"
+          },
+          "successes": {
+            "title": "Successes",
+            "type": "integer"
+          },
+          "summary": {
+            "description": "One-line reading, e.g. 'worked 7 of 9 (78%, 90% CI \u2026)'",
+            "title": "Summary",
+            "type": "string"
+          },
+          "unknown": {
+            "description": "Uses whose outcome was not recorded: excluded from n",
+            "title": "Unknown",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "action_code",
+          "action_label",
+          "n",
+          "successes",
+          "partial",
+          "failures",
+          "unknown",
+          "first_choice",
+          "success_rate",
+          "posterior_mean",
+          "ci90_low",
+          "ci90_high",
+          "median_npt_hours",
+          "median_volume_lost_m3",
+          "by_severity",
+          "summary",
+          "cases"
+        ],
+        "title": "LedgerEntry",
+        "type": "object"
+      },
+      "LedgerResponse": {
+        "properties": {
+          "basin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Basin"
+          },
+          "caveat": {
+            "title": "Caveat",
+            "type": "string"
+          },
+          "event_type": {
+            "enum": [
+              "LOSS",
+              "KICK",
+              "STUCK",
+              "TIGHT",
+              "TORQUE",
+              "INSTAB",
+              "BALLING",
+              "OVERP",
+              "GAS",
+              "CEMENT",
+              "CASING",
+              "FISH",
+              "EQUIP",
+              "WAIT",
+              "OTHER_NPT"
+            ],
+            "title": "Event Type",
+            "type": "string"
+          },
+          "formation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formation"
+          },
+          "insufficient": {
+            "description": "n < min_n: listed with their cases",
+            "items": {
+              "$ref": "#/components/schemas/LedgerEntry"
+            },
+            "title": "Insufficient",
+            "type": "array"
+          },
+          "min_n": {
+            "description": "Entries with fewer known outcomes are not ranked",
+            "title": "Min N",
+            "type": "integer"
+          },
+          "outcome_rule": {
+            "title": "Outcome Rule",
+            "type": "string"
+          },
+          "radius_km": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Radius Km"
+          },
+          "ranked": {
+            "description": "n \u2265 min_n, best posterior mean first",
+            "items": {
+              "$ref": "#/components/schemas/LedgerEntry"
+            },
+            "title": "Ranked",
+            "type": "array"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/LedgerScope"
+          },
+          "synthetic": {
+            "description": "True when any contributing well is synthetic",
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "well_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Well Id"
+          }
+        },
+        "required": [
+          "event_type",
+          "formation",
+          "basin",
+          "well_id",
+          "radius_km",
+          "min_n",
+          "outcome_rule",
+          "caveat",
+          "scope",
+          "ranked",
+          "insufficient",
+          "synthetic"
+        ],
+        "title": "LedgerResponse",
+        "type": "object"
+      },
+      "LedgerScope": {
+        "properties": {
+          "events": {
+            "title": "Events",
+            "type": "integer"
+          },
+          "mitigations": {
+            "title": "Mitigations",
+            "type": "integer"
+          },
+          "unknown_outcomes": {
+            "title": "Unknown Outcomes",
+            "type": "integer"
+          },
+          "wells": {
+            "title": "Wells",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "wells",
+          "events",
+          "mitigations",
+          "unknown_outcomes"
+        ],
+        "title": "LedgerScope",
+        "type": "object"
+      },
       "LessonCard": {
         "description": "Problem -> likely cause -> action taken -> outcome -> lesson for one event.",
         "properties": {
@@ -5040,6 +5612,204 @@
         "title": "ReviewReject",
         "type": "object"
       },
+      "RiskInterval": {
+        "properties": {
+          "base_md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Md M"
+          },
+          "base_tvdss_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Tvdss M"
+          },
+          "formation": {
+            "title": "Formation",
+            "type": "string"
+          },
+          "offsets": {
+            "items": {
+              "$ref": "#/components/schemas/RiskOffset"
+            },
+            "title": "Offsets",
+            "type": "array"
+          },
+          "risks": {
+            "description": "Highest probability first",
+            "items": {
+              "$ref": "#/components/schemas/EventRisk"
+            },
+            "title": "Risks",
+            "type": "array"
+          },
+          "strat_order": {
+            "title": "Strat Order",
+            "type": "integer"
+          },
+          "top_md_m": {
+            "title": "Top Md M",
+            "type": "number"
+          },
+          "top_tvdss_m": {
+            "title": "Top Tvdss M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "formation",
+          "strat_order",
+          "top_md_m",
+          "base_md_m",
+          "top_tvdss_m",
+          "base_tvdss_m",
+          "offsets",
+          "risks"
+        ],
+        "title": "RiskInterval",
+        "type": "object"
+      },
+      "RiskMode": {
+        "enum": [
+          "AT_FORMATION",
+          "SURFACE"
+        ],
+        "title": "RiskMode",
+        "type": "string"
+      },
+      "RiskOffset": {
+        "properties": {
+          "distance_kind": {
+            "description": "'at_formation' (3D entry points) or 'surface'",
+            "title": "Distance Kind",
+            "type": "string"
+          },
+          "distance_m": {
+            "title": "Distance M",
+            "type": "number"
+          },
+          "events": {
+            "additionalProperties": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "description": "event_type \u2192 event ids in this interval",
+            "title": "Events",
+            "type": "object"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "similarity": {
+            "description": "0.5\u20131.0: \u00d7 0.75 other hole size, \u00d7 0.8 other mud system, \u00d7 0.9 other well type",
+            "title": "Similarity",
+            "type": "number"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "weight": {
+            "description": "exp(\u2212d\u00b2/2\u03c3\u00b2) \u00d7 similarity \u00d7 recency",
+            "title": "Weight",
+            "type": "number"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "well_id",
+          "name",
+          "synthetic",
+          "distance_m",
+          "distance_kind",
+          "similarity",
+          "weight",
+          "events"
+        ],
+        "title": "RiskOffset",
+        "type": "object"
+      },
+      "RiskProfile": {
+        "properties": {
+          "intervals": {
+            "items": {
+              "$ref": "#/components/schemas/RiskInterval"
+            },
+            "title": "Intervals",
+            "type": "array"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "mode": {
+            "description": "Distance used for weights: AT_FORMATION or SURFACE",
+            "title": "Mode",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "prior_strength": {
+            "description": "\u03b1 + \u03b2 of the basin prior (pseudo-offsets)",
+            "title": "Prior Strength",
+            "type": "number"
+          },
+          "radius_km": {
+            "title": "Radius Km",
+            "type": "number"
+          },
+          "sigma_km": {
+            "title": "Sigma Km",
+            "type": "number"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "well_id",
+          "name",
+          "status",
+          "synthetic",
+          "mode",
+          "radius_km",
+          "sigma_km",
+          "prior_strength",
+          "method",
+          "intervals"
+        ],
+        "title": "RiskProfile",
+        "type": "object"
+      },
       "SearchResponse": {
         "properties": {
           "embedding_provider": {
@@ -5084,6 +5854,29 @@
           "took_ms"
         ],
         "title": "SearchResponse",
+        "type": "object"
+      },
+      "SeverityStratum": {
+        "properties": {
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "severity": {
+            "title": "Severity",
+            "type": "string"
+          },
+          "successes": {
+            "title": "Successes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "severity",
+          "n",
+          "successes"
+        ],
+        "title": "SeverityStratum",
         "type": "object"
       },
       "SpanOut": {
@@ -7190,6 +7983,7 @@
     },
     "/api/v1/ledger": {
       "get": {
+        "description": "Actions against ``event_type`` ranked by recorded outcomes: Beta(1,1) posterior mean\nand 90% credible interval per action, ranked only with at least ``min_n`` known\noutcomes; the rest are listed as insufficient evidence with their cases. Scope with a\nformation (name or synonym), a basin, or ``well_id`` + ``radius_km``; ``severity``\nstratifies. Observational: associated with, not caused by.",
         "operationId": "ledger_api_v1_ledger_get",
         "parameters": [
           {
@@ -7197,6 +7991,23 @@
             "name": "event_type",
             "required": true,
             "schema": {
+              "enum": [
+                "LOSS",
+                "KICK",
+                "STUCK",
+                "TIGHT",
+                "TORQUE",
+                "INSTAB",
+                "BALLING",
+                "OVERP",
+                "GAS",
+                "CEMENT",
+                "CASING",
+                "FISH",
+                "EQUIP",
+                "WAIT",
+                "OTHER_NPT"
+              ],
               "title": "Event Type",
               "type": "string"
             }
@@ -7208,6 +8019,7 @@
             "schema": {
               "anyOf": [
                 {
+                  "maxLength": 100,
                   "type": "string"
                 },
                 {
@@ -7224,6 +8036,7 @@
             "schema": {
               "anyOf": [
                 {
+                  "maxLength": 100,
                   "type": "string"
                 },
                 {
@@ -7232,16 +8045,99 @@
               ],
               "title": "Basin"
             }
+          },
+          {
+            "in": "query",
+            "name": "well_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Well Id"
+            }
+          },
+          {
+            "description": "Radius around well_id's surface location (km)",
+            "in": "query",
+            "name": "radius_km",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "maximum": 100,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Radius around well_id's surface location (km)",
+              "title": "Radius Km"
+            }
+          },
+          {
+            "in": "query",
+            "name": "severity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severity"
+            }
+          },
+          {
+            "description": "Rank only with \u2265 min_n outcomes",
+            "in": "query",
+            "name": "min_n",
+            "required": false,
+            "schema": {
+              "default": 3,
+              "description": "Rank only with \u2265 min_n outcomes",
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Min N",
+              "type": "integer"
+            }
           }
         ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerResponse"
+                }
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
           },
           "422": {
             "content": {
@@ -7252,16 +8148,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Mitigation effectiveness ranking (USP 2)",
@@ -8004,6 +8890,93 @@
         ]
       }
     },
+    "/api/v1/wells/{well_id}/cementing-check": {
+      "get": {
+        "description": "Planned slurry density against the mud weights at which offsets lost circulation in\nthe formation at the shoe, and offsets' losses while cementing there.",
+        "operationId": "get_cementing_check_api_v1_wells__well_id__cementing_check_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "well_id",
+            "required": true,
+            "schema": {
+              "title": "Well Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "shoe_md_m",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "maximum": 15000,
+              "title": "Shoe Md M",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "slurry_density_sg",
+            "required": true,
+            "schema": {
+              "maximum": 2.6,
+              "minimum": 1.0,
+              "title": "Slurry Density Sg",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "radius_km",
+            "required": false,
+            "schema": {
+              "default": 10.0,
+              "exclusiveMinimum": 0,
+              "maximum": 50,
+              "title": "Radius Km",
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CementingCheck"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cementing checklist from offsets",
+        "tags": [
+          "risk"
+        ]
+      }
+    },
     "/api/v1/wells/{well_id}/events/timeline": {
       "get": {
         "description": "Active events of the well plus its DDR NPT lines, for the Well 360 Events tab.",
@@ -8188,6 +9161,7 @@
     },
     "/api/v1/wells/{well_id}/risk-profile": {
       "get": {
+        "description": "For each formation of the well: P(event | formation) from offsets within\n``radius_km`` (weighted Beta-Binomial with a basin prior), its 90% credible interval,\nn_eff and the contributing offsets. The well's own events are never used.",
         "operationId": "get_risk_profile_api_v1_wells__well_id__risk_profile_get",
         "parameters": [
           {
@@ -8200,6 +9174,19 @@
             }
           },
           {
+            "in": "query",
+            "name": "radius_km",
+            "required": false,
+            "schema": {
+              "default": 10.0,
+              "exclusiveMinimum": 0,
+              "maximum": 50,
+              "title": "Radius Km",
+              "type": "number"
+            }
+          },
+          {
+            "description": "Spatial scale; default radius_km / 2",
             "in": "query",
             "name": "sigma_km",
             "required": false,
@@ -8214,7 +9201,55 @@
                   "type": "null"
                 }
               ],
+              "description": "Spatial scale; default radius_km / 2",
               "title": "Sigma Km"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mode",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RiskMode",
+              "default": "AT_FORMATION"
+            }
+          },
+          {
+            "description": "Repeat for several; default: all seen",
+            "in": "query",
+            "name": "event_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "enum": [
+                      "LOSS",
+                      "KICK",
+                      "STUCK",
+                      "TIGHT",
+                      "TORQUE",
+                      "INSTAB",
+                      "BALLING",
+                      "OVERP",
+                      "GAS",
+                      "CEMENT",
+                      "CASING",
+                      "FISH",
+                      "EQUIP",
+                      "WAIT",
+                      "OTHER_NPT"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Repeat for several; default: all seen",
+              "title": "Event Type"
             }
           }
         ],
@@ -8222,10 +9257,22 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/RiskProfile"
+                }
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
           },
           "422": {
             "content": {
@@ -8236,19 +9283,9 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
-        "summary": "Offset prior risk by depth",
+        "summary": "Offset prior risk by formation",
         "tags": [
           "risk"
         ]

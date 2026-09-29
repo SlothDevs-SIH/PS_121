@@ -1,8 +1,10 @@
 """Wells, offsets, trajectories and formations (B1). B2 adds the map bbox / fluid filters,
 the AT_FORMATION and CLOSEST_APPROACH offset modes, trajectory-at-depth and survey upload.
-The risk profile and the Offset Risk Brief remain skeletons until their phases.
+B3 adds the offset prior risk profile and the cementing check; the Offset Risk Brief
+remains a skeleton until B5.
 Correlation lives in correlation.py."""
 
+from enum import StrEnum
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, Query
@@ -10,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.v1.params import NOT_FOUND, InvalidParamsError, check_range, parse_bbox
+from app.api.v1.schemas.knowledge import CementingCheck, RiskProfile
 from app.api.v1.schemas.wells import (
     FormationOut,
     OffsetOut,
@@ -26,11 +29,12 @@ from app.api.v1.schemas.wells import (
 from app.core.errors import NOT_IMPLEMENTED, NotFoundError, NotImplementedYetError
 from app.db.models import Field, Formation
 from app.db.session import get_session
-from app.db.vocab import FluidType
+from app.db.vocab import EventType, FluidType
 from app.geo import proximity, trajectory_service
 from app.geo.service import path_latlon, surface_offsets
 from app.normalise import well360
 from app.normalise.wells_service import get_well_or_404, list_wells, well_detail
+from app.risk import prior
 
 router = APIRouter()
 DbSession = Annotated[Session, Depends(get_session)]
@@ -204,16 +208,66 @@ def get_formations(session: DbSession, basin: str | None = None) -> list[Formati
     return [FormationOut.model_validate(f, from_attributes=True) for f in session.scalars(stmt)]
 
 
+class RiskMode(StrEnum):
+    AT_FORMATION = "AT_FORMATION"
+    SURFACE = "SURFACE"
+
+
 @router.get(
     "/wells/{well_id}/risk-profile",
     tags=["risk"],
-    summary="Offset prior risk by depth",
-    responses=NOT_IMPLEMENTED,
+    summary="Offset prior risk by formation",
+    response_model=RiskProfile,
+    responses=NOT_FOUND,
 )
 def get_risk_profile(
-    well_id: int, sigma_km: Annotated[float | None, Query(gt=0, le=50)] = None
-) -> None:
-    raise NotImplementedYetError("Offset prior risk (S7a)", "B3")
+    well_id: int,
+    session: DbSession,
+    radius_km: Annotated[float, Query(gt=0, le=50)] = prior.DEFAULT_RADIUS_KM,
+    sigma_km: Annotated[
+        float | None, Query(gt=0, le=50, description="Spatial scale; default radius_km / 2")
+    ] = None,
+    mode: RiskMode = RiskMode.AT_FORMATION,
+    event_type: Annotated[
+        list[EventType] | None, Query(description="Repeat for several; default: all seen")
+    ] = None,
+) -> RiskProfile:
+    """For each formation of the well: P(event | formation) from offsets within
+    ``radius_km`` (weighted Beta-Binomial with a basin prior), its 90% credible interval,
+    n_eff and the contributing offsets. The well's own events are never used."""
+    return prior.risk_profile(
+        session,
+        well_id,
+        radius_km=radius_km,
+        sigma_km=sigma_km,
+        mode=mode.value,
+        event_types=list(event_type) if event_type else None,
+    )
+
+
+@router.get(
+    "/wells/{well_id}/cementing-check",
+    tags=["risk"],
+    summary="Cementing checklist from offsets",
+    response_model=CementingCheck,
+    responses=NOT_FOUND,
+)
+def get_cementing_check(
+    well_id: int,
+    session: DbSession,
+    shoe_md_m: Annotated[float, Query(gt=0, le=15000)],
+    slurry_density_sg: Annotated[float, Query(ge=1.0, le=2.6)],
+    radius_km: Annotated[float, Query(gt=0, le=50)] = prior.DEFAULT_RADIUS_KM,
+) -> CementingCheck:
+    """Planned slurry density against the mud weights at which offsets lost circulation in
+    the formation at the shoe, and offsets' losses while cementing there."""
+    return prior.cementing_check(
+        session,
+        well_id,
+        shoe_md_m=shoe_md_m,
+        slurry_density_sg=slurry_density_sg,
+        radius_km=radius_km,
+    )
 
 
 @router.get(
