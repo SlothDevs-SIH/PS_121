@@ -36,7 +36,7 @@ COMPONENTS: list[Component] = [
         stage="S2",
         name="Schema extraction + review queue",
         phase="B2",
-        status="in_progress",
+        status="built",
     ),
     Component(
         key="normalise",
@@ -48,23 +48,23 @@ COMPONENTS: list[Component] = [
     Component(
         key="geo",
         stage="S4",
-        name="Trajectory engine & proximity modes (surface built; other modes B2)",
+        name="Trajectory engine & proximity modes (surface, at-formation, closest approach)",
         phase="B1",
-        status="in_progress",
+        status="built",
     ),
     Component(
         key="search",
         stage="S5",
-        name="Hybrid search, RAG, lessons cards",
+        name="Hybrid search + lessons cards (RAG copilot: B5)",
         phase="B2",
-        status="in_progress",
+        status="built",
     ),
     Component(
         key="correlation",
         stage="S6",
         name="Depth/formation correlation",
         phase="B2",
-        status="in_progress",
+        status="built",
     ),
     Component(
         key="risk_prior", stage="S7a", name="Offset prior risk", phase="B3", status="planned"

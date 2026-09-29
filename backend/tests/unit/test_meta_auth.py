@@ -17,15 +17,18 @@ def test_component_registry_is_consistent() -> None:
     keys = [c.key for c in COMPONENTS]
     assert len(keys) == len(set(keys))
     assert all(c.phase in VALID_PHASES for c in COMPONENTS)
-    # Built so far: B0 platform + B1 ingestion and normalisation. B2 in progress: geo (surface
-    # mode built in B1), extraction, search and correlation.
-    assert [c.key for c in COMPONENTS if c.status == "built"] == ["platform", "ingest", "normalise"]
-    assert [c.key for c in COMPONENTS if c.status == "in_progress"] == [
+    # Built so far: B0 platform, B1 ingestion/normalisation/geo, B2 extraction, search and
+    # correlation (Part 2). Nothing is half-built between parts.
+    assert [c.key for c in COMPONENTS if c.status == "built"] == [
+        "platform",
+        "ingest",
         "extract",
+        "normalise",
         "geo",
         "search",
         "correlation",
     ]
+    assert [c.key for c in COMPONENTS if c.status == "in_progress"] == []
 
 
 def test_dev_auth_returns_local_admin(client: TestClient) -> None:

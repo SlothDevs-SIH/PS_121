@@ -1,0 +1,201 @@
+{
+  "what": "S2 extraction vs synthetic ground truth (NOT the \u00a713.1 real-report gold set)",
+  "measured_at": "2026-09-29T05:53:35+00:00",
+  "commit": "9a74d62",
+  "wells_scored": 41,
+  "match_rule": "same well, |MD| <= 15.0 m, greedy nearest",
+  "events": {
+    "tp": 113,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0
+  },
+  "events_by_type": {
+    "BALLING": {
+      "tp": 16,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "CEMENT": {
+      "tp": 14,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "INSTAB": {
+      "tp": 9,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "KICK": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "LOSS": {
+      "tp": 21,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "OVERP": {
+      "tp": 7,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "STUCK": {
+      "tp": 18,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "TIGHT": {
+      "tp": 18,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "TORQUE": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    }
+  },
+  "ddr_event_detection": {
+    "scanned": {
+      "tp": 43,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "text_layer": {
+      "tp": 67,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    }
+  },
+  "fields_on_matched_events": {
+    "event_type": {
+      "n": 113,
+      "accuracy": 1.0
+    },
+    "subtype": {
+      "n": 63,
+      "accuracy": 0.9206
+    },
+    "severity": {
+      "n": 113,
+      "accuracy": 0.885
+    },
+    "formation": {
+      "n": 113,
+      "accuracy": 1.0
+    },
+    "event_date": {
+      "n": 113,
+      "accuracy": 1.0
+    },
+    "resolved": {
+      "n": 113,
+      "accuracy": 1.0
+    },
+    "depth_abs_error_m": {
+      "mean": 0.16,
+      "max": 0.5
+    },
+    "npt_abs_error_h": {
+      "mean": 0.0,
+      "max": 0.0
+    }
+  },
+  "mitigations": {
+    "count_exact": {
+      "n": 113,
+      "accuracy": 1.0
+    },
+    "action_code_in_order": {
+      "n": 165,
+      "accuracy": 1.0
+    },
+    "outcome_in_order": {
+      "n": 165,
+      "accuracy": 1.0
+    }
+  },
+  "casing": {
+    "od_in": {
+      "n": 120,
+      "accuracy": 0.9583
+    },
+    "hole_size_in": {
+      "n": 120,
+      "accuracy": 0.9917
+    },
+    "shoe_md_m": {
+      "n": 120,
+      "accuracy": 1.0
+    },
+    "toc_md_m": {
+      "n": 120,
+      "accuracy": 0.9833
+    },
+    "returns": {
+      "n": 120,
+      "accuracy": 0.975
+    }
+  },
+  "mud": {
+    "interval": {
+      "n": 120,
+      "accuracy": 1.0
+    },
+    "mw_sg": {
+      "n": 120,
+      "accuracy": 1.0
+    },
+    "mud_type": {
+      "n": 120,
+      "accuracy": 1.0
+    }
+  },
+  "confidence_calibration": {
+    "mean_when_correct": 0.949,
+    "mean_when_wrong": null,
+    "n_wrong": 0
+  },
+  "notes": [
+    "Severity for TIGHT/TORQUE is drawn at random by the generator (not from overpull/torque), so severity accuracy for those types is capped near 50% by design.",
+    "Kick subtypes (gas/water/oil) are never written in the synthetic reports; extraction leaves them null rather than guessing, which scores as a subtype miss.",
+    "Rule phrase lists are general drilling vocabulary, but the synthetic reports use a fixed vocabulary too; expect lower scores on real reports."
+  ]
+}

@@ -2,16 +2,63 @@
 
 **Team:** Slothdevs · **Solution:** SMRITI (working name) · **Problem Statement:** PS 121 — eRTMAC-NWIS (Oil India Limited)
 **Parent documents:** [`SMRITI_MASTER_PLAN.md`](../SMRITI_MASTER_PLAN.md) (product) · [`BACKEND_PLAN.md`](BACKEND_PLAN.md) (API and data). This document is the source of truth for the web app. When they disagree, fix all of them in the same PR.
-**Document date:** 2026-09-28 (v1.0)
-**Frontend phase:** F0 ✅ · **F1 — Map & ingestion: ✅ COMPLETE (2026-09-28, Part 1)**. Next: **F2 — Knowledge** (not started — the team chose to stop after Part 1).
+**Document date:** 2026-09-28 (v1.0) · **updated 2026-09-29 (v1.1, Part 2):** the design-system revamp of `docs/SPEC_RECONCILIATION.md` §5 (themes, motion, shell, ⌘K palette, MapLibre, Documents Library, Dashboard) is built; see §0.1, §5, §8, §13, Appendix B3.
+**Frontend phase:** F0 ✅ · F1 ✅ (Part 1) · **Part 2 revamp (P2): ✅ COMPLETE (2026-09-29)**. Next: **F2 — Knowledge** screens (Well 360, Correlation Panel, Knowledge Search, Review queue, map proximity modes) in Part 3.
 
-> ⚠️ **Same honesty rule as the master and backend plans:** a "✅" must point to a file and a test that passed. Every number in §0 and Appendix B was measured on 2026-09-28 in this repository. Everything from F1 onward is a **plan**.
+> ⚠️ **Same honesty rule as the master and backend plans:** a "✅" must point to a file and a test that passed. Every number in §0 and Appendix B was measured in this repository on the date given. Everything from F2 onward is a **plan**.
 
 ---
 
-## 0. Where the frontend actually stands right now (2026-09-28)
+## 0. Where the frontend actually stands right now (2026-09-29)
 
-### 0.1 F1 — Map & ingestion (built in Part 1, 2026-09-28)
+### 0.1 Part 2 — Design system, shell, MapLibre, Documents Library, Dashboard (2026-09-29)
+
+**Built and verified** (evidence: Appendix B3):
+- **Design system** (`src/styles/index.css`, `src/lib/motion.ts`, `src/lib/wellTypes.ts`):
+  - Three themes as CSS tokens: **Deep Rig** (dark ops-centre, default), **Daylight Field**, **Command Blue**. Components use tokens only.
+  - Well-type colours (oil `#FF6B35`, gas `#F2C94C`, water `#00B4D8`) and a fixed z-index scale (§7 rule 9).
+  - Self-hosted Inter (variable) and JetBrains Mono with tabular numbers.
+  - Shared motion variants (transform and opacity only). `MotionConfig reducedMotion="user"` honours "reduce motion".
+  - The theme switch sweeps in as a circle from the click point (View Transitions API; instant elsewhere).
+- **UI state in Zustand** (`src/stores/ui.ts`): theme, office/field mode, units, sidebar, global well-type filter, palette. Guarded persistence; Part 1's saved `light`/`dark` migrate. The pre-paint script (`public/theme-init.js`) mirrors it, so there's no flash.
+- **Shell** (`src/components/shell/*`, `src/app/AppShell.tsx`):
+  - Collapsible sidebar (15 rem ↔ 4.5 rem through a CSS `grid-template-columns` transition, §7 rule 4) with a sliding `layoutId` active pill.
+  - Grouped navigation from the screen registry, and **Oil / Gas / Water well groups with live counts**.
+  - A rail is imposed below `lg` and on the map (with no toggle then); an off-canvas drawer below `md`.
+  - Sticky glass top bar: breadcrumb, **global Oil / Gas / Water / All switcher**, ⌘K trigger, backend status, office/field, units, theme.
+  - **cmdk command palette** (⌘K / Ctrl+K) over pages, wells (fluid icons) and documents. It is lazy-loaded, its own motion dialog, and restores focus on close.
+  - Animated route transitions with a frozen outlet (stable keys, §7 rule 8).
+- **MapLibre GL replaces Leaflet** (`src/components/map/WellMap.tsx`, `src/lib/maplibre.ts`):
+  - Offline-first: no basemap and no glyph server needed. Wells and clusters are HTML markers styled by tokens.
+  - MapLibre's own clustering, with fluid-composition rings. The active well and its offsets never disappear into a cluster.
+  - **Pulsing rings on drilling wells**, the radius circle, the trajectory path, `flyTo` on selection, theme-aware paint.
+  - The ResizeObserver resize and a fixed-size container satisfy §7 rule 7.
+  - **Strict CSP kept:** the worker is bundled by Vite as a same-origin ES module and passed to `setWorkerUrl`; no `blob:` workers.
+- **Map Explorer** (`/map`): full-bleed map with a floating radius control and a legend that toggles each fluid.
+  - A sliding well panel shows fluid, status, event / document / casing counts and the offset table.
+  - Wells of other fluids are dimmed by the global filter. The URL state (`well`, `r`, `type`) is kept.
+  - At-formation and closest-approach are disabled here, labelled "Part 3" (the API already serves them).
+- **Documents Library** (`/documents`; `/ingest` redirects):
+  - Upload zone with a spinner ring, and pipeline stage totals.
+  - Grid (first-page thumbnails) or list, with a type filter and text search.
+  - A per-document **Upload → Text → Extract → Index** timeline from the three stage columns, with a failure or skip reason on hover.
+  - Polling only while something is really moving, and `?doc=` deep links to the evidence viewer.
+- **Dashboard** (`/`):
+  - Count-up KPIs from real endpoints: wells by fluid, wells drilling now (pulsing), events extracted, reports indexed and the review backlog.
+  - A mini map, and recent extracted events (unverified ones marked).
+  - **Live alerts are an explicit placeholder until Part 4–5. Nothing is simulated.**
+- **Tests:**
+  - **53 unit/component tests** (was 35). MapLibre is replaced in jsdom by `src/test/fakeMaplibre.ts`, so `WellMap` itself is tested (markers, roles, pulse, radius, clicks, cleanup).
+  - **33 browser e2e** (desktop + tablet; 1 skip by design). These include dashboard KPIs and a **WebGL map rendered under the strict CSP with zero console errors**, the well-type switcher, the palette, the map markers, fly-to and legend, the documents grid, list and deep link, sidebar collapse, and no horizontal scroll at 375 px on five pages.
+
+**Real problems found and fixed while building Part 2:**
+1. **Fonts were blocked by our own CSP.** Vite inlines small files as `data:` URIs, and `font-src 'self'` refuses them; only the e2e console check showed it. Font files are now never inlined (`vite.config.ts`).
+2. **Phone-width overflow on three pages.** Grid tracks without explicit columns sized to content (`auto`); fixed with `grid-cols-1` / `minmax(0,1fr)`. The top-bar buttons were 6 px too wide at 375 px.
+3. **The sidebar toggle offered "Expand" where the rail is imposed** (narrow window, map page) and did nothing. It is hidden there now (unit test).
+4. **At map-page zoom, offset wells vanished into clusters**, so "click an offset well" was impossible. Active and offset wells now come from a separate, unclustered source.
+5. **The shell bundle crossed the 180 kB budget** (181.4 kB gzip) once cmdk was added. The palette now loads on first use: shell 164 kB.
+
+### 0.2 F1 — Map & ingestion (built in Part 1, 2026-09-28)
 
 **Built and verified** (evidence: Appendix B2):
 - **Well Map** (`/map`, master plan screen 1):
@@ -52,7 +99,7 @@
 1. **The map overflowed the phone layout by 18 px.** Grid items default to `min-width: auto`, and Leaflet's internal panes are huge. The phone-width e2e test caught it; fixed with `min-w-0`.
 2. **Offset-table well names and depths wrapped mid-token** ("SYN-/ASM-/09"), found in the screenshot review. Those cells are now non-wrapping inside the table's horizontal scroll.
 
-### 0.2 F0 — Skeleton (built earlier on 2026-09-28)
+### 0.3 F0 — Skeleton (built earlier on 2026-09-28)
 
 **Built and verified in F0** (evidence in Appendix B):
 
@@ -110,6 +157,9 @@
 | V-F8 | Docker Hub rate limits (HTTP 429) | Hit repeatedly when pulling `node`/`nginx` in the sandbox (same as V-B7) | Retry/back-off worked; `docker save` the images for the finale machine | ⏳ Watch |
 | V-F9 | Local image build needed a CA-trusting Node base (sandbox TLS inspection) | Same situation as V-B5 | `frontend/Dockerfile` takes `ARG NODE_IMAGE` / `NGINX_IMAGE`; no sandbox CA committed | ✅ Resolved |
 | V-F10 | Map tiles need a Content-Security-Policy change | CSP `img-src` is `'self' data: blob:` only | Done in F1: nginx serves `/config.json` from `MAP_TILE_URL` / `MAP_TILE_ATTRIBUTION`, and the CSP adds only `MAP_TILE_ORIGIN`. Default is no basemap (offline); a self-hosted tile pack is still the recommended on-prem option | ✅ Resolved |
+| V-F11 | MapLibre needs WebGL2 and a worker | Headless Chromium 1194 here and on GitHub runners provides WebGL2 (SwiftShader); the default worker creation uses a `blob:` URL, which the CSP forbids | `?worker&url` + `setWorkerUrl` (same-origin module worker); e2e asserts markers render with no console errors. jsdom tests use a fake (`src/test/fakeMaplibre.ts`) | ✅ Resolved |
+| V-F12 | MapLibre chunk is ~283 kB gzip (+144 kB worker) | Over the 150 kB per-screen budget in §10 | Loaded only by pages with a map (Map Explorer, Dashboard mini map). Accepted for Part 2; revisit a lighter dashboard preview (static SVG) if the dashboard's first paint suffers on field tablets | ⚠️ Accepted |
+| V-F13 | "Framer Motion" in the spec is published as `motion` | Same library, renamed package | `motion` 13 (`motion/react`) | ✅ Decided |
 
 ---
 
@@ -392,8 +442,11 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 8 | nginx image: SPA fallback, proxy (HTTP + WS), CSP/security headers, caching | F0 | ⚠️ ships source maps (V-F4) | `frontend/Dockerfile`, `frontend/nginx/default.conf.template` · e2e WebSocket test, curl header checks (App. B) |
 | 9 | Compose `frontend` service, health-gated | F0 | ✅ | `docker-compose.yml` · `up --wait` healthy |
 | 10 | CI: frontend-checks + e2e in integration | F0 | ✅ | `.github/workflows/ci.yml` · [run](https://github.com/SlothDevs-SIH/PS_121/actions/runs/36463537008) green |
-| 11 | Well Map (surface mode; other modes shown disabled until B2) | F1 | ✅ | `src/pages/WellMapPage.tsx`, `src/components/map/WellMap.tsx` · `WellMapPage.test.tsx` (2), e2e map + units scenarios |
-| 12 | Ingestion upload & job status | F1 | ✅ | `src/pages/IngestPage.tsx` · `IngestPage.test.tsx` (3), e2e upload scenario |
+| 11 | Map Explorer on MapLibre (surface mode; other modes labelled Part 3) | F1 → P2 | ✅ | `src/pages/WellMapPage.tsx`, `src/components/map/WellMap.tsx`, `src/lib/maplibre.ts` · `WellMapPage.test.tsx` (4), `WellMap.test.tsx` (3), e2e map scenarios |
+| 12 | Documents Library (upload, grid/list, pipeline timeline, deep links) | F1 → P2 | ✅ | `src/pages/IngestPage.tsx`, `src/components/documents/Pipeline.tsx`, `src/lib/documents.ts` · `IngestPage.test.tsx` (5), e2e upload + library scenarios |
+| 12a | Design system: 3 themes, well-type colours, z-index scale, fonts, motion, theme reveal | P2 | ✅ | `src/styles/index.css`, `src/lib/motion.ts`, `src/components/shell/ThemeSwitcher.tsx` · `AppShell.test.tsx` theme cycle, `ui.test.ts` (3), e2e theme persistence |
+| 12b | Shell: collapsible sidebar, top bar, well-type switcher, ⌘K palette, route transitions | P2 | ✅ | `src/components/shell/*`, `src/app/AppShell.tsx`, `src/stores/ui.ts` · `AppShell.test.tsx` (11), `CommandPalette.test.tsx` (2), e2e palette / switcher / collapse |
+| 12c | Dashboard shell (KPIs, mini map, recent events, alerts placeholder) | P2 | ✅ | `src/pages/DashboardPage.tsx`, `src/components/ui/KpiCard.tsx` · `DashboardPage.test.tsx` (2), e2e dashboard |
 | 13 | `EvidenceLink`, `PageViewer`, `ConfidenceValue`, `DataTable`, units formatter, units toggle, runtime config | F1 | ✅ | `src/components/**`, `src/lib/format/units.ts`, `src/lib/config.ts` · `PageViewer.test.tsx` (2), `DataTable.test.tsx` (2), `units.test.ts` (5) |
 | 14 | Review queue, Well 360, Correlation Panel, Knowledge Search | F2 | 📋 | §4.2–4.5 |
 | 15 | Mitigation Ledger, risk curves on Map/Well 360 | F3 | 📋 | §4.6 |
@@ -411,7 +464,8 @@ Frontend phases follow the backend phases they depend on, typically starting a f
 |---|---|---|---|---|
 | **F0 Skeleton** | B0 | P0 | Shell, theming, field mode, API layer, System Status, planned screens, nginx image, CI | ✅ **Met 2026-09-28**, including a green GitHub CI run — Appendix B |
 | **F1 Map & ingestion** | B1 | P1 | Well Map (surface mode), upload + job status, `EvidenceLink`/`PageViewer`, `ConfidenceValue`, `DataTable`, units formatter, route-level code splitting, tile decision | ✅ **Met 2026-09-28** on synthetic wells (no Volve data, see BACKEND_PLAN V-B13): radius search end to end in the browser; uploads tracked to `processed` and viewable with evidence; e2e covers both |
-| **F2 Knowledge** | B2 | P2 | Review queue, Well 360, **Correlation Panel**, Knowledge Search, at-formation/closest-approach modes on the map, axe checks in e2e | Correlation panel renders 6 wells < 1 s with evidence links; review round trip; search with citations |
+| **P2 Revamp** (Part 2) | B2 | — | `SPEC_RECONCILIATION.md` §5: themes, motion, collapsible sidebar, top bar with well-type switcher, ⌘K palette, MapLibre map, Documents Library revamp, Dashboard shell | ✅ **Met 2026-09-29** — §0.1, Appendix B3 |
+| **F2 Knowledge** (Part 3) | B2 ✅ | P2 | Review queue, Well 360, **Correlation Panel**, Knowledge Search, at-formation/closest-approach modes on the map, axe checks in e2e | Correlation panel renders 6 wells < 1 s with evidence links; review round trip; search with citations |
 | **F3 Risk & ledger** | B3 | P3a | Mitigation Ledger, `RiskCurve` on Map/Well 360/Correlation hazard strip | Ledger shows the planted ranking; risk curves show n and CI |
 | **F4 Real-time** | B4 | P3b | Live Well Monitor, Alerts list/detail, Déjà Vu overlay, WebSocket client with reconnect/stale handling | Replay → alerts appear in the UI ≤ 5 s after the backend emits them (measured); tablet smoothness target met |
 | **F5 Copilot & polish** | B5 | P4 | Copilot panel (SSE), Analytics, Offset Risk Brief download, PWA with an offline well pack | Copilot answers with clickable citations; field view usable offline for a cached well (knowledge views only) |
@@ -447,18 +501,21 @@ Per-viewer preferences in localStorage (guarded; not reliable state): `smriti.th
 
 ## 8. Design System
 
-**Tokens (`src/styles/index.css`):** `bg`, `surface`, `surface-2`, `border`, `text`, `text-muted`, `accent`/`accent-contrast`, plus the status pairs `ok`, `warn`, `danger`, `info` (each with a `-bg`). All are defined for light and dark and exposed to Tailwind as `bg-surface`, `text-muted`, `bg-ok-bg`, and so on.
+*(Rewritten 2026-09-29 for Part 2; follows FRONTEND_SPEC §2 and SPEC_RECONCILIATION §5.)*
 
-**Planned semantic tokens (F3/F4):**
-- Event-type palette: LOSS, KICK, STUCK, TORQUE, CEMENT, OVERP, OTHER — colour-blind-safe and paired with icons.
-- Risk scale: sequential, 5 steps.
-- Synthetic-data badge colour.
+**Themes** (`data-theme` on `<html>`, CSS variables in `src/styles/index.css`): **Deep Rig** (default; `--bg #0A0E14`, rig-orange accent), **Daylight Field** (light, printable), **Command Blue** (dark, blue accent). Every theme defines `bg`, `surface`, `surface-2`, `border`, `text`, `text-muted`, `accent`/`accent-contrast`, `accent-2`, the status pairs `ok`/`warn`/`danger`/`info` (each with `-bg`), map background and grid, card shadow and glass. Tailwind exposes them as `bg-surface`, `text-muted`, and so on. **No raw hex in components.**
 
-Chart colours follow the same tokens, so charts switch theme with the app.
+**Well-type colours** (all themes): oil `--well-oil #FF6B35` (droplet), gas `--well-gas #F2C94C` (flame), water `--well-water #00B4D8` (waves). They are used on the map, the sidebar counts, badges, the palette and the dashboard.
 
-**Typography:** a system UI font stack (no web-font download, better offline); tabular numbers (`tabular-nums`) for all measurements; 16 px base in office view, 19 px in field view.
+**Z-index scale:** base 0 · map overlay 10 · sticky top bar 20 · sidebar 30 · popovers 40 · modals and palette 50 · toasts 60 (`--z-*`, used as `z-(--z-modal)`).
 
-**Field view:** larger type, a reduced navigation (Map, Correlation, Live, Alerts, Search, Ledger, System), dark theme recommended for control rooms, and touch targets ≥ 44 px from F4.
+**Typography:** Inter (variable) and JetBrains Mono, self-hosted via `@fontsource` (font files, never inlined, because of the CSP). Numbers use `.num` (mono + tabular) so updating values keep their width. 16 px base in office view, 19 px in field view.
+
+**Motion** (`src/lib/motion.ts`): page transition (fade + 10 px rise), stagger lists, spring active pill, slide-in panel; only `transform` and `opacity` animate. KPI numbers count up; live states pulse (drilling wells, "drilling now" card). All motion respects "reduce motion".
+
+**Planned semantic tokens (F3/F4):** an event-type palette (colour-blind-safe, paired with icons) and a 5-step sequential risk scale.
+
+**Field view:** larger type and a reduced navigation (Map, Correlation, Live, Alerts, Search, Ledger, System); Deep Rig is the recommended theme for control rooms; touch targets ≥ 44 px from F4.
 
 ---
 
@@ -530,13 +587,16 @@ Chart colours follow the same tokens, so charts switch theme with the app.
 | ADR-F3 | TanStack Query for server state | Redux / Zustand for everything | Caching, polling, retries and invalidation built in; nearly all state is server state |
 | ADR-F4 | Types generated from the backend OpenAPI, committed, with CI drift checks | Hand-written types / runtime-only validation | The frontend and backend can't silently disagree; a diff shows up in review |
 | ADR-F5 | Tailwind v4 + CSS-variable tokens + shadcn-style components | A component library (MUI/Ant) | Full control of the field/dark theme and density; small CSS; no heavy dependency |
-| ADR-F6 | Leaflet (react-leaflet) for maps | Google Maps, Mapbox | No keys or cost, offline tile packs possible; 2D offsets suffice (master plan ADR) |
+| ADR-F6 | ~~Leaflet (react-leaflet)~~ **MapLibre GL** (from Part 2) | Leaflet, Google Maps, Mapbox | GPU rendering with fly-to, native clustering and smooth pulse markers (FRONTEND_SPEC §4.3); open source, no keys, offline-capable. Markers are HTML so no glyph server is needed |
 | ADR-F7 | D3 for depth tracks; ECharts for time series/analytics | One charting library for all | Correlation tracks are bespoke (shared depth axis, flattening) → D3; live strips need fast canvas → ECharts |
 | ADR-F8 | Screen registry drives routes + nav + tests | Hand-maintained route list | One place to change; tests guarantee all 10 plan screens exist and use real endpoints |
 | ADR-F9 | Planned screens probe real endpoints | Static "coming soon" pages | Shows honest, live build status (501 + phase) and exercises the proxy/contract from day one |
 | ADR-F10 | TypeScript 5.9 | TypeScript 6.0 (template default) | Type generator compatibility (V-F1) |
 | ADR-F11 | oxlint | ESLint | Template default; fast; sufficient rules; revisit if an a11y rule is missing (V-F5) |
 | ADR-F12 | Web app (responsive + PWA) | Native mobile app | Master plan ADR: one codebase for office and field; no app-store deployment inside a PSU network |
+| ADR-F13 | Zustand for UI-only state; TanStack Query stays the only home of server data | Context providers per concern | Tiny, selector-based (no re-render cascades), testable outside React; never duplicates server data (FRONTEND_SPEC §6) |
+| ADR-F14 | cmdk's `Command` inside our own motion dialog, lazy-loaded | cmdk's Radix-based `Command.Dialog` | Our dialog gets the same motion and z-index rules; no Radix title warnings; cmdk stays out of the shell bundle |
+| ADR-F15 | CSS grid-column transition for the sidebar | Framer `width` animation | Spec §7 rule 4: the browser interpolates one property; no per-frame JS layout |
 
 ---
 
@@ -578,12 +638,11 @@ One codebase serves office laptops, RTMAC wall screens and rig tablets, with no 
 
 ## 16. Immediate Next Actions (frontend)
 
-1. ~~Watch the first GitHub CI run~~ — done, all green (V-F3).
-*(Updated 2026-09-28 after Part 1. F0 and F1 are done; work is paused here at the team's request.)*
+*(Updated 2026-09-29 after Part 2.)*
 
-2. **F2 kickoff when resumed:** the correlation panel on the real B1 data (tops and trajectories already exist for 42 wells). It's the highest-risk UI component (RF1), so it goes first.
-3. **Self-hosted tile pack** for the demo area, so the map has a basemap offline (V-F10 follow-up) — UI eng. + infra.
-4. **`docker save`** the node/nginx base images for the finale machine (V-F8).
+1. **Part 3 (F2 Knowledge):** the Correlation Panel first (highest-risk UI, RF1), on `/correlation` which now returns real panels in about 85 ms. Then Well 360 (with the 3D trajectory), Knowledge Search, the review queue, and at-formation / closest-approach on the map. The API for all of them is live (B2).
+2. **Self-hosted tile pack** for the demo area, so the map has a basemap offline (V-F10 follow-up) — UI eng. + infra.
+3. **`docker save`** the node/nginx base images for the finale machine (V-F8).
 
 ---
 
@@ -654,6 +713,20 @@ Clean run against the freshly seeded stack (see BACKEND_PLAN Appendix B2).
 | Browser e2e | `npm run e2e` (Playwright 1.56.1, Chromium, through nginx) | **22 passed** (11 scenarios × desktop + tablet) |
 | Runtime config | `curl localhost:8080/config.json` | `{"mapTileUrl":"","mapTileAttribution":""}`; CSP `img-src 'self' data: blob:` plus the configured origin only |
 | Visual review | Playwright screenshots: Well Map (light, 1400 px), Ingestion (dark), evidence viewer on a scanned DDR | Correct; the offset-table wrapping found here was fixed |
+
+## Appendix B3 — Part 2 Verification Record (2026-09-29)
+
+Clean run against the freshly seeded stack (BACKEND_PLAN Appendix B3).
+
+| Check | Command | Result |
+|---|---|---|
+| Unit/component tests | `npm test` | **53 passed** (13 files) |
+| Lint / format / types | `npm run lint`, `format:check`, `typecheck` | clean |
+| Contract | `npm run gen:api` from the regenerated `openapi.json` | committed; typecheck clean against the B2 schema |
+| Build | `npm run build` | shell `index.js` **164.1 kB gzip** (budget 180); `CommandPalette` 17.7 kB (lazy); `DashboardPage` 8.5 kB; `IngestPage` 5.3 kB; `WellMapPage` 4.2 kB; `WellMap` (MapLibre) 283 kB + worker 144 kB gzip, map pages only (V-F12); CSS 9.0 kB gzip |
+| Browser e2e | `npm run e2e` (Playwright 1.56.1, Chromium, through nginx) | **33 passed, 1 skipped** (desktop + tablet; the skip is the collapse test on tablet, where the rail is imposed) |
+| CSP | e2e console check on the dashboard and map | WebGL map rendered; zero CSP violations after the font fix |
+| Visual review | Playwright screenshots at 1440 px: Dashboard, Map Explorer and Documents Library in Deep Rig, Daylight Field and Command Blue; the palette open | Correct. The pipeline labels truncating, the dashboard map not filling its card and wrapped bearings were found here and fixed |
 
 ## Appendix C — Document Maintenance Rules
 

@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-29 · **Status:** decided; every later phase follows this file.
 **Sources reconciled:**
-- **SMRITI plans on this branch:** [`SMRITI_MASTER_PLAN.md`](../SMRITI_MASTER_PLAN.md), [`BACKEND_PLAN.md`](BACKEND_PLAN.md), [`FRONTEND_PLAN.md`](FRONTEND_PLAN.md). Phases B0–B1 and F0–F1 ("Part 1") are built and green in CI.
+- **SMRITI plans on this branch:** [`SMRITI_MASTER_PLAN.md`](../SMRITI_MASTER_PLAN.md), [`BACKEND_PLAN.md`](BACKEND_PLAN.md), [`FRONTEND_PLAN.md`](FRONTEND_PLAN.md). Phases B0–B1 and F0–F1 ("Part 1") are built and green in CI; **Part 2 (B2 + the frontend revamp) was built on 2026-09-29** (records: BACKEND_PLAN §0.1 / Appendix B3, FRONTEND_PLAN §0.1 / Appendix B3).
 - **"Final spec" documents** pushed to `main` on 2026-09-29, copied unchanged into [`docs/spec/`](spec/):
   - [`BACKEND_SPEC.md`](spec/BACKEND_SPEC.md) (NWIS backend blueprint);
   - [`FRONTEND_SPEC.md`](spec/FRONTEND_SPEC.md) (NWIS frontend blueprint, "crazy but professional");
@@ -31,25 +31,25 @@ All paths are under `/api/v1`. "✅" means built; the phase column says where th
 |---|---|---|
 | `POST /auth/login`, `POST /auth/refresh` | same paths | Part 5 (JWT) |
 | `GET /auth/me` | `GET /me` | ✅ B0 (dev user); JWT user in Part 5 |
-| `GET /wells`, `GET /wells/{id}` | same | ✅ B1; Well 360 enrichment in B2 |
-| `GET /wells/nearby-map?bbox=` | `GET /wells?bbox=` | B2 |
-| `GET /wells/{id}/nearby?radius_km=` | `GET /wells/{id}/offsets?radius_km=&mode=SURFACE\|AT_FORMATION\|CLOSEST_APPROACH` | ✅ surface B1; other modes B2 |
+| `GET /wells`, `GET /wells/{id}` | same | ✅ B1; ✅ Well 360 enrichment B2 |
+| `GET /wells/nearby-map?bbox=` | `GET /wells?bbox=` (+ `fluid_type=`) | ✅ B2 |
+| `GET /wells/{id}/nearby?radius_km=` | `GET /wells/{id}/offsets?radius_km=&mode=SURFACE\|AT_FORMATION\|CLOSEST_APPROACH` | ✅ surface B1; ✅ other modes B2 |
 | `GET /wells/{id}/formations` | tops inside `GET /wells/{id}`; dictionary at `GET /formations` | ✅ B1 |
 | `POST /wells`, `PATCH /wells/{id}` | admin master-data edit | Part 6 (admin); import stays `app.cli seed` / `import_field` |
 | `GET /wells/{id}/trajectory` | same | ✅ B1 |
-| `GET /wells/{id}/trajectory/at-depth?md=` | same | B2 |
-| `POST /wells/{id}/trajectory` | same (survey upload → minimum curvature) | B2 |
+| `GET /wells/{id}/trajectory/at-depth?md=` | same (`md_m=`) | ✅ B2 |
+| `POST /wells/{id}/trajectory` | same (survey upload → minimum curvature) | ✅ B2 |
 | `POST /documents/upload` | `POST /documents` | ✅ B1 |
 | `GET /documents`, `/documents/{id}`, `/documents/{id}/pages/{n}` | same | ✅ B1 |
 | `GET /documents/{id}/download` | `GET /documents/{id}/file` (streamed, same-origin: V-B12) | ✅ B1 |
 | `POST /documents/{id}/reprocess` | same | ✅ B1 |
-| `GET /events`, `GET /events/{id}`, `POST /events` | same | B2 |
-| `PATCH /events/{id}/verify` | same + `GET /review-queue`, `POST /review-queue/{item_id}` | B2 |
-| `GET /wells/{id}/events/timeline` | same | B2 |
-| `POST /search` | `GET /search?q=&…filters` (GET, so result URLs can be shared) | B2 |
+| `GET /events`, `GET /events/{id}`, `POST /events` | same | ✅ B2 |
+| `PATCH /events/{id}/verify` | same + `GET /review-queue`, `POST /review-queue/{item_id}` | ✅ B2 |
+| `GET /wells/{id}/events/timeline` | same | ✅ B2 |
+| `POST /search` | `GET /search?q=&…filters` (GET, so result URLs can be shared) | ✅ B2 |
 | `POST /search/ask` | `POST /copilot/chat` (SSE, read-only tools, cited) | Part 5 |
-| `GET /correlation?well_ids=&formation=` | `GET /correlation?wells=&align=TVDSS\|FLATTEN_ON_TOP\|FORMATION_RELATIVE&top=` | B2 |
-| `GET /correlation/formation-risk?formation=` | `GET /correlation/formation-stats` | B2 |
+| `GET /correlation?well_ids=&formation=` | `GET /correlation?wells=&align=TVDSS\|FLATTEN_ON_TOP\|FORMATION_RELATIVE&top=` | ✅ B2 |
+| `GET /correlation/formation-risk?formation=` | `GET /correlation/formation-stats` | ✅ B2 |
 | — (SMRITI S7a) | `GET /wells/{id}/risk-profile` | B3 |
 | — (SMRITI S8, USP 2) | `GET /ledger` | B3 |
 | `POST /predictions/risk`, `GET /predictions/anomaly`, `GET /predictions/pattern-match`, `POST /predictions/retrain` | same paths | Part 4 |
@@ -128,15 +128,15 @@ Kept from the existing app: React/TS/Vite, Tailwind 4 + shadcn-style components,
 | Page | Final spec | Master plan §10 | Part |
 |---|---|---|---|
 | Landing + Login | §4.1 | — | 6 |
-| Dashboard | §4.2 | — | shell in 2, live in 5 |
-| Map Explorer | §4.3 | 1 Well Map | MapLibre in 2, proximity modes in 3 |
+| Dashboard | §4.2 | — | ✅ shell in 2, live in 5 |
+| Map Explorer | §4.3 | 1 Well Map | ✅ MapLibre in 2, proximity modes in 3 |
 | Well Detail (Overview / Trajectory 3D / Parameters / Events / Correlation / Documents) | §4.4 | 2 Well 360 | 3; Parameters tab in 5 |
 | Correlation Panel | §4.4 tab | 3 | 3 |
 | Knowledge Search + Ask | §4.5 | 6 | search in 3, Ask/copilot in 6 |
 | Alerts Center + detail | §4.6 | 5 | 5 |
 | Live Well Monitor | — | 4 | 5 |
 | Mitigation Ledger (USP 2) | — | 7 | 4 |
-| Documents Library + Review queue | §4.7 | 8 | revamp in 2, review queue in 3 |
+| Documents Library + Review queue | §4.7 | 8 | ✅ revamp in 2, review queue in 3 |
 | Analytics | — | 9 | 6 |
 | Admin | — | 10 | 6 |
 | System Status | — | supporting | ✅ F0 |
@@ -154,7 +154,7 @@ Kept from the existing app: React/TS/Vite, Tailwind 4 + shadcn-style components,
 
 | Part | Backend | Frontend |
 |---|---|---|
-| 2 | **B2** knowledge layer: extraction + DDR time log + review queue + events API; hybrid search + lessons cards; correlation (3 alignments + formation stats); at-formation and closest-approach offsets; Well 360 enrichment; `fluid_type` | Design-system revamp (themes, motion, collapsible sidebar, top bar with well-type switcher, ⌘K palette), MapLibre map, Documents Library revamp, Dashboard shell |
+| 2 ✅ | **B2** knowledge layer: extraction + DDR time log + review queue + events API; hybrid search + lessons cards; correlation (3 alignments + formation stats); at-formation and closest-approach offsets; Well 360 enrichment; `fluid_type` | Design-system revamp (themes, motion, collapsible sidebar, top bar with well-type switcher, ⌘K palette), MapLibre map, Documents Library revamp, Dashboard shell |
 | 3 | **B3** offset prior risk, physics indicators, Mitigation Effectiveness Ledger | **F2** Well Detail (incl. 3D trajectory), Correlation Panel, Knowledge Search, Review queue, map proximity modes |
 | 4 | **B4** replay stream, real-time tables, rig state, classifiers, anomaly, Déjà Vu, alert engine, WebSockets | **F3** Mitigation Ledger, risk curves |
 | 5 | **B5** copilot (SSE), Offset Risk Brief, analytics endpoints; JWT auth + RBAC + audit | **F4** Live Well Monitor, Alerts Center, Déjà Vu overlay, live dashboard |

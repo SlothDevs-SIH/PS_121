@@ -3,15 +3,68 @@
 **Team:** Slothdevs · **Solution:** SMRITI (working name) · **Problem Statement:** PS 121 — eRTMAC-NWIS (Oil India Limited)
 **Parent document:** [`SMRITI_MASTER_PLAN.md`](../SMRITI_MASTER_PLAN.md). That is the product source of truth; **this** document is the source of truth for the backend. When the two disagree, fix both in the same PR.
 **Document date:** 2026-09-28 (v1.0) · **updated 2026-09-28 (v1.1):** frontend F0 landed (V-B4 resolved); new `app.cli openapi` command exports the API contract for the frontend (+1 unit test → 31); CI jobs restructured (`backend-checks`, `frontend-checks`, `integration`).
-**Backend phase:** B0 ✅ · **B1 — Data foundation: ✅ COMPLETE (2026-09-28, Part 1)**. Next: **B2 — Knowledge layer** (not started — the team chose to stop after Part 1).
+**Updated 2026-09-29 (v1.2, Part 2):** B2 knowledge layer built on the contract drafted in `f621a3e` (data model, migrations 0005–0006, typed API); §0.1, §5, §6, §13, §16 and Appendix B3 record it.
+**Backend phase:** B0 ✅ · B1 ✅ (Part 1) · **B2 — Knowledge layer: ✅ COMPLETE (2026-09-29, Part 2)**. Next: **B3 — Batch intelligence** (Part 3).
 
-> ⚠️ **Same honesty rule as the master plan and DHRUVA:** a "✅" must point to a file and a test that passed. Every number in §0 was measured on 2026-09-28 in this repository. Everything from B1 onward is a **plan**.
+> ⚠️ **Same honesty rule as the master plan and DHRUVA:** a "✅" must point to a file and a test that passed. Every number in §0 was measured in this repository on the date given. Everything from B3 onward is a **plan**.
 
 ---
 
-## 0. Where the backend actually stands right now (2026-09-28)
+## 0. Where the backend actually stands right now (2026-09-29)
 
-### 0.1 B1 — Data foundation (built in Part 1, 2026-09-28)
+### 0.1 B2 — Knowledge layer (built in Part 2, 2026-09-29)
+
+**Built and verified** (evidence: Appendix B3):
+- **S2 extraction** (`app/extract/`), rules first, no LLM needed:
+  - `rules.py`: units to SI, event type / subtype / severity, event parameters, 27 mitigation action codes, outcomes, NPT totals. Phrase lists are general drilling vocabulary.
+  - `ddr.py`: the DDR time log. It survives OCR damage: punctuation between cells, lost decimals ("05" for 0.5 h, so hours come from the clock times), colons dropped from times, garbled Hrs cells, operations past midnight, and wrapped operation cells whose first line sits *above* the row (regrouped by vertical position).
+  - `wcr.py`: casing + cement, mud programme, problem bullets. Each mitigation cites only the lines it spans. An unreadable cell ("YT", "ie)") becomes null with a reason; it is never guessed.
+  - `service.py`: depth is voted across text, time-log column and header. TVD/TVDSS are interpolated from the survey, never extrapolated. Formation comes from the text (synonyms, longest match), else the header, else the tops (penalised).
+  - Confidence = 0.95 for a text layer or the OCR line confidence, minus named penalties. Below `extract_confidence_threshold` (0.75) a **review item** records the reasons.
+  - **One event told by several reports (DDR + WCR) is merged** and cites all of them. A per-well advisory lock stops concurrent workers from creating duplicates.
+  - Re-extraction is idempotent and never undoes a human verification.
+  - The task chain is ingest → extract → index; CLI `extract` and `index`.
+- **Events and review API** (`app/extract/events_service.py`, `review_service.py`):
+  - `/events` with every filter and a keyset cursor; `/events/{id}`.
+  - Manual entry (evidence spans checked against the cited page); verify / reject.
+  - `/wells/{id}/events/timeline`.
+  - `/review-queue`: accept, validated correct (per-kind field whitelist; derived depths recomputed) or reject, with 409 on a second decision.
+- **S5 search** (`app/search/`):
+  - `hash` embedder (offline default, labelled in every response) or Ollama (BGE-M3).
+  - Full text + pgvector fused with RRF (k = 60) after filters (well + radius, formation, event type, document type, dates).
+  - **Relevance floor:** a lexical hit needs half the query's lexemes; a dense hit needs a minimum cosine (V-B14). Otherwise `no_record_found`.
+  - Plain-text snippets with `[start, end)` highlights.
+  - Template **lesson cards** grounded in each event's fields (advisory wording; a card never claims a success rate).
+- **S6 correlation** (`app/correlation/service.py`): TVDSS / flatten-on-top / formation-relative panels with formation, casing-shoe, cement-top, mud and event tracks (all with evidence). Wells missing a needed top fall back to TVDSS and say why. Formation statistics.
+- **S4 proximity** (`app/geo/proximity.py`, `trajectory_service.py`):
+  - AT_FORMATION: 3D distance between PostGIS entry points.
+  - CLOSEST_APPROACH: paths sampled every 5 m and refined at 0.25 m, optionally inside a TVDSS window.
+  - Wells that can't be measured are listed in `excluded` with the reason.
+  - Exact minimum-curvature **position at depth** (tangent slerp along the arc).
+  - **Survey upload** recomputes the path, entry points and every derived TVDSS.
+- **Well 360 enrichment** (`app/normalise/well360.py`): casing with cement, mud, event counts, recent events, document pipeline overview, lesson cards.
+- **fluid_type** on the synthetic wells (own RNG stream: 29 oil / 8 gas / 5 water; nothing else changed); `/wells?bbox=&fluid_type=`.
+- **Measured** (synthetic ground truth, `eval/results/extraction_synthetic_2026-09-29.json`, commit `9a74d62`, clean stack):
+  - **Event P = R = F1 = 1.000** (113/113) on text-layer and OCR'd DDRs alike; event type, formation, date and resolved 100%.
+  - Depth error mean 0.16 m (max 0.5 m); NPT error 0.
+  - Mitigation action and outcome, in order, 100% (165/165).
+  - Casing OD 95.8% (the misses are OCR-garbled cells, left null and sent to review); mud 100%.
+  - **This is an upper bound** (V-B15): the synthetic reports use a fixed vocabulary.
+  - Latency (best of 5, sandbox): search 24–27 ms; 6-well correlation panel 81–84 ms; `/events?limit=500` 29 ms; AT_FORMATION 18 ms; CLOSEST_APPROACH 0.6 s at 5 km (V-B18).
+- **Tests:** **202 unit** (rules, parsers on text-layer and OCR-damaged text, search pieces, exact arc interpolation) and **25 integration**. The integration suite checks evidence spans against the page endpoint, and entry-point distances against independent at-depth positions. It also checks the invariant closest-approach ≤ entry-point distance, the review round trip with 409, and an idempotent survey upload. Ruff and strict mypy clean.
+
+**Real bugs found and fixed while building B2:**
+1. **Re-seeding deleted every extracted record.** Master import cleared and recreated each well's wellbore, and events, casing, mud and DDR lines cascade from it. The wellbore is now updated in place (`app/normalise/master_import.py`); extracted data survives a re-seed (verified).
+2. **`seed --no-documents` wiped the report list from `truth.json`**, which the extraction eval needs. The list is now carried over.
+3. **Write routes returned 201 without committing** (the request session doesn't auto-commit). Found by the integration test; every write route now commits.
+4. **"Lost circulation" read as the action "circulate"**, and "Waited on" was missed as WAIT. Both patterns were fixed with unit tests.
+
+**Not done in B2, stated plainly:**
+- **No LLM extraction pass.** `extract_llm_enabled` exists but the rules reached F1 1.0 on synthetic reports; the pass is needed for real reports (V-B17).
+- **No hand-annotated gold set and no search Recall@5.** Only synthetic ground truth exists; both need real reports (V-B15).
+- **Kick subtype** (gas / water / oil) is never written in the synthetic reports, so it stays null. That is the 8% subtype "miss".
+
+### 0.2 B1 — Data foundation (built in Part 1, 2026-09-28)
 
 **Built and verified** (evidence: Appendix B2):
 - **Synthetic Upper-Assam-style field** (`app/synthetic/`), seeded and deterministic:
@@ -65,7 +118,7 @@
 - **No LLM classification fallback.** Rules classify every synthetic report correctly; the LLM hook moves to B2 with extraction.
 - **No at-formation or closest-approach offset modes** (B2, as planned).
 
-### 0.2 B0 — Skeleton (built earlier on 2026-09-28)
+### 0.3 B0 — Skeleton (built earlier on 2026-09-28)
 
 **Built and verified in B0**, with the evidence recorded in Appendix B:
 
@@ -120,6 +173,11 @@
 | V-B11 | Migration order changed from the plan | `document.well_id` references `well`, so master data must come first | Now `0002_master_data`, `0003_documents`, `0004_trajectory` (§8) | ✅ Resolved |
 | V-B12 | Page images are streamed through the API, not by pre-signed URLs | The S3 endpoint (`s3:8333`) isn't reachable from browsers, and same-origin images keep the CSP strict | `GET /documents/{id}/pages/{n}/image` | ✅ Decided |
 | V-B13 | Synthetic data only | No Volve access in the sandbox | Master plan §12.5 is unchanged; OIL/Volve data goes through the same `import_field` + upload path | ⏳ Open |
+| V-B14 | Dense relevance floor for the `hash` embedder | Short queries against ~1,000-character chunks score low even when relevant. Measured on the synthetic corpus: 13 queries; relevant top-1 ≥ 0.31 for 7 of 8 (0.09 for "high torque", found lexically); irrelevant top-1 ≤ 0.154 | Floor 0.22 for `hash`, 0.45 for `ollama` (`app/search/hybrid.py`). Re-calibrate on real reports and when switching embedder | ✅ Calibrated (synthetic) |
+| V-B15 | Extraction F1 measured on synthetic reports, not the master plan §13.1 gold set | The generator's phrasing is a fixed vocabulary, so 1.0 is an upper bound | Quote it only as "on synthetic reports". Build the gold set from review-queue corrections (the `(proposed, correction)` pairs are stored for this) plus annotated real DDRs | ⏳ Open |
+| V-B16 | Wellbore recreation on re-seed cascaded away extracted data | Found while building B2 | Fixed: update in place (§0.1 bug 1) | ✅ Resolved |
+| V-B17 | LLM extraction pass not built | Rules suffice on synthetic reports | Build it when real reports show the rules' misses; the review queue measures them | ⏳ Open |
+| V-B18 | CLOSEST_APPROACH takes ~0.6 s at 5 km (20 candidate wells, numpy sampling) | Acceptable for an interactive request | If slow on real fields: sample only inside the window's bounding box, or pre-filter with `ST_3DDistance` per pair in SQL | ⏳ Watch |
 
 ---
 
@@ -472,10 +530,12 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 18 | S1 ingestion (upload, PDFium text layer, Tesseract OCR + rule removal, spans/bbox, page images, chunks, classification, well linking, Celery task) | B1 | ✅ | `app/ingest/*` · `test_ingest_rules.py` (19), integration `test_upload_process_and_page_evidence` |
 | 19 | S3 normalisation + master data tables (import, TVDSS, formations, alias resolution, data-quality score) | B1 | ✅ | `app/normalise/*`, migrations 0002–0004 · integration `test_trajectory_and_well_detail` |
 | 20 | S4 min-curvature + surface offsets | B1 | ✅ | `app/geo/*` · `test_mincurv.py` (8, closed-form), integration `test_surface_offsets_match_independent_distance`, `scripts/perf_offsets.py` |
-| 21 | S4 at-formation + closest-approach | B2 | 📋 | §4.3 |
-| 22 | S2 extraction + review queue + DDR parser | B2 | 📋 | §4.4 |
-| 23 | S5 search + lessons cards | B2 | 📋 | §4.5 |
-| 24 | S6 correlation | B2 | 📋 | §4.6 |
+| 21 | S4 at-formation + closest-approach, position at depth, survey upload | B2 | ✅ | `app/geo/proximity.py`, `trajectory_service.py`, `mincurv.interpolate_at_md` · `test_mincurv.py` (arc-exact interpolation), integration `test_at_formation_matches_independent_positions_and_bounds_closest_approach`, `test_trajectory_at_depth_and_idempotent_survey_upload` |
+| 22 | S2 extraction + review queue + DDR parser | B2 | ✅ | `app/extract/*` · `test_extract_rules.py` (51), `test_extract_parsers.py` (8), integration `test_review_queue_accept_then_conflict`; `eval/results/extraction_synthetic_2026-09-29.json` |
+| 23 | S5 search + lessons cards | B2 | ✅ | `app/search/*` · `test_search_units.py` (6), integration `test_hybrid_search_cites_passages_and_says_when_nothing_is_found` |
+| 24 | S6 correlation + formation stats | B2 | ✅ | `app/correlation/service.py` · integration `test_correlation_alignments`, `test_formation_stats` |
+| 24a | Events API (filters, cursor, manual entry, verify/reject, timeline) | B2 | ✅ | `app/extract/events_service.py` · integration `test_event_cursor_pages_cover_the_list_once_in_order`, `test_manual_event_verify_and_reject`, `test_timeline_counts_and_npt_lines` |
+| 24b | Well 360 enrichment, `fluid_type`, map bbox filter | B2 | ✅ | `app/normalise/well360.py` · integration `test_well_360_enrichment`, `test_well_detail_and_offsets_have_b2_fields` |
 | 25 | S7a prior, S7c physics, S8 ledger | B3 | 📋 | §4.7–4.9 |
 | 26 | S12 stream/replay, S7b, S7d, S9 alerts, WebSockets | B4 | 📋 | §4.10–4.12 |
 | 27 | S10 copilot, reports | B5 | 📋 | §4.13–4.14 |
@@ -492,7 +552,7 @@ Backend phases map onto master plan §18 (P0–P5). Durations assume ~7 weeks to
 |---|---|---|---|---|
 | **B0 Skeleton** | P0 | Days 1–3 | Platform, Compose, migrations, CI, API contract | ✅ **Met 2026-09-28**, including a green GitHub CI run — see Appendix B |
 | **B1 Data foundation** | P1 | W1–W2 | S1 ingestion; S3 master data & datums; S4 min-curvature + surface offsets; migrations 0002–0004; OCR worker image | ✅ **Met 2026-09-28** with one substitution: 151 synthetic DDRs + 40 WCRs (58 DDRs and 7 WCRs scanned) instead of Volve DDRs (V-B13). Endpoints return real data; min-curvature closed-form tests pass; offsets p95 14.6 ms on 10k wells. See §0.1 and Appendix B2 |
-| **B2 Knowledge layer** | P2 | W2–W3 | S2 extraction + review queue + DDR parser; S5 search; S6 correlation; S4 other proximity modes; LLM service; migrations 0005–0006 | Gold-set event F1 measured and saved; search Recall@5 measured; correlation JSON for all 3 alignment modes; review queue round trip works |
+| **B2 Knowledge layer** | P2 | W2–W3 | S2 extraction + review queue + DDR parser; S5 search; S6 correlation; S4 other proximity modes; LLM service; migrations 0005–0006 | ✅ **Met 2026-09-29 (Part 2) with two gaps stated:** event F1 measured and saved, but on synthetic ground truth, not a gold set (V-B15); search Recall@5 **not measured** (needs labelled queries on real reports); correlation JSON for all 3 modes ✅; review round trip ✅. LLM pass deferred (V-B17). See §0.1 and Appendix B3 |
 | **B3 Batch intelligence** | P3 (first half) | W3–W4 | S7a prior, S7c physics, S8 ledger | Risk-profile endpoint live; physics formula tests pass; ledger recovers the planted ranking (ρ ≥ 0.8) |
 | **B4 Real-time** | P3 (second half) | W4–W5 | S12 stream + replay; rig state; S7b scoring; S7d Déjà Vu; S9 alerts; WebSockets; migrations 0007–0009 | Replay of a Volve well and a synthetic well produces the expected alerts over the WebSocket; alert latency p95 ≤ 5 s; every alert has evidence (property test) |
 | **B5 Copilot & reports** | P4 | W5–W6 | S10 copilot (SSE); Offset Risk Brief PDF; MLflow profile | Copilot answers the 50-question set with citations measured; unanswerable refusal rate measured; PDF renders |
@@ -701,6 +761,10 @@ Redis Stream  rt:{wellbore_id}  (MAXLEN ~200k)
 | ADR-B11 | Dev auth refused in `prod` | Trusting configuration | Fail closed: a misconfigured pilot can't silently run without auth |
 | ADR-B12 | PDFium text layer + Tesseract 5 with table-rule removal | Docling + PaddleOCR | Much smaller dependency footprint (no PyTorch); measured 86% mean OCR confidence and 100% well linking on the synthetic scans; swappable behind `app/ingest/pages.py` |
 | ADR-B13 | Synthetic field generator with planted ground truth | Hand-made fixtures | Every later phase needs realistic structure with *known* answers (events, mitigation success rates); generated deterministically from one seed |
+| ADR-B14 | Rules-first extraction; LLM only as a later second pass | LLM-first extraction | Deterministic, explainable, unit-testable, offline, milliseconds per report. Every rule-based record cites its spans, and the confidence penalties say exactly why a record needs review |
+| ADR-B15 | `hash` embedder as the offline default; Ollama BGE-M3 when configured | Always requiring a model server | Search must work air-gapped and in CI. The embedder's name is in every response, so nobody mistakes lexical hashing for semantics |
+| ADR-B16 | Merge one event across reports (same well + type, ±15 m, ±3 days) | One event per report | Counting a DDR and its WCR summary twice would double every statistic and the ledger (Part 3). The merged event cites every report |
+| ADR-B17 | Template lesson cards | LLM-written cards | Every sentence traces to extracted fields. A card describes one event and points to the ledger for rates. An LLM rewrite can come later as `generated_by` |
 
 ---
 
@@ -743,11 +807,12 @@ MinIO's Docker Hub image wasn't available when we built. Our code speaks plain S
 
 ## 16. Immediate Next Actions (backend)
 
-*(Updated 2026-09-28 after Part 1. B0 and B1 are done; work is paused here at the team's request.)*
+*(Updated 2026-09-29 after Part 2. B0–B2 are done.)*
 
-1. **B2 kickoff when resumed** — the rule extractor for events, mitigations and outcomes over the 191 ingested reports, scored against `synthetic/truth.json`. The ground truth already exists, so extraction F1 can be measured from day one.
-2. **Real data:** try to obtain Volve drilling folders (or OIL samples, V6) and run them through the same `import_field` + upload path (V-B13).
-3. **Save the pinned images** (`docker save`) for the finale machine (RB5) — Infra.
+1. **B3 (Part 3):** offset prior risk (S7a), physics indicators (S7c) and the **Mitigation Effectiveness Ledger** (S8). Ledger inputs already exist: 113 merged events with 165 ordered mitigations and outcomes, and planted success rates in `truth.json` to check the ranking against (exit criterion ρ ≥ 0.8).
+2. **Gold set (V-B15):** export the review queue's `(proposed, correction)` pairs, then add annotated real DDRs when data arrives.
+3. **Real data:** try to obtain Volve drilling folders (or OIL samples, V6) and run them through the same `import_field` + upload path (V-B13).
+4. **Save the pinned images** (`docker save`) for the finale machine (RB5) — Infra.
 
 ---
 
@@ -829,6 +894,23 @@ Clean run: images rebuilt, every volume wiped (`docker compose down -v`), stack 
 | Offsets performance | `uv run python scripts/perf_offsets.py` | 10,000 wells, 200 queries: **p50 2.9 ms, p95 14.6 ms**, max 51 ms; GiST index used |
 | Contract | `app.cli openapi` vs committed `frontend/src/lib/api/openapi.json` | identical |
 | Worker round trip | `docker compose exec worker python -m app.cli check --worker` | exit 0 |
+
+## Appendix B3 — B2 Verification Record (2026-09-29)
+
+Clean run: every volume wiped (`docker compose down -v`), stack up, full seed with extraction and indexing.
+
+| Check | Command | Result |
+|---|---|---|
+| Full seed | `uv run python -m app.cli seed --inline` (ingest → extract → index; OCR on the host, V-B10) | 42 wells; **191 reports processed, 191 extracted, 191 indexed**; 3 min 33 s |
+| Extracted records | SQL | 113 events (merged across DDR + WCR), 165 mitigations, 572 DDR lines, 120 casing strings + cement jobs, 120 mud intervals, 14 review items, 765 embedded chunks |
+| Extraction vs synthetic truth | `uv run python scripts/eval_extraction.py` | Event **P = R = F1 = 1.000**; scanned and text-layer DDRs both 1.000; type, formation, date, resolved 100%; subtype 92.1% (kick subtype never written); severity 88.5% (TIGHT/TORQUE severity is random in the generator); depth error mean 0.16 m; mitigations 100%; casing OD 95.8%; mud 100% → `eval/results/extraction_synthetic_2026-09-29.json` (commit `9a74d62`) |
+| Re-extraction | `app.cli extract --all` twice | same 113 events and 14 review items (idempotent) |
+| Re-seed keeps extracted data | `app.cli seed --no-documents` | 113 events and 120 casing strings still present (V-B16) |
+| Unit tests | `uv run pytest` | **202 passed** |
+| Integration tests | `uv run pytest -m integration` (run twice: tests tolerate their own earlier writes) | **25 passed** |
+| Lint / types | ruff, ruff format, `mypy --strict` | clean |
+| Latency (best of 5) | `curl` against the API container | search 24–27 ms · 6-well correlation 81–84 ms · events (500) 29 ms · AT_FORMATION 18 ms · CLOSEST_APPROACH 611 ms (5 km) |
+| Contract | `app.cli openapi` → `frontend/src/lib/api/openapi.json`, `npm run gen:api` | regenerated and committed; frontend typecheck clean |
 
 ## Appendix C — Document Maintenance Rules
 

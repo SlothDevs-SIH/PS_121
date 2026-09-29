@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router'
 
 import { AnimatedOutlet } from '../components/shell/AnimatedOutlet'
-import { CommandPalette } from '../components/shell/CommandPalette'
+import { CommandPaletteHost } from '../components/shell/CommandPaletteHost'
 import { Sidebar } from '../components/shell/Sidebar'
 import { Topbar } from '../components/shell/Topbar'
 import { useMediaQuery } from '../hooks/useMediaQuery'
@@ -73,7 +73,7 @@ export function AppShell() {
           <AnimatedOutlet />
         </main>
       </div>
-      <CommandPalette />
+      <CommandPaletteHost />
     </div>
   )
 }

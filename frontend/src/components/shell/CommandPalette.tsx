@@ -15,8 +15,9 @@ const itemClass =
 const groupClass =
   '[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-[0.65rem] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:text-muted [&_[cmdk-group-heading]]:uppercase'
 
-/** ⌘K / Ctrl+K: jump to any page, well or document (FRONTEND_SPEC §3.2). */
-export function CommandPalette() {
+/** ⌘K / Ctrl+K: jump to any page, well or document (FRONTEND_SPEC §3.2). Loaded on first
+ *  use by CommandPaletteHost, which owns the shortcut. */
+export default function CommandPalette() {
   const open = useUiStore((s) => s.paletteOpen)
   const setOpen = useUiStore((s) => s.setPaletteOpen)
   const mode = useUiStore((s) => s.mode)
@@ -24,17 +25,6 @@ export function CommandPalette() {
   const wells = useWells()
   const docs = useDocuments(undefined, open)
   const returnFocus = useRef<Element | null>(null)
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        setOpen(!useUiStore.getState().paletteOpen)
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [setOpen])
 
   useEffect(() => {
     if (open) {
