@@ -1102,7 +1102,7 @@ Clean run at commit `49940bc` (code as pushed for Part 5; the later commits chan
 | Integration tests | `uv run pytest -m integration` | **55 passed** (incl. `test_b5_auth.py` 4, `test_b5_copilot.py` 5, `test_b5_reports.py` 5, `test_b4.py` 8 with the Déjà Vu overlay reproducing its recorded similarity) |
 | Browser e2e | `npx playwright test` | **67 passed**, 3 skipped (incl. `part5.spec.ts`: replay → toast **2.33 s** after the alert was stored) |
 | Lint / types | ruff, ruff format, `mypy --strict` | clean |
-| CI | GitHub Actions | `1dba93f` (B5 brief/analytics) and `bef70de` (B5 overlay): all jobs green. `5383742` (F4): e2e red on two assertions about the replaced placeholder screens, fixed in `49940bc`; `49940bc`: frontend format check red on one file, fixed in `2b3a5e9` |
+| CI | GitHub Actions | `1dba93f` (B5 brief/analytics) and `bef70de` (B5 overlay): all jobs green. `5383742` (F4): e2e red on two assertions about the replaced placeholder screens, fixed in `49940bc`; `49940bc`: frontend format check red on one file, fixed in `2b3a5e9`. **`6e85a22` (Part 5 wrap-up): all three jobs green** ([run 36619142240](https://github.com/SlothDevs-SIH/PS_121/actions/runs/36619142240)) |
 
 ## Appendix C — Document Maintenance Rules
 
