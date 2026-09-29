@@ -40,6 +40,22 @@ class Settings(BaseSettings):
     max_upload_mb: int = 50
     ocr_needs_review_below: float = 60.0  # mean OCR confidence (0..100) that triggers review
 
+    # Extraction (S2, B2). Rules always run; the optional LLM pass needs an OpenAI-compatible
+    # endpoint (Ollama / vLLM), e.g. http://localhost:11434/v1. Unset = rules only.
+    llm_base_url: str | None = None
+    llm_model: str = "qwen2.5:7b-instruct"  # model id sent to the LLM endpoint
+    llm_timeout_s: float = Field(default=60.0, gt=0)  # per LLM request
+    extract_llm_enabled: bool = False  # run the LLM pass (also needs llm_base_url)
+    # Record-level confidence below which an extraction goes to the review queue
+    extract_confidence_threshold: float = Field(default=0.75, ge=0, le=1)
+
+    # Search (S5, B2). "hash" = deterministic 1024-d feature hashing (offline/CI);
+    # "ollama" = the embedding_model served at embedding_base_url.
+    embedding_provider: Literal["hash", "ollama"] = "hash"
+    embedding_model: str = "bge-m3"  # used by the "ollama" provider
+    embedding_base_url: str | None = None  # e.g. http://localhost:11434 (Ollama API root)
+    reranker_url: str | None = None  # optional cross-encoder rerank endpoint; unset = RRF only
+
     # Auth: "dev" returns a fixed local user; "oidc" (Keycloak) is planned for phase B6
     auth_mode: Literal["dev", "oidc"] = "dev"
 

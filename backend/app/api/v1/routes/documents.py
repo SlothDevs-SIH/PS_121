@@ -4,7 +4,7 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Response, UploadFile, status
-from sqlalchemy import func, select
+from sqlalchemy import Select, distinct, func, select
 from sqlalchemy.orm import Session
 
 from app.api.v1.schemas.documents import (
@@ -19,8 +19,9 @@ from app.api.v1.schemas.documents import (
 from app.core.auth import CurrentUser, get_current_user
 from app.core.config import get_settings
 from app.core.errors import AppError, NotFoundError
-from app.db.models import Document, Page, TextSpan, Well
+from app.db.models import Document, Event, EventEvidence, Page, TextSpan, Well
 from app.db.session import get_session
+from app.db.vocab import StageStatus
 from app.ingest.service import store_upload
 from app.storage.s3 import get_s3_client
 
@@ -36,7 +37,24 @@ class TooManyFilesError(AppError):
     code = "too_many_files"
 
 
-def _summary(doc: Document, well_name: str | None) -> DocumentSummary:
+def event_counts_stmt(document_ids: list[int]) -> Select[tuple[int, int]]:
+    """Active events citing each document (an event with several evidence spans in one
+    document counts once)."""
+    return (
+        select(EventEvidence.document_id, func.count(distinct(EventEvidence.event_id)))
+        .join(Event, Event.id == EventEvidence.event_id)
+        .where(EventEvidence.document_id.in_(document_ids), Event.status == "active")
+        .group_by(EventEvidence.document_id)
+    )
+
+
+def _event_counts(session: Session, document_ids: list[int]) -> dict[int, int]:
+    if not document_ids:
+        return {}
+    return {int(d): int(n) for d, n in session.execute(event_counts_stmt(document_ids)).all()}
+
+
+def _summary(doc: Document, well_name: str | None, event_count: int = 0) -> DocumentSummary:
     return DocumentSummary(
         id=doc.id,
         filename=doc.filename,
@@ -52,6 +70,10 @@ def _summary(doc: Document, well_name: str | None) -> DocumentSummary:
         size_bytes=doc.size_bytes,
         created_at=doc.created_at,
         processed_at=doc.processed_at,
+        extract_status=doc.extract_status,  # CHECK-constrained to the StageStatus values
+        index_status=doc.index_status,
+        extract_error=doc.extract_error,
+        event_count=event_count,
     )
 
 
@@ -110,6 +132,8 @@ def list_documents(
     well_id: int | None = None,
     status_: Annotated[str | None, Query(alias="status")] = None,
     doc_type: str | None = None,
+    extract_status: StageStatus | None = None,
+    index_status: StageStatus | None = None,
     limit: Annotated[int, Query(ge=1, le=500)] = 100,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> DocumentList:
@@ -120,6 +144,10 @@ def list_documents(
         stmt = stmt.where(Document.ingest_status == status_)
     if doc_type:
         stmt = stmt.where(Document.doc_type == doc_type)
+    if extract_status:
+        stmt = stmt.where(Document.extract_status == extract_status)
+    if index_status:
+        stmt = stmt.where(Document.index_status == index_status)
     total = session.scalar(select(func.count()).select_from(stmt.subquery())) or 0
     rows = session.execute(stmt.order_by(Document.id.desc()).limit(limit).offset(offset)).all()
     counts: dict[str, int] = {
@@ -128,8 +156,9 @@ def list_documents(
             select(Document.ingest_status, func.count()).group_by(Document.ingest_status)
         ).all()
     }
+    events = _event_counts(session, [d.id for d, _ in rows])
     return DocumentList(
-        items=[_summary(d, n) for d, n in rows],
+        items=[_summary(d, n, events.get(d.id, 0)) for d, n in rows],
         total=int(total),
         status_counts=counts,
     )
@@ -152,7 +181,7 @@ def get_document(document_id: int, session: DbSession) -> DocumentDetail:
         ).all()
     )
     return DocumentDetail(
-        **_summary(doc, well_name).model_dump(),
+        **_summary(doc, well_name, _event_counts(session, [doc.id]).get(doc.id, 0)).model_dump(),
         sha256=doc.sha256,
         content_type=doc.content_type,
         uploaded_by=doc.uploaded_by,

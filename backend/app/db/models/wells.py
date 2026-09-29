@@ -6,6 +6,7 @@ from typing import Any
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    CheckConstraint,
     Date,
     DateTime,
     Float,
@@ -22,6 +23,7 @@ from sqlalchemy.orm import Mapped, deferred, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.types import Geography, Geometry
+from app.db.vocab import FLUID_TYPES, in_list
 
 
 class Field(Base):
@@ -56,6 +58,7 @@ class Well(Base):
             postgresql_using="gin",
             postgresql_ops={"canonical_name": "gin_trgm_ops"},
         ),
+        CheckConstraint(in_list("fluid_type", FLUID_TYPES), name="fluid_type"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -63,7 +66,8 @@ class Well(Base):
     aliases: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
     field_id: Mapped[int] = mapped_column(ForeignKey("field.id"))
     status: Mapped[str] = mapped_column(String(20))  # planned | drilling | completed | abandoned
-    well_type: Mapped[str | None] = mapped_column(String(30))
+    well_type: Mapped[str | None] = mapped_column(String(30))  # purpose: exploration / ...
+    fluid_type: Mapped[str | None] = mapped_column(String(10))  # oil | gas | water (B2)
     profile: Mapped[str | None] = mapped_column(String(20))
     surface_loc: Mapped[Any] = deferred(mapped_column(Geography("POINT", 4326)))
     lat: Mapped[float] = mapped_column(Float)

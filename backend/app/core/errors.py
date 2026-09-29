@@ -6,6 +6,7 @@
 from typing import Any
 
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -80,6 +81,11 @@ def register_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(RequestValidationError)
     async def _validation_error(_: Request, exc: RequestValidationError) -> JSONResponse:
+        # jsonable_encoder: a validator raising ValueError puts the exception object in
+        # errors()[i]["ctx"], which would otherwise break JSON serialisation (500, not 422).
         return _envelope(
-            422, "validation_error", "Request validation failed", {"errors": exc.errors()}
+            422,
+            "validation_error",
+            "Request validation failed",
+            {"errors": jsonable_encoder(exc.errors())},
         )

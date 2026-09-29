@@ -1,11 +1,15 @@
-"""Response models for documents, pages and evidence spans (B1)."""
+"""Response models for documents, pages and evidence spans (B1), with the B2 extraction and
+indexing stage fields."""
 
 from datetime import date, datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from app.api.v1.schemas.common import ResponseModel
+from app.db.vocab import StageStatus
 
 
-class DocumentSummary(BaseModel):
+class DocumentSummary(ResponseModel):
     id: int
     filename: str
     doc_type: str | None
@@ -20,6 +24,11 @@ class DocumentSummary(BaseModel):
     size_bytes: int
     created_at: datetime
     processed_at: datetime | None
+    # B2 pipeline stages after ingestion: S2 extraction, S5 search indexing
+    extract_status: StageStatus = "pending"
+    index_status: StageStatus = "pending"
+    extract_error: str | None = None
+    event_count: int = Field(default=0, description="Active events citing this document")
 
 
 class DocumentList(BaseModel):

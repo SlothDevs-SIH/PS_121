@@ -96,8 +96,33 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Correlation panel data */
+        /**
+         * Correlation panel data
+         * @description One column per well, in the order given, with formation / casing / mud / cement /
+         *     event tracks on a shared aligned axis. Unknown well ids answer 404.
+         */
         get: operations["correlation_api_v1_correlation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/correlation/formation-stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Per-formation offset statistics
+         * @description Either an explicit ``wells`` list, or ``well_id`` plus ``radius_km`` (default 5 km):
+         *     the well and its surface offsets. Rows are in stratigraphic order.
+         */
+        get: operations["formation_stats_api_v1_correlation_formation_stats_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -216,14 +241,68 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Search drilling events */
+        /**
+         * Search drilling events
+         * @description Active events matching every given filter, ordered by (well name, md_m, id).
+         *
+         *     ``formation`` matches a formation name or synonym (case-insensitive). With ``radius_km``
+         *     the events of ``well_id`` *and* of every well whose surface location lies within the
+         *     radius are returned; without it, only ``well_id``'s. Rejected events are never listed.
+         */
         get: operations["list_events_api_v1_events_get"];
+        put?: never;
+        /**
+         * Record an event manually
+         * @description Stores the event with ``source='manual'``, ``verified=false``; depth references
+         *     (``tvd_m``/``tvdss_m``) and the formation are derived from ``md_m`` when not given.
+         *     404 if the well does not exist; 422 if evidence spans are not on the cited page.
+         */
+        post: operations["create_event_api_v1_events_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{event_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Event detail with mitigations, evidence and lesson card
+         * @description One event (active or rejected) with its mitigations in the order tried.
+         */
+        get: operations["get_event_api_v1_events__event_id__get"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{event_id}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Verify, un-verify or reject an event
+         * @description Sets ``verified``/``verified_by``/``verified_at`` (and ``status`` when given) and
+         *     closes any pending review items for the event.
+         */
+        patch: operations["verify_event_api_v1_events__event_id__verify_patch"];
         trace?: never;
     };
     "/api/v1/formations": {
@@ -335,7 +414,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Low-confidence extractions awaiting review */
+        /**
+         * Low-confidence extractions awaiting review
+         * @description Items ordered by confidence (lowest first), then id. Pass ``status`` explicitly to
+         *     see decided items; ``status_counts`` always covers every status.
+         */
         get: operations["list_review_queue_api_v1_review_queue_get"];
         put?: never;
         post?: never;
@@ -354,7 +437,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Accept, correct or reject */
+        /**
+         * Accept, correct or reject
+         * @description Applies the decision to the target record (verified / corrected / rejected), records
+         *     ``decided_by``/``decided_at`` and returns the updated item. 409 if already decided.
+         */
         post: operations["review_item_api_v1_review_queue__item_id__post"];
         delete?: never;
         options?: never;
@@ -369,7 +456,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Hybrid document search */
+        /**
+         * Hybrid document search
+         * @description Full-text (tsvector) and dense (pgvector) retrieval fused with RRF (k = 60) after the
+         *     filters are applied; returns cited passages and the lesson cards of matching events.
+         *     ``no_record_found`` is true when nothing clears the relevance floor.
+         */
         get: operations["search_api_v1_search_get"];
         put?: never;
         post?: never;
@@ -413,6 +505,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/wells/{well_id}/events/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Chronological event list for one well
+         * @description Active events of the well plus its DDR NPT lines, for the Well 360 Events tab.
+         */
+        get: operations["get_event_timeline_api_v1_wells__well_id__events_timeline_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/wells/{well_id}/offsets": {
         parameters: {
             query?: never;
@@ -420,7 +532,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Offset wells within a radius */
+        /**
+         * Offset wells within a radius
+         * @description ``SURFACE``: wellhead-to-wellhead distance. ``AT_FORMATION`` (needs ``formation``):
+         *     distance between the two wells' entry points into that formation; wells that never
+         *     reach it are listed in ``excluded``. ``CLOSEST_APPROACH``: minimum 3D distance between
+         *     the wellbore paths inside the optional TVDSS window. ``radius_km`` bounds the distance in
+         *     every mode.
+         */
         get: operations["get_offsets_api_v1_wells__well_id__offsets_get"];
         put?: never;
         post?: never;
@@ -456,6 +575,32 @@ export interface paths {
         };
         /** Survey stations and 3D path */
         get: operations["get_trajectory_api_v1_wells__well_id__trajectory_get"];
+        put?: never;
+        /**
+         * Upload survey stations and recompute the trajectory
+         * @description Replaces the primary wellbore's stations, recomputes them by minimum curvature,
+         *     rebuilds ``path_geom`` and formation entry points, and clears ``trajectory_assumed``.
+         */
+        post: operations["upload_survey_api_v1_wells__well_id__trajectory_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wells/{well_id}/trajectory/at-depth": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Interpolated position at a measured depth
+         * @description Minimum-curvature interpolation between the bracketing stations; 422 when ``md_m``
+         *     is beyond the last station.
+         */
+        get: operations["get_trajectory_at_depth_api_v1_wells__well_id__trajectory_at_depth_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -512,6 +657,105 @@ export interface components {
             /** Files */
             files: string[];
         };
+        /**
+         * CasingOut
+         * @description ``od_in``/``hole_size_in``/``weight_ppf`` are nominal industry designations.
+         */
+        CasingOut: {
+            /** Cement */
+            cement: components["schemas"]["CementJobOut"][];
+            /** Confidence */
+            confidence: number;
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRef"][];
+            /** Grade */
+            grade: string | null;
+            /** Hole Size In */
+            hole_size_in: number | null;
+            /** Id */
+            id: number;
+            /** Od In */
+            od_in: number | null;
+            /** Planned Shoe Md M */
+            planned_shoe_md_m: number | null;
+            /** Shoe Md M */
+            shoe_md_m: number | null;
+            /** Shoe Tvd M */
+            shoe_tvd_m: number | null;
+            /** Shoe Tvdss M */
+            shoe_tvdss_m: number | null;
+            /** Verified */
+            verified: boolean;
+            /** Weight Ppf */
+            weight_ppf: number | null;
+        };
+        /** CasingShoeTrack */
+        CasingShoeTrack: {
+            /** Aligned */
+            aligned: number | null;
+            /** Casing Id */
+            casing_id: number;
+            /** Confidence */
+            confidence: number;
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRef"][];
+            /** Hole Size In */
+            hole_size_in: number | null;
+            /** Od In */
+            od_in: number | null;
+            /** Shoe Md M */
+            shoe_md_m: number | null;
+            /** Shoe Tvdss M */
+            shoe_tvdss_m: number | null;
+            /** Verified */
+            verified: boolean;
+        };
+        /** CementJobOut */
+        CementJobOut: {
+            /** Bond Quality */
+            bond_quality: string | null;
+            /** Confidence */
+            confidence: number;
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRef"][];
+            /** Id */
+            id: number;
+            /** Remedial */
+            remedial: string | null;
+            /** Returns */
+            returns: ("full" | "partial" | "none") | null;
+            /** Slurry Density Sg */
+            slurry_density_sg: number | null;
+            /** Toc Md M */
+            toc_md_m: number | null;
+            /** Toc Tvdss M */
+            toc_tvdss_m: number | null;
+            /** Verified */
+            verified: boolean;
+            /** Volume M3 */
+            volume_m3: number | null;
+        };
+        /** CementTopTrack */
+        CementTopTrack: {
+            /** Aligned */
+            aligned: number | null;
+            /** Casing Id */
+            casing_id: number;
+            /** Cement Job Id */
+            cement_job_id: number;
+            /** Confidence */
+            confidence: number;
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRef"][];
+            /** Returns */
+            returns: ("full" | "partial" | "none") | null;
+            /** Toc Md M */
+            toc_md_m: number | null;
+            /** Toc Tvdss M */
+            toc_tvdss_m: number | null;
+            /** Verified */
+            verified: boolean;
+        };
         /** Component */
         Component: {
             /** Key */
@@ -542,6 +786,57 @@ export interface components {
             /** Ok */
             ok: boolean;
         };
+        /** CorrelationPanel */
+        CorrelationPanel: {
+            align: components["schemas"]["Alignment"];
+            depth_axis: components["schemas"]["DepthAxis"];
+            /**
+             * Top
+             * @description Flattening formation (FLATTEN_ON_TOP)
+             */
+            top: string | null;
+            /** Wells */
+            wells: components["schemas"]["CorrelationWell"][];
+        };
+        /** CorrelationTracks */
+        CorrelationTracks: {
+            /** Casing Shoes */
+            casing_shoes: components["schemas"]["CasingShoeTrack"][];
+            /** Cement Tops */
+            cement_tops: components["schemas"]["CementTopTrack"][];
+            /** Events */
+            events: components["schemas"]["EventMarker"][];
+            /** Formations */
+            formations: components["schemas"]["FormationTrack"][];
+            /** Mud */
+            mud: components["schemas"]["MudTrack"][];
+        };
+        /** CorrelationWell */
+        CorrelationWell: {
+            /**
+             * Fallback To Tvdss
+             * @description True when this well could not be aligned
+             */
+            fallback_to_tvdss: boolean;
+            /** Fluid Type */
+            fluid_type: ("oil" | "gas" | "water") | null;
+            /** Name */
+            name: string;
+            /**
+             * Reason
+             * @description Why it fell back (e.g. 'no Barail top')
+             */
+            reason: string | null;
+            /** Status */
+            status: string;
+            /** Synthetic */
+            synthetic: boolean;
+            /** Td Aligned */
+            td_aligned: number | null;
+            tracks: components["schemas"]["CorrelationTracks"];
+            /** Well Id */
+            well_id: number;
+        };
         /** CurrentUser */
         CurrentUser: {
             /** Name */
@@ -558,6 +853,57 @@ export interface components {
             /** Score */
             score: number;
         };
+        /**
+         * DdrOperationOut
+         * @description One DDR time-log line (NPT lines appear on the well timeline).
+         */
+        DdrOperationOut: {
+            /** Activity Code */
+            activity_code: string | null;
+            /** Description */
+            description: string;
+            /** Document Id */
+            document_id: number;
+            /** Event Id */
+            event_id: number | null;
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRef"][];
+            /** Hours */
+            hours: number | null;
+            /** Id */
+            id: number;
+            /** Is Npt */
+            is_npt: boolean;
+            /** Md M */
+            md_m: number | null;
+            /** Npt Category */
+            npt_category: string | null;
+            /** Page No */
+            page_no: number | null;
+            /** Report Date */
+            report_date: string | null;
+            /** T From */
+            t_from: string | null;
+            /** T To */
+            t_to: string | null;
+        };
+        /** DepthAxis */
+        DepthAxis: {
+            /**
+             * Label
+             * @description Axis title, e.g. 'TVDSS (m)' or 'Relative to Barail top (m)'
+             */
+            label: string;
+            /** Max */
+            max: number;
+            /** Min */
+            min: number;
+            /**
+             * Unit
+             * @description 'm' or 'formation' (FORMATION_RELATIVE)
+             */
+            unit: string;
+        };
         /** DocumentDetail */
         DocumentDetail: {
             /** Content Type */
@@ -571,10 +917,30 @@ export interface components {
             doc_type: string | null;
             /** Error */
             error: string | null;
+            /**
+             * Event Count
+             * @description Active events citing this document
+             * @default 0
+             */
+            event_count: number;
+            /** Extract Error */
+            extract_error: string | null;
+            /**
+             * Extract Status
+             * @default pending
+             * @enum {string}
+             */
+            extract_status: "pending" | "running" | "done" | "failed" | "skipped";
             /** Filename */
             filename: string;
             /** Id */
             id: number;
+            /**
+             * Index Status
+             * @default pending
+             * @enum {string}
+             */
+            index_status: "pending" | "running" | "done" | "failed" | "skipped";
             /** Ingest Status */
             ingest_status: string;
             /** Page Count */
@@ -622,10 +988,30 @@ export interface components {
             doc_type: string | null;
             /** Error */
             error: string | null;
+            /**
+             * Event Count
+             * @description Active events citing this document
+             * @default 0
+             */
+            event_count: number;
+            /** Extract Error */
+            extract_error: string | null;
+            /**
+             * Extract Status
+             * @default pending
+             * @enum {string}
+             */
+            extract_status: "pending" | "running" | "done" | "failed" | "skipped";
             /** Filename */
             filename: string;
             /** Id */
             id: number;
+            /**
+             * Index Status
+             * @default pending
+             * @enum {string}
+             */
+            index_status: "pending" | "running" | "done" | "failed" | "skipped";
             /** Ingest Status */
             ingest_status: string;
             /** Page Count */
@@ -644,6 +1030,36 @@ export interface components {
             well_id: number | null;
             /** Well Name */
             well_name: string | null;
+        };
+        /**
+         * DocumentsOverview
+         * @description Counts of this well's documents by type and by pipeline stage status.
+         */
+        DocumentsOverview: {
+            /**
+             * By Doc Type
+             * @description Documents per doc_type ('unknown' when unclassified)
+             */
+            by_doc_type: {
+                [key: string]: number;
+            };
+            /** By Extract Status */
+            by_extract_status: {
+                [key: string]: number;
+            };
+            /** By Index Status */
+            by_index_status: {
+                [key: string]: number;
+            };
+            /** By Ingest Status */
+            by_ingest_status: {
+                [key: string]: number;
+            };
+            /**
+             * Total
+             * @default 0
+             */
+            total: number;
         };
         /** ErrorBody */
         ErrorBody: {
@@ -665,6 +1081,413 @@ export interface components {
         ErrorResponse: {
             error: components["schemas"]["ErrorBody"];
         };
+        /**
+         * EventCreate
+         * @description Manual event entry. Stored with ``source='manual'`` and ``verified=false`` until a
+         *     reviewer verifies it; without evidence the UI shows it as uncited.
+         */
+        EventCreate: {
+            /** Cause Text */
+            cause_text?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Event Date */
+            event_date?: string | null;
+            /**
+             * Event Type
+             * @enum {string}
+             */
+            event_type: "LOSS" | "KICK" | "STUCK" | "TIGHT" | "TORQUE" | "INSTAB" | "BALLING" | "OVERP" | "GAS" | "CEMENT" | "CASING" | "FISH" | "EQUIP" | "WAIT" | "OTHER_NPT";
+            /** Evidence */
+            evidence?: components["schemas"]["EvidenceRefIn"][];
+            /** Formation Id */
+            formation_id?: number | null;
+            /** Hole Size In */
+            hole_size_in?: number | null;
+            /** Md M */
+            md_m?: number | null;
+            /** Mitigations */
+            mitigations?: components["schemas"]["MitigationCreate"][];
+            /** Mw Sg */
+            mw_sg?: number | null;
+            /** Npt Hours */
+            npt_hours?: number | null;
+            params?: components["schemas"]["EventParamsIn"];
+            /** Resolved */
+            resolved?: boolean | null;
+            /** Severity */
+            severity?: ("low" | "medium" | "high") | null;
+            /** Subtype */
+            subtype?: string | null;
+            /** T End */
+            t_end?: string | null;
+            /** T Start */
+            t_start?: string | null;
+            /** Well Id */
+            well_id: number;
+            /** Wellbore Id */
+            wellbore_id?: number | null;
+        };
+        /** EventDetail */
+        EventDetail: {
+            /** Cause Text */
+            cause_text: string | null;
+            /** Confidence */
+            confidence: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Description */
+            description: string | null;
+            /** Event Date */
+            event_date: string | null;
+            /**
+             * Event Type
+             * @enum {string}
+             */
+            event_type: "LOSS" | "KICK" | "STUCK" | "TIGHT" | "TORQUE" | "INSTAB" | "BALLING" | "OVERP" | "GAS" | "CEMENT" | "CASING" | "FISH" | "EQUIP" | "WAIT" | "OTHER_NPT";
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRef"][];
+            /**
+             * Formation
+             * @description Formation name at the event depth
+             */
+            formation: string | null;
+            /** Formation Id */
+            formation_id: number | null;
+            /** Hole Size In */
+            hole_size_in: number | null;
+            /** Id */
+            id: number;
+            lesson_card: components["schemas"]["LessonCardContent"] | null;
+            /** Md M */
+            md_m: number | null;
+            /** Mitigations */
+            mitigations: components["schemas"]["MitigationOut"][];
+            /** Mw Sg */
+            mw_sg: number | null;
+            /** Npt Hours */
+            npt_hours: number | null;
+            params: components["schemas"]["EventParams"];
+            /** Resolved */
+            resolved: boolean | null;
+            /** Severity */
+            severity: ("low" | "medium" | "high") | null;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "rules" | "llm" | "manual" | "import";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "rejected";
+            /** Subtype */
+            subtype: string | null;
+            /**
+             * Synthetic
+             * @description True when the well belongs to a SYNTHETIC field
+             */
+            synthetic: boolean;
+            /** T End */
+            t_end: string | null;
+            /** T Start */
+            t_start: string | null;
+            /** Tvd M */
+            tvd_m: number | null;
+            /** Tvdss M */
+            tvdss_m: number | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Verified */
+            verified: boolean;
+            /** Verified At */
+            verified_at: string | null;
+            /** Verified By */
+            verified_by: string | null;
+            /** Well Id */
+            well_id: number;
+            /** Well Name */
+            well_name: string;
+            /** Wellbore Id */
+            wellbore_id: number | null;
+        };
+        /** EventMarker */
+        EventMarker: {
+            /**
+             * Aligned
+             * @description Null when the event has no usable depth
+             */
+            aligned: number | null;
+            /** Confidence */
+            confidence: number;
+            /** Event Id */
+            event_id: number;
+            /**
+             * Event Type
+             * @enum {string}
+             */
+            event_type: "LOSS" | "KICK" | "STUCK" | "TIGHT" | "TORQUE" | "INSTAB" | "BALLING" | "OVERP" | "GAS" | "CEMENT" | "CASING" | "FISH" | "EQUIP" | "WAIT" | "OTHER_NPT";
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRef"][];
+            /** Md M */
+            md_m: number | null;
+            /** Npt Hours */
+            npt_hours: number | null;
+            /**
+             * Relative Position
+             * @description 0 = formation top, 1 = base (FORMATION_RELATIVE only)
+             */
+            relative_position: number | null;
+            /** Severity */
+            severity: ("low" | "medium" | "high") | null;
+            /** Tvdss M */
+            tvdss_m: number | null;
+            /** Verified */
+            verified: boolean;
+        };
+        /**
+         * EventPage
+         * @description Cursor page: pass ``next_cursor`` back as ``cursor``; null means the last page.
+         */
+        EventPage: {
+            /** Items */
+            items: components["schemas"]["EventSummary"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /**
+         * EventParams
+         * @description Event parameters as returned (every key present, null when not recorded).
+         */
+        EventParams: {
+            /** Ecd Sg */
+            ecd_sg: number | null;
+            /** Gas Pct */
+            gas_pct: number | null;
+            /** H2S Ppm */
+            h2s_ppm: number | null;
+            /** Jarring H */
+            jarring_h: number | null;
+            /** Kill Mw Sg */
+            kill_mw_sg: number | null;
+            /** Loss Rate M3 H */
+            loss_rate_m3_h: number | null;
+            /** Overpull Kn */
+            overpull_kn: number | null;
+            /** Pit Gain M3 */
+            pit_gain_m3: number | null;
+            /** Sicp Kpa */
+            sicp_kpa: number | null;
+            /** Sidpp Kpa */
+            sidpp_kpa: number | null;
+            /** Time To Cure H */
+            time_to_cure_h: number | null;
+            /** Torque Knm */
+            torque_knm: number | null;
+            /** Total Loss M3 */
+            total_loss_m3: number | null;
+        };
+        /**
+         * EventParamsIn
+         * @description Event parameters as supplied by a client; unknown keys are rejected.
+         */
+        EventParamsIn: {
+            /** Ecd Sg */
+            ecd_sg?: number | null;
+            /** Gas Pct */
+            gas_pct?: number | null;
+            /** H2S Ppm */
+            h2s_ppm?: number | null;
+            /** Jarring H */
+            jarring_h?: number | null;
+            /** Kill Mw Sg */
+            kill_mw_sg?: number | null;
+            /** Loss Rate M3 H */
+            loss_rate_m3_h?: number | null;
+            /** Overpull Kn */
+            overpull_kn?: number | null;
+            /** Pit Gain M3 */
+            pit_gain_m3?: number | null;
+            /** Sicp Kpa */
+            sicp_kpa?: number | null;
+            /** Sidpp Kpa */
+            sidpp_kpa?: number | null;
+            /** Time To Cure H */
+            time_to_cure_h?: number | null;
+            /** Torque Knm */
+            torque_knm?: number | null;
+            /** Total Loss M3 */
+            total_loss_m3?: number | null;
+        };
+        /** EventSummary */
+        EventSummary: {
+            /** Confidence */
+            confidence: number;
+            /** Event Date */
+            event_date: string | null;
+            /**
+             * Event Type
+             * @enum {string}
+             */
+            event_type: "LOSS" | "KICK" | "STUCK" | "TIGHT" | "TORQUE" | "INSTAB" | "BALLING" | "OVERP" | "GAS" | "CEMENT" | "CASING" | "FISH" | "EQUIP" | "WAIT" | "OTHER_NPT";
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRef"][];
+            /**
+             * Formation
+             * @description Formation name at the event depth
+             */
+            formation: string | null;
+            /** Formation Id */
+            formation_id: number | null;
+            /** Hole Size In */
+            hole_size_in: number | null;
+            /** Id */
+            id: number;
+            /** Md M */
+            md_m: number | null;
+            /** Mw Sg */
+            mw_sg: number | null;
+            /** Npt Hours */
+            npt_hours: number | null;
+            /** Resolved */
+            resolved: boolean | null;
+            /** Severity */
+            severity: ("low" | "medium" | "high") | null;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "rules" | "llm" | "manual" | "import";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "rejected";
+            /** Subtype */
+            subtype: string | null;
+            /**
+             * Synthetic
+             * @description True when the well belongs to a SYNTHETIC field
+             */
+            synthetic: boolean;
+            /** T End */
+            t_end: string | null;
+            /** T Start */
+            t_start: string | null;
+            /** Tvd M */
+            tvd_m: number | null;
+            /** Tvdss M */
+            tvdss_m: number | null;
+            /** Verified */
+            verified: boolean;
+            /** Well Id */
+            well_id: number;
+            /** Well Name */
+            well_name: string;
+            /** Wellbore Id */
+            wellbore_id: number | null;
+        };
+        /**
+         * EventTimeline
+         * @description Chronological events of one well (ordered by event_date / t_start, then md_m;
+         *     undated events last), with the DDR NPT lines and per-type counts.
+         */
+        EventTimeline: {
+            /** Completion Date */
+            completion_date: string | null;
+            /**
+             * Counts By Type
+             * @description Active events per event_type code
+             */
+            counts_by_type: {
+                [key: string]: number;
+            };
+            /** Events */
+            events: components["schemas"]["EventSummary"][];
+            /** Npt Operations */
+            npt_operations: components["schemas"]["DdrOperationOut"][];
+            /** Spud Date */
+            spud_date: string | null;
+            /** Synthetic */
+            synthetic: boolean;
+            /** Td Md M */
+            td_md_m: number | null;
+            /**
+             * Total Npt Hours
+             * @description Sum over events; null if none recorded
+             */
+            total_npt_hours: number | null;
+            /** Well Id */
+            well_id: number;
+            /** Well Name */
+            well_name: string;
+        };
+        /**
+         * EventVerify
+         * @description Verify (or un-verify) an event, or reject it as not a real event.
+         */
+        EventVerify: {
+            /** Note */
+            note?: string | null;
+            /**
+             * Status
+             * @description Set 'rejected' to hide a false extraction; null = unchanged
+             */
+            status?: ("active" | "rejected") | null;
+            /**
+             * Verified
+             * @default true
+             */
+            verified: boolean;
+        };
+        /**
+         * EvidenceRef
+         * @description Where a fact was read: page ``page_no`` (1-based) of ``document_id``, highlighting the
+         *     ``span_ids`` (GET /documents/{document_id}/pages/{page_no} returns their boxes).
+         */
+        EvidenceRef: {
+            /** Doc Type */
+            doc_type: string | null;
+            /** Document Id */
+            document_id: number;
+            /** Filename */
+            filename: string | null;
+            /** Page No */
+            page_no: number;
+            /** Span Ids */
+            span_ids: number[];
+        };
+        /**
+         * EvidenceRefIn
+         * @description Evidence supplied by a client (manual event entry, review correction).
+         */
+        EvidenceRefIn: {
+            /** Document Id */
+            document_id: number;
+            /** Page No */
+            page_no: number;
+            /** Span Ids */
+            span_ids?: number[];
+        };
+        /**
+         * ExcludedWell
+         * @description A well left out of a result, with the reason (never dropped silently).
+         */
+        ExcludedWell: {
+            /** Name */
+            name: string;
+            /** Reason */
+            reason: string;
+            /** Well Id */
+            well_id: number;
+        };
         /** FormationOut */
         FormationOut: {
             /** Basin */
@@ -680,6 +1503,43 @@ export interface components {
             /** Synonyms */
             synonyms: string[];
         };
+        /** FormationStats */
+        FormationStats: {
+            /** Rows */
+            rows: components["schemas"]["FormationStatsRow"][];
+            /**
+             * Wells
+             * @description Wells the statistics were computed over
+             */
+            wells: number[];
+        };
+        /** FormationStatsRow */
+        FormationStatsRow: {
+            /**
+             * Events By Type
+             * @description Active events per event_type code
+             */
+            events_by_type: {
+                [key: string]: number;
+            };
+            /** Formation */
+            formation: string;
+            /** Median Mw Sg */
+            median_mw_sg: number | null;
+            /** Median Npt Hours */
+            median_npt_hours: number | null;
+            /** Strat Order */
+            strat_order: number;
+            /** Wells Penetrating */
+            wells_penetrating: number;
+            /**
+             * Wells With Event By Type
+             * @description Wells with >= 1 event of the type (the '3 of 6 offsets' numerator)
+             */
+            wells_with_event_by_type: {
+                [key: string]: number;
+            };
+        };
         /** FormationTopOut */
         FormationTopOut: {
             /** Formation */
@@ -693,10 +1553,92 @@ export interface components {
             /** Top Tvdss M */
             top_tvdss_m: number;
         };
+        /** FormationTrack */
+        FormationTrack: {
+            /**
+             * Base
+             * @description Next formation's top or TD; null if unknown
+             */
+            base: number | null;
+            /** Base Tvdss M */
+            base_tvdss_m: number | null;
+            /** Lithology */
+            lithology: string | null;
+            /** Name */
+            name: string;
+            /** Strat Order */
+            strat_order: number;
+            /** Top */
+            top: number;
+            /** Top Tvdss M */
+            top_tvdss_m: number;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        JsonValue: unknown;
+        /**
+         * LessonCard
+         * @description Problem -> likely cause -> action taken -> outcome -> lesson for one event.
+         */
+        LessonCard: {
+            /** Action Taken */
+            action_taken: string | null;
+            /** Confidence */
+            confidence: number;
+            /** Event Id */
+            event_id: number;
+            /**
+             * Event Type
+             * @enum {string}
+             */
+            event_type: "LOSS" | "KICK" | "STUCK" | "TIGHT" | "TORQUE" | "INSTAB" | "BALLING" | "OVERP" | "GAS" | "CEMENT" | "CASING" | "FISH" | "EQUIP" | "WAIT" | "OTHER_NPT";
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRef"][];
+            /** Formation */
+            formation: string | null;
+            /** Lesson */
+            lesson: string | null;
+            /** Likely Cause */
+            likely_cause: string | null;
+            /** Md M */
+            md_m: number | null;
+            /** Outcome */
+            outcome: string | null;
+            /** Problem */
+            problem: string;
+            /** Synthetic */
+            synthetic: boolean;
+            /** Tvdss M */
+            tvdss_m: number | null;
+            /** Verified */
+            verified: boolean;
+            /** Well Id */
+            well_id: number;
+            /** Well Name */
+            well_name: string;
+        };
+        /**
+         * LessonCardContent
+         * @description Problem -> likely cause -> action taken -> outcome -> lesson (master plan Stage 5),
+         *     stored in ``event.lesson_card``. Advisory wording; every line is grounded in the event's
+         *     evidence. ``generated_by`` names the template or model that wrote it.
+         */
+        LessonCardContent: {
+            /** Action Taken */
+            action_taken: string | null;
+            /** Generated By */
+            generated_by: string;
+            /** Lesson */
+            lesson: string | null;
+            /** Likely Cause */
+            likely_cause: string | null;
+            /** Outcome */
+            outcome: string | null;
+            /** Problem */
+            problem: string;
         };
         /** Meta */
         Meta: {
@@ -713,12 +1655,148 @@ export interface components {
             /** Version */
             version: string;
         };
+        /** MitigationCreate */
+        MitigationCreate: {
+            /**
+             * Action Code
+             * @enum {string}
+             */
+            action_code: "LCM_PILL_FINE" | "LCM_PILL_COARSE" | "LCM_BACKGROUND" | "REDUCE_MW" | "REDUCE_FLOW_RATE" | "CEMENT_PLUG" | "SQUEEZE" | "SET_CASING_EARLY" | "DRILL_BLIND" | "JAR_UP" | "JAR_DOWN" | "SPOT_PIPE_RELEASE_PILL" | "WORK_PIPE" | "INCREASE_FLOW" | "BACKOFF_AND_FISH" | "SIDETRACK" | "DRILLERS_METHOD" | "WAIT_AND_WEIGHT" | "BULLHEAD" | "REMEDIAL_SQUEEZE" | "TOP_JOB" | "LIGHTWEIGHT_SLURRY" | "REAM" | "WIPER_TRIP" | "INCREASE_MW" | "CIRCULATE" | "CHANGE_BHA" | "FISHING" | "REPAIR_EQUIPMENT" | "WAIT" | "OTHER";
+            /** Action Text */
+            action_text?: string | null;
+            /** Evidence */
+            evidence?: components["schemas"]["EvidenceRefIn"][];
+            /** Npt Hours After */
+            npt_hours_after?: number | null;
+            /**
+             * Outcome
+             * @default unknown
+             * @enum {string}
+             */
+            outcome: "success" | "partial" | "fail" | "unknown";
+            /** Recurrence */
+            recurrence?: boolean | null;
+            /** T Start */
+            t_start?: string | null;
+            /** Volume Lost M3 */
+            volume_lost_m3?: number | null;
+        };
+        /** MitigationOut */
+        MitigationOut: {
+            /**
+             * Action Code
+             * @enum {string}
+             */
+            action_code: "LCM_PILL_FINE" | "LCM_PILL_COARSE" | "LCM_BACKGROUND" | "REDUCE_MW" | "REDUCE_FLOW_RATE" | "CEMENT_PLUG" | "SQUEEZE" | "SET_CASING_EARLY" | "DRILL_BLIND" | "JAR_UP" | "JAR_DOWN" | "SPOT_PIPE_RELEASE_PILL" | "WORK_PIPE" | "INCREASE_FLOW" | "BACKOFF_AND_FISH" | "SIDETRACK" | "DRILLERS_METHOD" | "WAIT_AND_WEIGHT" | "BULLHEAD" | "REMEDIAL_SQUEEZE" | "TOP_JOB" | "LIGHTWEIGHT_SLURRY" | "REAM" | "WIPER_TRIP" | "INCREASE_MW" | "CIRCULATE" | "CHANGE_BHA" | "FISHING" | "REPAIR_EQUIPMENT" | "WAIT" | "OTHER";
+            /** Action Text */
+            action_text: string | null;
+            /** Confidence */
+            confidence: number;
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRef"][];
+            /** Id */
+            id: number;
+            /** Npt Hours After */
+            npt_hours_after: number | null;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "success" | "partial" | "fail" | "unknown";
+            /** Recurrence */
+            recurrence: boolean | null;
+            /**
+             * Seq
+             * @description Order in which the action was tried (1 = first)
+             */
+            seq: number;
+            /** T Start */
+            t_start: string | null;
+            /** Verified */
+            verified: boolean;
+            /** Volume Lost M3 */
+            volume_lost_m3: number | null;
+        };
+        /** MudIntervalOut */
+        MudIntervalOut: {
+            /** Confidence */
+            confidence: number;
+            /** Ecd Sg */
+            ecd_sg: number | null;
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRef"][];
+            /** Hole Size In */
+            hole_size_in: number | null;
+            /** Id */
+            id: number;
+            /** Md From M */
+            md_from_m: number;
+            /** Md To M */
+            md_to_m: number;
+            /** Mud Type */
+            mud_type: string | null;
+            /** Mw Sg */
+            mw_sg: number | null;
+            /** Tvdss From M */
+            tvdss_from_m: number | null;
+            /** Tvdss To M */
+            tvdss_to_m: number | null;
+            /** Verified */
+            verified: boolean;
+        };
+        /** MudTrack */
+        MudTrack: {
+            /** Base */
+            base: number | null;
+            /** Confidence */
+            confidence: number;
+            /** Ecd Sg */
+            ecd_sg: number | null;
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRef"][];
+            /** Md From M */
+            md_from_m: number;
+            /** Md To M */
+            md_to_m: number;
+            /** Mud Interval Id */
+            mud_interval_id: number;
+            /** Mud Type */
+            mud_type: string | null;
+            /** Mw Sg */
+            mw_sg: number | null;
+            /** Top */
+            top: number | null;
+            /** Tvdss From M */
+            tvdss_from_m: number | null;
+            /** Tvdss To M */
+            tvdss_to_m: number | null;
+            /** Verified */
+            verified: boolean;
+        };
         /** OffsetOut */
         OffsetOut: {
             /** Bearing Deg */
             bearing_deg: number | null;
-            /** Distance M */
+            /** Closest Offset Md M */
+            closest_offset_md_m: number | null;
+            /** Closest Subject Md M */
+            closest_subject_md_m: number | null;
+            /**
+             * Closest Tvdss M
+             * @description Offset-well TVDSS at the closest-approach point
+             */
+            closest_tvdss_m: number | null;
+            /**
+             * Distance M
+             * @description Meaning depends on the mode: see distance_label
+             */
             distance_m: number;
+            /** Entry Md M */
+            entry_md_m: number | null;
+            /** Entry Tvdss M */
+            entry_tvdss_m: number | null;
+            /** Fluid Type */
+            fluid_type: ("oil" | "gas" | "water") | null;
             /** Lat */
             lat: number;
             /** Lon */
@@ -738,14 +1816,35 @@ export interface components {
         };
         /** OffsetsOut */
         OffsetsOut: {
+            /**
+             * Distance Label
+             * @description What distance_m measures in this mode (shown as the column title)
+             * @default Surface distance between wellheads
+             */
+            distance_label: string;
+            /**
+             * Excluded
+             * @description Wells in range but left out, with the reason (e.g. 'no Barail top')
+             */
+            excluded: components["schemas"]["ExcludedWell"][];
             /** Formation */
             formation: string | null;
-            /** Mode */
-            mode: string;
+            mode: components["schemas"]["ProximityMode"];
             /** Offsets */
             offsets: components["schemas"]["OffsetOut"][];
             /** Radius Km */
             radius_km: number;
+            /**
+             * Subject Entry Md M
+             * @description AT_FORMATION: the subject well's formation entry MD
+             */
+            subject_entry_md_m: number | null;
+            /** Subject Entry Tvdss M */
+            subject_entry_tvdss_m: number | null;
+            /** Tvdss From M */
+            tvdss_from_m: number | null;
+            /** Tvdss To M */
+            tvdss_to_m: number | null;
             /** Well Id */
             well_id: number;
         };
@@ -778,6 +1877,55 @@ export interface components {
             page_no: number;
             /** Span Count */
             span_count: number;
+        };
+        /**
+         * Passage
+         * @description A retrieved chunk. ``snippet`` is plain text; ``highlights`` are ``[start, end)``
+         *     character ranges into ``snippet`` (never HTML, so the UI can render them safely).
+         */
+        Passage: {
+            /** Chunk Id */
+            chunk_id: number;
+            /**
+             * Dense Rank
+             * @description 1-based embedding rank; null if not matched
+             */
+            dense_rank: number | null;
+            /** Doc Type */
+            doc_type: string | null;
+            /** Document Id */
+            document_id: number;
+            /** Filename */
+            filename: string;
+            /** Highlights */
+            highlights: [
+                number,
+                number
+            ][];
+            /**
+             * Lexical Rank
+             * @description 1-based full-text rank; null if not matched
+             */
+            lexical_rank: number | null;
+            /** Page From */
+            page_from: number;
+            /** Page To */
+            page_to: number;
+            /**
+             * Score
+             * @description Fused rank score (RRF); a relevance score, not a probability
+             */
+            score: number;
+            /** Snippet */
+            snippet: string;
+            /** Span Ids */
+            span_ids: number[];
+            /** Synthetic */
+            synthetic: boolean;
+            /** Well Id */
+            well_id: number | null;
+            /** Well Name */
+            well_name: string | null;
         };
         /** PathPoint */
         PathPoint: {
@@ -812,6 +1960,153 @@ export interface components {
              */
             status: "ready" | "not_ready";
         };
+        /**
+         * ReviewAccept
+         * @description The proposed values are right: the target becomes verified.
+         */
+        ReviewAccept: {
+            /**
+             * Action
+             * @constant
+             */
+            action: "accept";
+            /** Note */
+            note?: string | null;
+        };
+        /**
+         * ReviewCorrect
+         * @description Replace some proposed values (same keys and canonical units as ``proposed``); the
+         *     target is updated and verified, and the pair is kept for the evaluation gold set.
+         */
+        ReviewCorrect: {
+            /**
+             * Action
+             * @constant
+             */
+            action: "correct";
+            /** Fields */
+            fields: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /** Note */
+            note?: string | null;
+        };
+        /** ReviewItem */
+        ReviewItem: {
+            /** Confidence */
+            confidence: number;
+            /** Correction */
+            correction: {
+                [key: string]: components["schemas"]["JsonValue"];
+            } | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decided At */
+            decided_at: string | null;
+            /** Decided By */
+            decided_by: string | null;
+            /** Doc Type */
+            doc_type: string | null;
+            /** Document Id */
+            document_id: number | null;
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceRef"][];
+            /**
+             * Field
+             * @description Field under review; null = the whole record
+             */
+            field: string | null;
+            /** Filename */
+            filename: string | null;
+            /** Id */
+            id: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "event" | "mitigation" | "casing" | "cement" | "mud" | "alias" | "other";
+            /** Page No */
+            page_no: number | null;
+            /**
+             * Proposed
+             * @description Extracted values, canonical units
+             */
+            proposed: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /**
+             * Reason
+             * @description Why it needs review, e.g. 'confidence 0.62 < 0.75'
+             */
+            reason: string;
+            /** Span Ids */
+            span_ids: number[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "accepted" | "corrected" | "rejected";
+            /**
+             * Target Id
+             * @description Row id in the table named by kind, if written
+             */
+            target_id: number | null;
+            /** Well Id */
+            well_id: number | null;
+            /** Well Name */
+            well_name: string | null;
+        };
+        /** ReviewPage */
+        ReviewPage: {
+            /** Items */
+            items: components["schemas"]["ReviewItem"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+            /**
+             * Status Counts
+             * @description Items per status (all kinds)
+             */
+            status_counts: {
+                [key: string]: number;
+            };
+        };
+        /**
+         * ReviewReject
+         * @description Not a real fact: the target is rejected (events get status 'rejected').
+         */
+        ReviewReject: {
+            /**
+             * Action
+             * @constant
+             */
+            action: "reject";
+            /** Reason */
+            reason: string;
+        };
+        /** SearchResponse */
+        SearchResponse: {
+            /**
+             * Embedding Provider
+             * @description Embedder used for the dense leg, e.g. 'hash'
+             */
+            embedding_provider: string;
+            /** Lessons */
+            lessons: components["schemas"]["LessonCard"][];
+            /**
+             * No Record Found
+             * @description True when nothing cleared the relevance floor: the UI must say 'No record found in the indexed documents' instead of showing weak matches
+             */
+            no_record_found: boolean;
+            /** Passages */
+            passages: components["schemas"]["Passage"][];
+            /** Query */
+            query: string;
+            /** Took Ms */
+            took_ms: number;
+        };
         /** SpanOut */
         SpanOut: {
             /** Bbox */
@@ -843,6 +2138,73 @@ export interface components {
             tvd_m: number;
             /** Tvdss M */
             tvdss_m: number;
+        };
+        /** SurveyStationIn */
+        SurveyStationIn: {
+            /** Azi Deg */
+            azi_deg: number;
+            /** Inc Deg */
+            inc_deg: number;
+            /** Md M */
+            md_m: number;
+        };
+        /**
+         * SurveyUpload
+         * @description Survey stations; the server recomputes TVD/TVDSS/N/E/DLS by minimum curvature,
+         *     rebuilds the 3D path and formation entry points, and returns the new trajectory.
+         */
+        SurveyUpload: {
+            /**
+             * Azi Ref
+             * @default true
+             * @enum {string}
+             */
+            azi_ref: "true" | "grid" | "magnetic";
+            /**
+             * Correction Deg
+             * @description Added to every azimuth to reach true north: magnetic declination (azi_ref=magnetic) or grid convergence (azi_ref=grid). Required unless azi_ref=true.
+             */
+            correction_deg?: number | null;
+            /** Stations */
+            stations: components["schemas"]["SurveyStationIn"][];
+        };
+        /**
+         * TrajectoryAtDepth
+         * @description Position at ``md_m``, interpolated along the minimum-curvature arc between stations.
+         */
+        TrajectoryAtDepth: {
+            /**
+             * Assumed
+             * @description True when the trajectory is assumed vertical
+             */
+            assumed: boolean;
+            /** Azi Deg */
+            azi_deg: number;
+            /** East M */
+            east_m: number;
+            /**
+             * Formation
+             * @description Formation at this depth, from the tops
+             */
+            formation: string | null;
+            /** Inc Deg */
+            inc_deg: number;
+            /** Lat */
+            lat: number;
+            /** Lon */
+            lon: number;
+            /** Md M */
+            md_m: number;
+            /** North M */
+            north_m: number;
+            /** Tvd M */
+            tvd_m: number;
+            /** Tvdss M */
+            tvdss_m: number;
+            /** Well Id */
+            well_id: number;
+            /** Wellbore Id */
+            wellbore_id: number;
         };
         /** TrajectoryOut */
         TrajectoryOut: {
@@ -889,6 +2251,11 @@ export interface components {
         WellDetail: {
             /** Aliases */
             aliases: string[];
+            /**
+             * Casing
+             * @description Ordered by shoe depth
+             */
+            casing: components["schemas"]["CasingOut"][];
             /** Completion Date */
             completion_date: string | null;
             /** Crs Epsg */
@@ -898,8 +2265,21 @@ export interface components {
             datum_assumed: boolean;
             /** Document Count */
             document_count: number;
+            documents: components["schemas"]["DocumentsOverview"];
+            /**
+             * Event Counts
+             * @description Active events per event_type code
+             */
+            event_counts: {
+                [key: string]: number;
+            };
             /** Field */
             field: string;
+            /**
+             * Fluid Type
+             * @description oil | gas | water (B2)
+             */
+            fluid_type: ("oil" | "gas" | "water") | null;
             /** Formation Tops */
             formation_tops: components["schemas"]["FormationTopOut"][];
             /** Gl Elev M */
@@ -908,12 +2288,27 @@ export interface components {
             id: number;
             /** Lat */
             lat: number;
+            /**
+             * Lessons
+             * @description Lesson cards of this well's events (at most 10)
+             */
+            lessons: components["schemas"]["LessonCard"][];
             /** Lon */
             lon: number;
+            /**
+             * Mud
+             * @description Ordered by md_from_m
+             */
+            mud: components["schemas"]["MudIntervalOut"][];
             /** Name */
             name: string;
             /** Profile */
             profile: string | null;
+            /**
+             * Recent Events
+             * @description Latest active events, newest first (at most 10)
+             */
+            recent_events: components["schemas"]["EventSummary"][];
             /** Rig Name */
             rig_name: string | null;
             /** Rkb Elev M */
@@ -930,7 +2325,10 @@ export interface components {
             trajectory_assumed: boolean;
             /** Units System */
             units_system: string | null;
-            /** Well Type */
+            /**
+             * Well Type
+             * @description Purpose: exploration / development / appraisal
+             */
             well_type: string | null;
         };
         /** WellList */
@@ -946,6 +2344,11 @@ export interface components {
             document_count: number;
             /** Field */
             field: string;
+            /**
+             * Fluid Type
+             * @description oil | gas | water (B2)
+             */
+            fluid_type: ("oil" | "gas" | "water") | null;
             /** Id */
             id: number;
             /** Lat */
@@ -964,7 +2367,10 @@ export interface components {
             synthetic: boolean;
             /** Td Md M */
             td_md_m: number | null;
-            /** Well Type */
+            /**
+             * Well Type
+             * @description Purpose: exploration / development / appraisal
+             */
             well_type: string | null;
         };
     };
@@ -1171,6 +2577,7 @@ export interface operations {
             query: {
                 wells: number[];
                 align?: components["schemas"]["Alignment"];
+                /** @description Formation to flatten on (FLATTEN_ON_TOP) */
                 top?: string | null;
             };
             header?: never;
@@ -1185,7 +2592,50 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["CorrelationPanel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Planned, not implemented in this phase */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    formation_stats_api_v1_correlation_formation_stats_get: {
+        parameters: {
+            query?: {
+                wells?: number[] | null;
+                well_id?: number | null;
+                /** @description Radius around well_id's surface location (km) */
+                radius_km?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FormationStats"];
                 };
             };
             /** @description Validation Error */
@@ -1214,6 +2664,8 @@ export interface operations {
                 well_id?: number | null;
                 status?: string | null;
                 doc_type?: string | null;
+                extract_status?: ("pending" | "running" | "done" | "failed" | "skipped") | null;
+                index_status?: ("pending" | "running" | "done" | "failed" | "skipped") | null;
                 limit?: number;
                 offset?: number;
             };
@@ -1436,12 +2888,23 @@ export interface operations {
     list_events_api_v1_events_get: {
         parameters: {
             query?: {
-                event_type?: string | null;
+                /** @description Repeat to match any of several types */
+                event_type?: ("LOSS" | "KICK" | "STUCK" | "TIGHT" | "TORQUE" | "INSTAB" | "BALLING" | "OVERP" | "GAS" | "CEMENT" | "CASING" | "FISH" | "EQUIP" | "WAIT" | "OTHER_NPT")[] | null;
                 formation?: string | null;
                 well_id?: number | null;
+                /** @description Radius around well_id's surface location (km) */
                 radius_km?: number | null;
                 tvdss_from_m?: number | null;
                 tvdss_to_m?: number | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                /** @description Only verified / unverified */
+                verified?: boolean | null;
+                min_confidence?: number | null;
+                /** @description Page size */
+                limit?: number;
+                /** @description Opaque cursor from the previous page's next_cursor */
+                cursor?: string | null;
             };
             header?: never;
             path?: never;
@@ -1455,7 +2918,151 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["EventPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Planned, not implemented in this phase */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_event_api_v1_events_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EventCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Planned, not implemented in this phase */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_event_api_v1_events__event_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventDetail"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Planned, not implemented in this phase */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    verify_event_api_v1_events__event_id__verify_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EventVerify"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventDetail"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1662,7 +3269,16 @@ export interface operations {
     };
     list_review_queue_api_v1_review_queue_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Default: pending only */
+                status?: ("pending" | "accepted" | "corrected" | "rejected") | null;
+                kind?: ("event" | "mitigation" | "casing" | "cement" | "mud" | "alias" | "other") | null;
+                document_id?: number | null;
+                /** @description Page size */
+                limit?: number;
+                /** @description Opaque cursor from the previous page's next_cursor */
+                cursor?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1675,7 +3291,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ReviewPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
             /** @description Planned, not implemented in this phase */
@@ -1698,7 +3323,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewAccept"] | components["schemas"]["ReviewCorrect"] | components["schemas"]["ReviewReject"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -1706,7 +3335,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ReviewItem"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1733,6 +3371,16 @@ export interface operations {
         parameters: {
             query: {
                 q: string;
+                well_id?: number | null;
+                /** @description Radius around well_id's surface location (km) */
+                radius_km?: number | null;
+                formation?: string | null;
+                /** @description Repeat to match any of several types */
+                event_type?: ("LOSS" | "KICK" | "STUCK" | "TIGHT" | "TORQUE" | "INSTAB" | "BALLING" | "OVERP" | "GAS" | "CEMENT" | "CASING" | "FISH" | "EQUIP" | "WAIT" | "OTHER_NPT")[] | null;
+                doc_type?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                limit?: number;
             };
             header?: never;
             path?: never;
@@ -1746,7 +3394,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SearchResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1775,6 +3423,9 @@ export interface operations {
                 field?: string | null;
                 status?: string | null;
                 q?: string | null;
+                /** @description Map viewport 'min_lon,min_lat,max_lon,max_lat' (WGS84 degrees) */
+                bbox?: string | null;
+                fluid_type?: ("oil" | "gas" | "water") | null;
                 limit?: number;
                 offset?: number;
             };
@@ -1835,12 +3486,66 @@ export interface operations {
             };
         };
     };
+    get_event_timeline_api_v1_wells__well_id__events_timeline_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                well_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventTimeline"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Planned, not implemented in this phase */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_offsets_api_v1_wells__well_id__offsets_get: {
         parameters: {
             query?: {
                 radius_km?: number;
                 mode?: components["schemas"]["ProximityMode"];
+                /** @description AT_FORMATION: formation to compare at */
                 formation?: string | null;
+                /** @description CLOSEST_APPROACH: TVDSS window start (m) */
+                tvdss_from_m?: number | null;
+                /** @description CLOSEST_APPROACH: TVDSS window end (m) */
+                tvdss_to_m?: number | null;
             };
             header?: never;
             path: {
@@ -1948,6 +3653,110 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_survey_api_v1_wells__well_id__trajectory_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                well_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyUpload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrajectoryOut"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Planned, not implemented in this phase */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_trajectory_at_depth_api_v1_wells__well_id__trajectory_at_depth_get: {
+        parameters: {
+            query: {
+                md_m: number;
+            };
+            header?: never;
+            path: {
+                well_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrajectoryAtDepth"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Planned, not implemented in this phase */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

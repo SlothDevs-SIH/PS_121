@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 Status = Literal["planned", "in_progress", "built"]
 
-CURRENT_PHASE = "B1"
+CURRENT_PHASE = "B2"
 
 
 class Component(BaseModel):
@@ -36,7 +36,7 @@ COMPONENTS: list[Component] = [
         stage="S2",
         name="Schema extraction + review queue",
         phase="B2",
-        status="planned",
+        status="in_progress",
     ),
     Component(
         key="normalise",
@@ -57,14 +57,14 @@ COMPONENTS: list[Component] = [
         stage="S5",
         name="Hybrid search, RAG, lessons cards",
         phase="B2",
-        status="planned",
+        status="in_progress",
     ),
     Component(
         key="correlation",
         stage="S6",
         name="Depth/formation correlation",
         phase="B2",
-        status="planned",
+        status="in_progress",
     ),
     Component(
         key="risk_prior", stage="S7a", name="Offset prior risk", phase="B3", status="planned"

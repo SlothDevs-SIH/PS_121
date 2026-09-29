@@ -27,6 +27,450 @@
         "title": "Body_upload_documents_api_v1_documents_post",
         "type": "object"
       },
+      "CasingOut": {
+        "description": "``od_in``/``hole_size_in``/``weight_ppf`` are nominal industry designations.",
+        "properties": {
+          "cement": {
+            "items": {
+              "$ref": "#/components/schemas/CementJobOut"
+            },
+            "title": "Cement",
+            "type": "array"
+          },
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade"
+          },
+          "hole_size_in": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hole Size In"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "od_in": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Od In"
+          },
+          "planned_shoe_md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned Shoe Md M"
+          },
+          "shoe_md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shoe Md M"
+          },
+          "shoe_tvd_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shoe Tvd M"
+          },
+          "shoe_tvdss_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shoe Tvdss M"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          },
+          "weight_ppf": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight Ppf"
+          }
+        },
+        "required": [
+          "confidence",
+          "verified",
+          "evidence",
+          "id",
+          "od_in",
+          "hole_size_in",
+          "shoe_md_m",
+          "shoe_tvd_m",
+          "shoe_tvdss_m",
+          "planned_shoe_md_m",
+          "grade",
+          "weight_ppf",
+          "cement"
+        ],
+        "title": "CasingOut",
+        "type": "object"
+      },
+      "CasingShoeTrack": {
+        "properties": {
+          "aligned": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aligned"
+          },
+          "casing_id": {
+            "title": "Casing Id",
+            "type": "integer"
+          },
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "hole_size_in": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hole Size In"
+          },
+          "od_in": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Od In"
+          },
+          "shoe_md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shoe Md M"
+          },
+          "shoe_tvdss_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shoe Tvdss M"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "confidence",
+          "verified",
+          "evidence",
+          "casing_id",
+          "od_in",
+          "hole_size_in",
+          "shoe_md_m",
+          "shoe_tvdss_m",
+          "aligned"
+        ],
+        "title": "CasingShoeTrack",
+        "type": "object"
+      },
+      "CementJobOut": {
+        "properties": {
+          "bond_quality": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bond Quality"
+          },
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "remedial": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remedial"
+          },
+          "returns": {
+            "anyOf": [
+              {
+                "enum": [
+                  "full",
+                  "partial",
+                  "none"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Returns"
+          },
+          "slurry_density_sg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slurry Density Sg"
+          },
+          "toc_md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Toc Md M"
+          },
+          "toc_tvdss_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Toc Tvdss M"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          },
+          "volume_m3": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume M3"
+          }
+        },
+        "required": [
+          "confidence",
+          "verified",
+          "evidence",
+          "id",
+          "toc_md_m",
+          "toc_tvdss_m",
+          "returns",
+          "slurry_density_sg",
+          "volume_m3",
+          "bond_quality",
+          "remedial"
+        ],
+        "title": "CementJobOut",
+        "type": "object"
+      },
+      "CementTopTrack": {
+        "properties": {
+          "aligned": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aligned"
+          },
+          "casing_id": {
+            "title": "Casing Id",
+            "type": "integer"
+          },
+          "cement_job_id": {
+            "title": "Cement Job Id",
+            "type": "integer"
+          },
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "returns": {
+            "anyOf": [
+              {
+                "enum": [
+                  "full",
+                  "partial",
+                  "none"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Returns"
+          },
+          "toc_md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Toc Md M"
+          },
+          "toc_tvdss_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Toc Tvdss M"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "confidence",
+          "verified",
+          "evidence",
+          "cement_job_id",
+          "casing_id",
+          "toc_md_m",
+          "toc_tvdss_m",
+          "aligned",
+          "returns"
+        ],
+        "title": "CementTopTrack",
+        "type": "object"
+      },
       "Component": {
         "properties": {
           "key": {
@@ -93,6 +537,171 @@
         "title": "ComponentStatus",
         "type": "object"
       },
+      "CorrelationPanel": {
+        "properties": {
+          "align": {
+            "$ref": "#/components/schemas/Alignment"
+          },
+          "depth_axis": {
+            "$ref": "#/components/schemas/DepthAxis"
+          },
+          "top": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Flattening formation (FLATTEN_ON_TOP)",
+            "title": "Top"
+          },
+          "wells": {
+            "items": {
+              "$ref": "#/components/schemas/CorrelationWell"
+            },
+            "title": "Wells",
+            "type": "array"
+          }
+        },
+        "required": [
+          "align",
+          "top",
+          "depth_axis",
+          "wells"
+        ],
+        "title": "CorrelationPanel",
+        "type": "object"
+      },
+      "CorrelationTracks": {
+        "properties": {
+          "casing_shoes": {
+            "items": {
+              "$ref": "#/components/schemas/CasingShoeTrack"
+            },
+            "title": "Casing Shoes",
+            "type": "array"
+          },
+          "cement_tops": {
+            "items": {
+              "$ref": "#/components/schemas/CementTopTrack"
+            },
+            "title": "Cement Tops",
+            "type": "array"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/EventMarker"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "formations": {
+            "items": {
+              "$ref": "#/components/schemas/FormationTrack"
+            },
+            "title": "Formations",
+            "type": "array"
+          },
+          "mud": {
+            "items": {
+              "$ref": "#/components/schemas/MudTrack"
+            },
+            "title": "Mud",
+            "type": "array"
+          }
+        },
+        "required": [
+          "formations",
+          "casing_shoes",
+          "mud",
+          "cement_tops",
+          "events"
+        ],
+        "title": "CorrelationTracks",
+        "type": "object"
+      },
+      "CorrelationWell": {
+        "properties": {
+          "fallback_to_tvdss": {
+            "description": "True when this well could not be aligned",
+            "title": "Fallback To Tvdss",
+            "type": "boolean"
+          },
+          "fluid_type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "oil",
+                  "gas",
+                  "water"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fluid Type"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why it fell back (e.g. 'no Barail top')",
+            "title": "Reason"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "td_aligned": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Td Aligned"
+          },
+          "tracks": {
+            "$ref": "#/components/schemas/CorrelationTracks"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "well_id",
+          "name",
+          "fluid_type",
+          "status",
+          "synthetic",
+          "fallback_to_tvdss",
+          "reason",
+          "td_aligned",
+          "tracks"
+        ],
+        "title": "CorrelationWell",
+        "type": "object"
+      },
       "CurrentUser": {
         "properties": {
           "name": {
@@ -150,6 +759,184 @@
         "title": "DataQuality",
         "type": "object"
       },
+      "DdrOperationOut": {
+        "description": "One DDR time-log line (NPT lines appear on the well timeline).",
+        "properties": {
+          "activity_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Code"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "document_id": {
+            "title": "Document Id",
+            "type": "integer"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hours"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_npt": {
+            "title": "Is Npt",
+            "type": "boolean"
+          },
+          "md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Md M"
+          },
+          "npt_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Npt Category"
+          },
+          "page_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page No"
+          },
+          "report_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Date"
+          },
+          "t_from": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "T From"
+          },
+          "t_to": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "T To"
+          }
+        },
+        "required": [
+          "id",
+          "document_id",
+          "page_no",
+          "report_date",
+          "t_from",
+          "t_to",
+          "hours",
+          "md_m",
+          "activity_code",
+          "description",
+          "is_npt",
+          "npt_category",
+          "event_id",
+          "evidence"
+        ],
+        "title": "DdrOperationOut",
+        "type": "object"
+      },
+      "DepthAxis": {
+        "properties": {
+          "label": {
+            "description": "Axis title, e.g. 'TVDSS (m)' or 'Relative to Barail top (m)'",
+            "title": "Label",
+            "type": "string"
+          },
+          "max": {
+            "title": "Max",
+            "type": "number"
+          },
+          "min": {
+            "title": "Min",
+            "type": "number"
+          },
+          "unit": {
+            "description": "'m' or 'formation' (FORMATION_RELATIVE)",
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "unit",
+          "min",
+          "max"
+        ],
+        "title": "DepthAxis",
+        "type": "object"
+      },
       "DocumentDetail": {
         "properties": {
           "content_type": {
@@ -183,6 +970,35 @@
             ],
             "title": "Error"
           },
+          "event_count": {
+            "default": 0,
+            "description": "Active events citing this document",
+            "title": "Event Count",
+            "type": "integer"
+          },
+          "extract_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extract Error"
+          },
+          "extract_status": {
+            "default": "pending",
+            "enum": [
+              "pending",
+              "running",
+              "done",
+              "failed",
+              "skipped"
+            ],
+            "title": "Extract Status",
+            "type": "string"
+          },
           "filename": {
             "title": "Filename",
             "type": "string"
@@ -190,6 +1006,18 @@
           "id": {
             "title": "Id",
             "type": "integer"
+          },
+          "index_status": {
+            "default": "pending",
+            "enum": [
+              "pending",
+              "running",
+              "done",
+              "failed",
+              "skipped"
+            ],
+            "title": "Index Status",
+            "type": "string"
           },
           "ingest_status": {
             "title": "Ingest Status",
@@ -309,6 +1137,10 @@
           "size_bytes",
           "created_at",
           "processed_at",
+          "extract_status",
+          "index_status",
+          "extract_error",
+          "event_count",
           "sha256",
           "content_type",
           "uploaded_by",
@@ -375,6 +1207,35 @@
             ],
             "title": "Error"
           },
+          "event_count": {
+            "default": 0,
+            "description": "Active events citing this document",
+            "title": "Event Count",
+            "type": "integer"
+          },
+          "extract_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extract Error"
+          },
+          "extract_status": {
+            "default": "pending",
+            "enum": [
+              "pending",
+              "running",
+              "done",
+              "failed",
+              "skipped"
+            ],
+            "title": "Extract Status",
+            "type": "string"
+          },
           "filename": {
             "title": "Filename",
             "type": "string"
@@ -382,6 +1243,18 @@
           "id": {
             "title": "Id",
             "type": "integer"
+          },
+          "index_status": {
+            "default": "pending",
+            "enum": [
+              "pending",
+              "running",
+              "done",
+              "failed",
+              "skipped"
+            ],
+            "title": "Index Status",
+            "type": "string"
           },
           "ingest_status": {
             "title": "Ingest Status",
@@ -478,9 +1351,61 @@
           "synthetic",
           "size_bytes",
           "created_at",
-          "processed_at"
+          "processed_at",
+          "extract_status",
+          "index_status",
+          "extract_error",
+          "event_count"
         ],
         "title": "DocumentSummary",
+        "type": "object"
+      },
+      "DocumentsOverview": {
+        "description": "Counts of this well's documents by type and by pipeline stage status.",
+        "properties": {
+          "by_doc_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Documents per doc_type ('unknown' when unclassified)",
+            "title": "By Doc Type",
+            "type": "object"
+          },
+          "by_extract_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Extract Status",
+            "type": "object"
+          },
+          "by_index_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Index Status",
+            "type": "object"
+          },
+          "by_ingest_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Ingest Status",
+            "type": "object"
+          },
+          "total": {
+            "default": 0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "by_doc_type",
+          "by_ingest_status",
+          "by_extract_status",
+          "by_index_status"
+        ],
+        "title": "DocumentsOverview",
         "type": "object"
       },
       "ErrorBody": {
@@ -528,6 +1453,1630 @@
           "error"
         ],
         "title": "ErrorResponse",
+        "type": "object"
+      },
+      "EventCreate": {
+        "additionalProperties": false,
+        "description": "Manual event entry. Stored with ``source='manual'`` and ``verified=false`` until a\nreviewer verifies it; without evidence the UI shows it as uncited.",
+        "properties": {
+          "cause_text": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cause Text"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 8000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "event_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Date"
+          },
+          "event_type": {
+            "enum": [
+              "LOSS",
+              "KICK",
+              "STUCK",
+              "TIGHT",
+              "TORQUE",
+              "INSTAB",
+              "BALLING",
+              "OVERP",
+              "GAS",
+              "CEMENT",
+              "CASING",
+              "FISH",
+              "EQUIP",
+              "WAIT",
+              "OTHER_NPT"
+            ],
+            "title": "Event Type",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRefIn"
+            },
+            "maxItems": 50,
+            "title": "Evidence",
+            "type": "array"
+          },
+          "formation_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formation Id"
+          },
+          "hole_size_in": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 40.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hole Size In"
+          },
+          "md_m": {
+            "anyOf": [
+              {
+                "maximum": 15000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Md M"
+          },
+          "mitigations": {
+            "items": {
+              "$ref": "#/components/schemas/MitigationCreate"
+            },
+            "maxItems": 20,
+            "title": "Mitigations",
+            "type": "array"
+          },
+          "mw_sg": {
+            "anyOf": [
+              {
+                "maximum": 2.6,
+                "minimum": 0.8,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mw Sg"
+          },
+          "npt_hours": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Npt Hours"
+          },
+          "params": {
+            "$ref": "#/components/schemas/EventParamsIn"
+          },
+          "resolved": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "subtype": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtype"
+          },
+          "t_end": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "T End"
+          },
+          "t_start": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "T Start"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          },
+          "wellbore_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wellbore Id"
+          }
+        },
+        "required": [
+          "well_id",
+          "event_type"
+        ],
+        "title": "EventCreate",
+        "type": "object"
+      },
+      "EventDetail": {
+        "properties": {
+          "cause_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cause Text"
+          },
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "event_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Date"
+          },
+          "event_type": {
+            "enum": [
+              "LOSS",
+              "KICK",
+              "STUCK",
+              "TIGHT",
+              "TORQUE",
+              "INSTAB",
+              "BALLING",
+              "OVERP",
+              "GAS",
+              "CEMENT",
+              "CASING",
+              "FISH",
+              "EQUIP",
+              "WAIT",
+              "OTHER_NPT"
+            ],
+            "title": "Event Type",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "formation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Formation name at the event depth",
+            "title": "Formation"
+          },
+          "formation_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formation Id"
+          },
+          "hole_size_in": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hole Size In"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "lesson_card": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LessonCardContent"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Md M"
+          },
+          "mitigations": {
+            "items": {
+              "$ref": "#/components/schemas/MitigationOut"
+            },
+            "title": "Mitigations",
+            "type": "array"
+          },
+          "mw_sg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mw Sg"
+          },
+          "npt_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Npt Hours"
+          },
+          "params": {
+            "$ref": "#/components/schemas/EventParams"
+          },
+          "resolved": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "source": {
+            "enum": [
+              "rules",
+              "llm",
+              "manual",
+              "import"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "subtype": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtype"
+          },
+          "synthetic": {
+            "description": "True when the well belongs to a SYNTHETIC field",
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "t_end": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "T End"
+          },
+          "t_start": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "T Start"
+          },
+          "tvd_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tvd M"
+          },
+          "tvdss_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tvdss M"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified At"
+          },
+          "verified_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified By"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          },
+          "well_name": {
+            "title": "Well Name",
+            "type": "string"
+          },
+          "wellbore_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wellbore Id"
+          }
+        },
+        "required": [
+          "confidence",
+          "verified",
+          "evidence",
+          "id",
+          "well_id",
+          "well_name",
+          "wellbore_id",
+          "synthetic",
+          "event_type",
+          "subtype",
+          "severity",
+          "event_date",
+          "t_start",
+          "t_end",
+          "md_m",
+          "tvd_m",
+          "tvdss_m",
+          "formation_id",
+          "formation",
+          "hole_size_in",
+          "mw_sg",
+          "npt_hours",
+          "resolved",
+          "source",
+          "status",
+          "params",
+          "cause_text",
+          "description",
+          "lesson_card",
+          "mitigations",
+          "verified_by",
+          "verified_at",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "EventDetail",
+        "type": "object"
+      },
+      "EventMarker": {
+        "properties": {
+          "aligned": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when the event has no usable depth",
+            "title": "Aligned"
+          },
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "integer"
+          },
+          "event_type": {
+            "enum": [
+              "LOSS",
+              "KICK",
+              "STUCK",
+              "TIGHT",
+              "TORQUE",
+              "INSTAB",
+              "BALLING",
+              "OVERP",
+              "GAS",
+              "CEMENT",
+              "CASING",
+              "FISH",
+              "EQUIP",
+              "WAIT",
+              "OTHER_NPT"
+            ],
+            "title": "Event Type",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Md M"
+          },
+          "npt_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Npt Hours"
+          },
+          "relative_position": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "0 = formation top, 1 = base (FORMATION_RELATIVE only)",
+            "title": "Relative Position"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "tvdss_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tvdss M"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "event_id",
+          "event_type",
+          "severity",
+          "md_m",
+          "tvdss_m",
+          "aligned",
+          "relative_position",
+          "npt_hours",
+          "confidence",
+          "verified",
+          "evidence"
+        ],
+        "title": "EventMarker",
+        "type": "object"
+      },
+      "EventPage": {
+        "description": "Cursor page: pass ``next_cursor`` back as ``cursor``; null means the last page.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EventSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "EventPage",
+        "type": "object"
+      },
+      "EventParams": {
+        "description": "Event parameters as returned (every key present, null when not recorded).",
+        "properties": {
+          "ecd_sg": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ecd Sg"
+          },
+          "gas_pct": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gas Pct"
+          },
+          "h2s_ppm": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "H2S Ppm"
+          },
+          "jarring_h": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jarring H"
+          },
+          "kill_mw_sg": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kill Mw Sg"
+          },
+          "loss_rate_m3_h": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loss Rate M3 H"
+          },
+          "overpull_kn": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overpull Kn"
+          },
+          "pit_gain_m3": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pit Gain M3"
+          },
+          "sicp_kpa": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sicp Kpa"
+          },
+          "sidpp_kpa": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sidpp Kpa"
+          },
+          "time_to_cure_h": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time To Cure H"
+          },
+          "torque_knm": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Torque Knm"
+          },
+          "total_loss_m3": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Loss M3"
+          }
+        },
+        "required": [
+          "loss_rate_m3_h",
+          "total_loss_m3",
+          "time_to_cure_h",
+          "ecd_sg",
+          "pit_gain_m3",
+          "sidpp_kpa",
+          "sicp_kpa",
+          "kill_mw_sg",
+          "overpull_kn",
+          "jarring_h",
+          "torque_knm",
+          "gas_pct",
+          "h2s_ppm"
+        ],
+        "title": "EventParams",
+        "type": "object"
+      },
+      "EventParamsIn": {
+        "additionalProperties": false,
+        "description": "Event parameters as supplied by a client; unknown keys are rejected.",
+        "properties": {
+          "ecd_sg": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ecd Sg"
+          },
+          "gas_pct": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gas Pct"
+          },
+          "h2s_ppm": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "H2S Ppm"
+          },
+          "jarring_h": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jarring H"
+          },
+          "kill_mw_sg": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kill Mw Sg"
+          },
+          "loss_rate_m3_h": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loss Rate M3 H"
+          },
+          "overpull_kn": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overpull Kn"
+          },
+          "pit_gain_m3": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pit Gain M3"
+          },
+          "sicp_kpa": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sicp Kpa"
+          },
+          "sidpp_kpa": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sidpp Kpa"
+          },
+          "time_to_cure_h": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time To Cure H"
+          },
+          "torque_knm": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Torque Knm"
+          },
+          "total_loss_m3": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Loss M3"
+          }
+        },
+        "title": "EventParamsIn",
+        "type": "object"
+      },
+      "EventSummary": {
+        "properties": {
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "event_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Date"
+          },
+          "event_type": {
+            "enum": [
+              "LOSS",
+              "KICK",
+              "STUCK",
+              "TIGHT",
+              "TORQUE",
+              "INSTAB",
+              "BALLING",
+              "OVERP",
+              "GAS",
+              "CEMENT",
+              "CASING",
+              "FISH",
+              "EQUIP",
+              "WAIT",
+              "OTHER_NPT"
+            ],
+            "title": "Event Type",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "formation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Formation name at the event depth",
+            "title": "Formation"
+          },
+          "formation_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formation Id"
+          },
+          "hole_size_in": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hole Size In"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Md M"
+          },
+          "mw_sg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mw Sg"
+          },
+          "npt_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Npt Hours"
+          },
+          "resolved": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "source": {
+            "enum": [
+              "rules",
+              "llm",
+              "manual",
+              "import"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "subtype": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtype"
+          },
+          "synthetic": {
+            "description": "True when the well belongs to a SYNTHETIC field",
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "t_end": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "T End"
+          },
+          "t_start": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "T Start"
+          },
+          "tvd_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tvd M"
+          },
+          "tvdss_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tvdss M"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          },
+          "well_name": {
+            "title": "Well Name",
+            "type": "string"
+          },
+          "wellbore_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wellbore Id"
+          }
+        },
+        "required": [
+          "confidence",
+          "verified",
+          "evidence",
+          "id",
+          "well_id",
+          "well_name",
+          "wellbore_id",
+          "synthetic",
+          "event_type",
+          "subtype",
+          "severity",
+          "event_date",
+          "t_start",
+          "t_end",
+          "md_m",
+          "tvd_m",
+          "tvdss_m",
+          "formation_id",
+          "formation",
+          "hole_size_in",
+          "mw_sg",
+          "npt_hours",
+          "resolved",
+          "source",
+          "status"
+        ],
+        "title": "EventSummary",
+        "type": "object"
+      },
+      "EventTimeline": {
+        "description": "Chronological events of one well (ordered by event_date / t_start, then md_m;\nundated events last), with the DDR NPT lines and per-type counts.",
+        "properties": {
+          "completion_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completion Date"
+          },
+          "counts_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Active events per event_type code",
+            "title": "Counts By Type",
+            "type": "object"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/EventSummary"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "npt_operations": {
+            "items": {
+              "$ref": "#/components/schemas/DdrOperationOut"
+            },
+            "title": "Npt Operations",
+            "type": "array"
+          },
+          "spud_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spud Date"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "td_md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Td Md M"
+          },
+          "total_npt_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sum over events; null if none recorded",
+            "title": "Total Npt Hours"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          },
+          "well_name": {
+            "title": "Well Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "well_id",
+          "well_name",
+          "synthetic",
+          "spud_date",
+          "completion_date",
+          "td_md_m",
+          "events",
+          "npt_operations",
+          "counts_by_type",
+          "total_npt_hours"
+        ],
+        "title": "EventTimeline",
+        "type": "object"
+      },
+      "EventVerify": {
+        "additionalProperties": false,
+        "description": "Verify (or un-verify) an event, or reject it as not a real event.",
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "active",
+                  "rejected"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set 'rejected' to hide a false extraction; null = unchanged",
+            "title": "Status"
+          },
+          "verified": {
+            "default": true,
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "title": "EventVerify",
+        "type": "object"
+      },
+      "EvidenceRef": {
+        "description": "Where a fact was read: page ``page_no`` (1-based) of ``document_id``, highlighting the\n``span_ids`` (GET /documents/{document_id}/pages/{page_no} returns their boxes).",
+        "properties": {
+          "doc_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doc Type"
+          },
+          "document_id": {
+            "title": "Document Id",
+            "type": "integer"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "page_no": {
+            "title": "Page No",
+            "type": "integer"
+          },
+          "span_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Span Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "document_id",
+          "page_no",
+          "span_ids",
+          "filename",
+          "doc_type"
+        ],
+        "title": "EvidenceRef",
+        "type": "object"
+      },
+      "EvidenceRefIn": {
+        "additionalProperties": false,
+        "description": "Evidence supplied by a client (manual event entry, review correction).",
+        "properties": {
+          "document_id": {
+            "title": "Document Id",
+            "type": "integer"
+          },
+          "page_no": {
+            "minimum": 1.0,
+            "title": "Page No",
+            "type": "integer"
+          },
+          "span_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 200,
+            "title": "Span Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "document_id",
+          "page_no"
+        ],
+        "title": "EvidenceRefIn",
+        "type": "object"
+      },
+      "ExcludedWell": {
+        "description": "A well left out of a result, with the reason (never dropped silently).",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "well_id",
+          "name",
+          "reason"
+        ],
+        "title": "ExcludedWell",
         "type": "object"
       },
       "FormationOut": {
@@ -578,6 +3127,96 @@
         "title": "FormationOut",
         "type": "object"
       },
+      "FormationStats": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/FormationStatsRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "wells": {
+            "description": "Wells the statistics were computed over",
+            "items": {
+              "type": "integer"
+            },
+            "title": "Wells",
+            "type": "array"
+          }
+        },
+        "required": [
+          "wells",
+          "rows"
+        ],
+        "title": "FormationStats",
+        "type": "object"
+      },
+      "FormationStatsRow": {
+        "properties": {
+          "events_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Active events per event_type code",
+            "title": "Events By Type",
+            "type": "object"
+          },
+          "formation": {
+            "title": "Formation",
+            "type": "string"
+          },
+          "median_mw_sg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Mw Sg"
+          },
+          "median_npt_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Npt Hours"
+          },
+          "strat_order": {
+            "title": "Strat Order",
+            "type": "integer"
+          },
+          "wells_penetrating": {
+            "title": "Wells Penetrating",
+            "type": "integer"
+          },
+          "wells_with_event_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Wells with >= 1 event of the type (the '3 of 6 offsets' numerator)",
+            "title": "Wells With Event By Type",
+            "type": "object"
+          }
+        },
+        "required": [
+          "formation",
+          "strat_order",
+          "wells_penetrating",
+          "events_by_type",
+          "wells_with_event_by_type",
+          "median_mw_sg",
+          "median_npt_hours"
+        ],
+        "title": "FormationStatsRow",
+        "type": "object"
+      },
       "FormationTopOut": {
         "properties": {
           "formation": {
@@ -611,6 +3250,71 @@
         "title": "FormationTopOut",
         "type": "object"
       },
+      "FormationTrack": {
+        "properties": {
+          "base": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Next formation's top or TD; null if unknown",
+            "title": "Base"
+          },
+          "base_tvdss_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Tvdss M"
+          },
+          "lithology": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lithology"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "strat_order": {
+            "title": "Strat Order",
+            "type": "integer"
+          },
+          "top": {
+            "title": "Top",
+            "type": "number"
+          },
+          "top_tvdss_m": {
+            "title": "Top Tvdss M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "strat_order",
+          "lithology",
+          "top",
+          "base",
+          "top_tvdss_m",
+          "base_tvdss_m"
+        ],
+        "title": "FormationTrack",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -622,6 +3326,234 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "JsonValue": {},
+      "LessonCard": {
+        "description": "Problem -> likely cause -> action taken -> outcome -> lesson for one event.",
+        "properties": {
+          "action_taken": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Taken"
+          },
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "integer"
+          },
+          "event_type": {
+            "enum": [
+              "LOSS",
+              "KICK",
+              "STUCK",
+              "TIGHT",
+              "TORQUE",
+              "INSTAB",
+              "BALLING",
+              "OVERP",
+              "GAS",
+              "CEMENT",
+              "CASING",
+              "FISH",
+              "EQUIP",
+              "WAIT",
+              "OTHER_NPT"
+            ],
+            "title": "Event Type",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "formation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formation"
+          },
+          "lesson": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lesson"
+          },
+          "likely_cause": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Likely Cause"
+          },
+          "md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Md M"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "problem": {
+            "title": "Problem",
+            "type": "string"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "tvdss_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tvdss M"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          },
+          "well_name": {
+            "title": "Well Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "well_id",
+          "well_name",
+          "synthetic",
+          "event_type",
+          "formation",
+          "md_m",
+          "tvdss_m",
+          "problem",
+          "likely_cause",
+          "action_taken",
+          "outcome",
+          "lesson",
+          "confidence",
+          "verified",
+          "evidence"
+        ],
+        "title": "LessonCard",
+        "type": "object"
+      },
+      "LessonCardContent": {
+        "description": "Problem -> likely cause -> action taken -> outcome -> lesson (master plan Stage 5),\nstored in ``event.lesson_card``. Advisory wording; every line is grounded in the event's\nevidence. ``generated_by`` names the template or model that wrote it.",
+        "properties": {
+          "action_taken": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Taken"
+          },
+          "generated_by": {
+            "title": "Generated By",
+            "type": "string"
+          },
+          "lesson": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lesson"
+          },
+          "likely_cause": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Likely Cause"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "problem": {
+            "title": "Problem",
+            "type": "string"
+          }
+        },
+        "required": [
+          "problem",
+          "likely_cause",
+          "action_taken",
+          "outcome",
+          "lesson",
+          "generated_by"
+        ],
+        "title": "LessonCardContent",
         "type": "object"
       },
       "Meta": {
@@ -665,6 +3597,522 @@
         "title": "Meta",
         "type": "object"
       },
+      "MitigationCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "action_code": {
+            "enum": [
+              "LCM_PILL_FINE",
+              "LCM_PILL_COARSE",
+              "LCM_BACKGROUND",
+              "REDUCE_MW",
+              "REDUCE_FLOW_RATE",
+              "CEMENT_PLUG",
+              "SQUEEZE",
+              "SET_CASING_EARLY",
+              "DRILL_BLIND",
+              "JAR_UP",
+              "JAR_DOWN",
+              "SPOT_PIPE_RELEASE_PILL",
+              "WORK_PIPE",
+              "INCREASE_FLOW",
+              "BACKOFF_AND_FISH",
+              "SIDETRACK",
+              "DRILLERS_METHOD",
+              "WAIT_AND_WEIGHT",
+              "BULLHEAD",
+              "REMEDIAL_SQUEEZE",
+              "TOP_JOB",
+              "LIGHTWEIGHT_SLURRY",
+              "REAM",
+              "WIPER_TRIP",
+              "INCREASE_MW",
+              "CIRCULATE",
+              "CHANGE_BHA",
+              "FISHING",
+              "REPAIR_EQUIPMENT",
+              "WAIT",
+              "OTHER"
+            ],
+            "title": "Action Code",
+            "type": "string"
+          },
+          "action_text": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Text"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRefIn"
+            },
+            "maxItems": 20,
+            "title": "Evidence",
+            "type": "array"
+          },
+          "npt_hours_after": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Npt Hours After"
+          },
+          "outcome": {
+            "default": "unknown",
+            "enum": [
+              "success",
+              "partial",
+              "fail",
+              "unknown"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "recurrence": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recurrence"
+          },
+          "t_start": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "T Start"
+          },
+          "volume_lost_m3": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume Lost M3"
+          }
+        },
+        "required": [
+          "action_code"
+        ],
+        "title": "MitigationCreate",
+        "type": "object"
+      },
+      "MitigationOut": {
+        "properties": {
+          "action_code": {
+            "enum": [
+              "LCM_PILL_FINE",
+              "LCM_PILL_COARSE",
+              "LCM_BACKGROUND",
+              "REDUCE_MW",
+              "REDUCE_FLOW_RATE",
+              "CEMENT_PLUG",
+              "SQUEEZE",
+              "SET_CASING_EARLY",
+              "DRILL_BLIND",
+              "JAR_UP",
+              "JAR_DOWN",
+              "SPOT_PIPE_RELEASE_PILL",
+              "WORK_PIPE",
+              "INCREASE_FLOW",
+              "BACKOFF_AND_FISH",
+              "SIDETRACK",
+              "DRILLERS_METHOD",
+              "WAIT_AND_WEIGHT",
+              "BULLHEAD",
+              "REMEDIAL_SQUEEZE",
+              "TOP_JOB",
+              "LIGHTWEIGHT_SLURRY",
+              "REAM",
+              "WIPER_TRIP",
+              "INCREASE_MW",
+              "CIRCULATE",
+              "CHANGE_BHA",
+              "FISHING",
+              "REPAIR_EQUIPMENT",
+              "WAIT",
+              "OTHER"
+            ],
+            "title": "Action Code",
+            "type": "string"
+          },
+          "action_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Text"
+          },
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "npt_hours_after": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Npt Hours After"
+          },
+          "outcome": {
+            "enum": [
+              "success",
+              "partial",
+              "fail",
+              "unknown"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "recurrence": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recurrence"
+          },
+          "seq": {
+            "description": "Order in which the action was tried (1 = first)",
+            "title": "Seq",
+            "type": "integer"
+          },
+          "t_start": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "T Start"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          },
+          "volume_lost_m3": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume Lost M3"
+          }
+        },
+        "required": [
+          "confidence",
+          "verified",
+          "evidence",
+          "id",
+          "seq",
+          "action_code",
+          "action_text",
+          "t_start",
+          "outcome",
+          "npt_hours_after",
+          "volume_lost_m3",
+          "recurrence"
+        ],
+        "title": "MitigationOut",
+        "type": "object"
+      },
+      "MudIntervalOut": {
+        "properties": {
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "ecd_sg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ecd Sg"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "hole_size_in": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hole Size In"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "md_from_m": {
+            "title": "Md From M",
+            "type": "number"
+          },
+          "md_to_m": {
+            "title": "Md To M",
+            "type": "number"
+          },
+          "mud_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mud Type"
+          },
+          "mw_sg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mw Sg"
+          },
+          "tvdss_from_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tvdss From M"
+          },
+          "tvdss_to_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tvdss To M"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "confidence",
+          "verified",
+          "evidence",
+          "id",
+          "md_from_m",
+          "md_to_m",
+          "tvdss_from_m",
+          "tvdss_to_m",
+          "hole_size_in",
+          "mud_type",
+          "mw_sg",
+          "ecd_sg"
+        ],
+        "title": "MudIntervalOut",
+        "type": "object"
+      },
+      "MudTrack": {
+        "properties": {
+          "base": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base"
+          },
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "ecd_sg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ecd Sg"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "md_from_m": {
+            "title": "Md From M",
+            "type": "number"
+          },
+          "md_to_m": {
+            "title": "Md To M",
+            "type": "number"
+          },
+          "mud_interval_id": {
+            "title": "Mud Interval Id",
+            "type": "integer"
+          },
+          "mud_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mud Type"
+          },
+          "mw_sg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mw Sg"
+          },
+          "top": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top"
+          },
+          "tvdss_from_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tvdss From M"
+          },
+          "tvdss_to_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tvdss To M"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "confidence",
+          "verified",
+          "evidence",
+          "mud_interval_id",
+          "md_from_m",
+          "md_to_m",
+          "tvdss_from_m",
+          "tvdss_to_m",
+          "top",
+          "base",
+          "mud_type",
+          "mw_sg",
+          "ecd_sg"
+        ],
+        "title": "MudTrack",
+        "type": "object"
+      },
       "OffsetOut": {
         "properties": {
           "bearing_deg": {
@@ -678,9 +4126,82 @@
             ],
             "title": "Bearing Deg"
           },
+          "closest_offset_md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closest Offset Md M"
+          },
+          "closest_subject_md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closest Subject Md M"
+          },
+          "closest_tvdss_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Offset-well TVDSS at the closest-approach point",
+            "title": "Closest Tvdss M"
+          },
           "distance_m": {
+            "description": "Meaning depends on the mode: see distance_label",
             "title": "Distance M",
             "type": "number"
+          },
+          "entry_md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Md M"
+          },
+          "entry_tvdss_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Tvdss M"
+          },
+          "fluid_type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "oil",
+                  "gas",
+                  "water"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fluid Type"
           },
           "lat": {
             "title": "Lat",
@@ -734,18 +4255,38 @@
           "name",
           "status",
           "well_type",
+          "fluid_type",
           "lat",
           "lon",
           "td_md_m",
           "synthetic",
           "distance_m",
-          "bearing_deg"
+          "bearing_deg",
+          "entry_md_m",
+          "entry_tvdss_m",
+          "closest_subject_md_m",
+          "closest_offset_md_m",
+          "closest_tvdss_m"
         ],
         "title": "OffsetOut",
         "type": "object"
       },
       "OffsetsOut": {
         "properties": {
+          "distance_label": {
+            "default": "Surface distance between wellheads",
+            "description": "What distance_m measures in this mode (shown as the column title)",
+            "title": "Distance Label",
+            "type": "string"
+          },
+          "excluded": {
+            "description": "Wells in range but left out, with the reason (e.g. 'no Barail top')",
+            "items": {
+              "$ref": "#/components/schemas/ExcludedWell"
+            },
+            "title": "Excluded",
+            "type": "array"
+          },
           "formation": {
             "anyOf": [
               {
@@ -758,8 +4299,7 @@
             "title": "Formation"
           },
           "mode": {
-            "title": "Mode",
-            "type": "string"
+            "$ref": "#/components/schemas/ProximityMode"
           },
           "offsets": {
             "items": {
@@ -772,6 +4312,51 @@
             "title": "Radius Km",
             "type": "number"
           },
+          "subject_entry_md_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "AT_FORMATION: the subject well's formation entry MD",
+            "title": "Subject Entry Md M"
+          },
+          "subject_entry_tvdss_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Entry Tvdss M"
+          },
+          "tvdss_from_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tvdss From M"
+          },
+          "tvdss_to_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tvdss To M"
+          },
           "well_id": {
             "title": "Well Id",
             "type": "integer"
@@ -782,7 +4367,13 @@
           "mode",
           "radius_km",
           "formation",
-          "offsets"
+          "tvdss_from_m",
+          "tvdss_to_m",
+          "distance_label",
+          "subject_entry_md_m",
+          "subject_entry_tvdss_m",
+          "offsets",
+          "excluded"
         ],
         "title": "OffsetsOut",
         "type": "object"
@@ -880,6 +4471,144 @@
         "title": "PageSummary",
         "type": "object"
       },
+      "Passage": {
+        "description": "A retrieved chunk. ``snippet`` is plain text; ``highlights`` are ``[start, end)``\ncharacter ranges into ``snippet`` (never HTML, so the UI can render them safely).",
+        "properties": {
+          "chunk_id": {
+            "title": "Chunk Id",
+            "type": "integer"
+          },
+          "dense_rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1-based embedding rank; null if not matched",
+            "title": "Dense Rank"
+          },
+          "doc_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doc Type"
+          },
+          "document_id": {
+            "title": "Document Id",
+            "type": "integer"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "highlights": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Highlights",
+            "type": "array"
+          },
+          "lexical_rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1-based full-text rank; null if not matched",
+            "title": "Lexical Rank"
+          },
+          "page_from": {
+            "title": "Page From",
+            "type": "integer"
+          },
+          "page_to": {
+            "title": "Page To",
+            "type": "integer"
+          },
+          "score": {
+            "description": "Fused rank score (RRF); a relevance score, not a probability",
+            "title": "Score",
+            "type": "number"
+          },
+          "snippet": {
+            "title": "Snippet",
+            "type": "string"
+          },
+          "span_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Span Ids",
+            "type": "array"
+          },
+          "synthetic": {
+            "title": "Synthetic",
+            "type": "boolean"
+          },
+          "well_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Well Id"
+          },
+          "well_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Well Name"
+          }
+        },
+        "required": [
+          "chunk_id",
+          "document_id",
+          "filename",
+          "doc_type",
+          "well_id",
+          "well_name",
+          "synthetic",
+          "page_from",
+          "page_to",
+          "span_ids",
+          "snippet",
+          "highlights",
+          "score",
+          "lexical_rank",
+          "dense_rank"
+        ],
+        "title": "Passage",
+        "type": "object"
+      },
       "PathPoint": {
         "properties": {
           "lat": {
@@ -958,6 +4687,397 @@
           "components"
         ],
         "title": "ReadinessReport",
+        "type": "object"
+      },
+      "ReviewAccept": {
+        "additionalProperties": false,
+        "description": "The proposed values are right: the target becomes verified.",
+        "properties": {
+          "action": {
+            "const": "accept",
+            "title": "Action",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "title": "ReviewAccept",
+        "type": "object"
+      },
+      "ReviewCorrect": {
+        "additionalProperties": false,
+        "description": "Replace some proposed values (same keys and canonical units as ``proposed``); the\ntarget is updated and verified, and the pair is kept for the evaluation gold set.",
+        "properties": {
+          "action": {
+            "const": "correct",
+            "title": "Action",
+            "type": "string"
+          },
+          "fields": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "minProperties": 1,
+            "title": "Fields",
+            "type": "object"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "action",
+          "fields"
+        ],
+        "title": "ReviewCorrect",
+        "type": "object"
+      },
+      "ReviewItem": {
+        "properties": {
+          "confidence": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "correction": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/JsonValue"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correction"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "decided_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided By"
+          },
+          "doc_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doc Type"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Field under review; null = the whole record",
+            "title": "Field"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "event",
+              "mitigation",
+              "casing",
+              "cement",
+              "mud",
+              "alias",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "page_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page No"
+          },
+          "proposed": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "description": "Extracted values, canonical units",
+            "title": "Proposed",
+            "type": "object"
+          },
+          "reason": {
+            "description": "Why it needs review, e.g. 'confidence 0.62 < 0.75'",
+            "title": "Reason",
+            "type": "string"
+          },
+          "span_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Span Ids",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "accepted",
+              "corrected",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Row id in the table named by kind, if written",
+            "title": "Target Id"
+          },
+          "well_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Well Id"
+          },
+          "well_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Well Name"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "target_id",
+          "document_id",
+          "filename",
+          "doc_type",
+          "well_id",
+          "well_name",
+          "page_no",
+          "span_ids",
+          "evidence",
+          "field",
+          "reason",
+          "confidence",
+          "proposed",
+          "status",
+          "decided_by",
+          "decided_at",
+          "correction",
+          "created_at"
+        ],
+        "title": "ReviewItem",
+        "type": "object"
+      },
+      "ReviewPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "status_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Items per status (all kinds)",
+            "title": "Status Counts",
+            "type": "object"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "status_counts"
+        ],
+        "title": "ReviewPage",
+        "type": "object"
+      },
+      "ReviewReject": {
+        "additionalProperties": false,
+        "description": "Not a real fact: the target is rejected (events get status 'rejected').",
+        "properties": {
+          "action": {
+            "const": "reject",
+            "title": "Action",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "reason"
+        ],
+        "title": "ReviewReject",
+        "type": "object"
+      },
+      "SearchResponse": {
+        "properties": {
+          "embedding_provider": {
+            "description": "Embedder used for the dense leg, e.g. 'hash'",
+            "title": "Embedding Provider",
+            "type": "string"
+          },
+          "lessons": {
+            "items": {
+              "$ref": "#/components/schemas/LessonCard"
+            },
+            "title": "Lessons",
+            "type": "array"
+          },
+          "no_record_found": {
+            "description": "True when nothing cleared the relevance floor: the UI must say 'No record found in the indexed documents' instead of showing weak matches",
+            "title": "No Record Found",
+            "type": "boolean"
+          },
+          "passages": {
+            "items": {
+              "$ref": "#/components/schemas/Passage"
+            },
+            "title": "Passages",
+            "type": "array"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "took_ms": {
+            "title": "Took Ms",
+            "type": "number"
+          }
+        },
+        "required": [
+          "query",
+          "passages",
+          "lessons",
+          "no_record_found",
+          "embedding_provider",
+          "took_ms"
+        ],
+        "title": "SearchResponse",
         "type": "object"
       },
       "SpanOut": {
@@ -1049,6 +5169,163 @@
           "dls_deg_30m"
         ],
         "title": "StationOut",
+        "type": "object"
+      },
+      "SurveyStationIn": {
+        "additionalProperties": false,
+        "properties": {
+          "azi_deg": {
+            "exclusiveMaximum": 360.0,
+            "minimum": 0.0,
+            "title": "Azi Deg",
+            "type": "number"
+          },
+          "inc_deg": {
+            "maximum": 180.0,
+            "minimum": 0.0,
+            "title": "Inc Deg",
+            "type": "number"
+          },
+          "md_m": {
+            "maximum": 15000.0,
+            "minimum": 0.0,
+            "title": "Md M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "md_m",
+          "inc_deg",
+          "azi_deg"
+        ],
+        "title": "SurveyStationIn",
+        "type": "object"
+      },
+      "SurveyUpload": {
+        "additionalProperties": false,
+        "description": "Survey stations; the server recomputes TVD/TVDSS/N/E/DLS by minimum curvature,\nrebuilds the 3D path and formation entry points, and returns the new trajectory.",
+        "properties": {
+          "azi_ref": {
+            "default": "true",
+            "enum": [
+              "true",
+              "grid",
+              "magnetic"
+            ],
+            "title": "Azi Ref",
+            "type": "string"
+          },
+          "correction_deg": {
+            "anyOf": [
+              {
+                "maximum": 180.0,
+                "minimum": -180.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Added to every azimuth to reach true north: magnetic declination (azi_ref=magnetic) or grid convergence (azi_ref=grid). Required unless azi_ref=true.",
+            "title": "Correction Deg"
+          },
+          "stations": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyStationIn"
+            },
+            "maxItems": 5000,
+            "minItems": 2,
+            "title": "Stations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "stations"
+        ],
+        "title": "SurveyUpload",
+        "type": "object"
+      },
+      "TrajectoryAtDepth": {
+        "description": "Position at ``md_m``, interpolated along the minimum-curvature arc between stations.",
+        "properties": {
+          "assumed": {
+            "description": "True when the trajectory is assumed vertical",
+            "title": "Assumed",
+            "type": "boolean"
+          },
+          "azi_deg": {
+            "title": "Azi Deg",
+            "type": "number"
+          },
+          "east_m": {
+            "title": "East M",
+            "type": "number"
+          },
+          "formation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Formation at this depth, from the tops",
+            "title": "Formation"
+          },
+          "inc_deg": {
+            "title": "Inc Deg",
+            "type": "number"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "title": "Lon",
+            "type": "number"
+          },
+          "md_m": {
+            "title": "Md M",
+            "type": "number"
+          },
+          "north_m": {
+            "title": "North M",
+            "type": "number"
+          },
+          "tvd_m": {
+            "title": "Tvd M",
+            "type": "number"
+          },
+          "tvdss_m": {
+            "title": "Tvdss M",
+            "type": "number"
+          },
+          "well_id": {
+            "title": "Well Id",
+            "type": "integer"
+          },
+          "wellbore_id": {
+            "title": "Wellbore Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "well_id",
+          "wellbore_id",
+          "md_m",
+          "tvd_m",
+          "tvdss_m",
+          "north_m",
+          "east_m",
+          "inc_deg",
+          "azi_deg",
+          "lat",
+          "lon",
+          "formation",
+          "assumed"
+        ],
+        "title": "TrajectoryAtDepth",
         "type": "object"
       },
       "TrajectoryOut": {
@@ -1177,6 +5454,14 @@
             "title": "Aliases",
             "type": "array"
           },
+          "casing": {
+            "description": "Ordered by shoe depth",
+            "items": {
+              "$ref": "#/components/schemas/CasingOut"
+            },
+            "title": "Casing",
+            "type": "array"
+          },
           "completion_date": {
             "anyOf": [
               {
@@ -1204,9 +5489,37 @@
             "title": "Document Count",
             "type": "integer"
           },
+          "documents": {
+            "$ref": "#/components/schemas/DocumentsOverview"
+          },
+          "event_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Active events per event_type code",
+            "title": "Event Counts",
+            "type": "object"
+          },
           "field": {
             "title": "Field",
             "type": "string"
+          },
+          "fluid_type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "oil",
+                  "gas",
+                  "water"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "oil | gas | water (B2)",
+            "title": "Fluid Type"
           },
           "formation_tops": {
             "items": {
@@ -1234,9 +5547,25 @@
             "title": "Lat",
             "type": "number"
           },
+          "lessons": {
+            "description": "Lesson cards of this well's events (at most 10)",
+            "items": {
+              "$ref": "#/components/schemas/LessonCard"
+            },
+            "title": "Lessons",
+            "type": "array"
+          },
           "lon": {
             "title": "Lon",
             "type": "number"
+          },
+          "mud": {
+            "description": "Ordered by md_from_m",
+            "items": {
+              "$ref": "#/components/schemas/MudIntervalOut"
+            },
+            "title": "Mud",
+            "type": "array"
           },
           "name": {
             "title": "Name",
@@ -1252,6 +5581,14 @@
               }
             ],
             "title": "Profile"
+          },
+          "recent_events": {
+            "description": "Latest active events, newest first (at most 10)",
+            "items": {
+              "$ref": "#/components/schemas/EventSummary"
+            },
+            "title": "Recent Events",
+            "type": "array"
           },
           "rig_name": {
             "anyOf": [
@@ -1330,6 +5667,7 @@
                 "type": "null"
               }
             ],
+            "description": "Purpose: exploration / development / appraisal",
             "title": "Well Type"
           }
         },
@@ -1339,6 +5677,7 @@
           "field",
           "status",
           "well_type",
+          "fluid_type",
           "profile",
           "lat",
           "lon",
@@ -1356,7 +5695,13 @@
           "trajectory_assumed",
           "crs_epsg",
           "formation_tops",
-          "data_quality"
+          "data_quality",
+          "casing",
+          "mud",
+          "event_counts",
+          "recent_events",
+          "documents",
+          "lessons"
         ],
         "title": "WellDetail",
         "type": "object"
@@ -1391,6 +5736,23 @@
           "field": {
             "title": "Field",
             "type": "string"
+          },
+          "fluid_type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "oil",
+                  "gas",
+                  "water"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "oil | gas | water (B2)",
+            "title": "Fluid Type"
           },
           "id": {
             "title": "Id",
@@ -1459,6 +5821,7 @@
                 "type": "null"
               }
             ],
+            "description": "Purpose: exploration / development / appraisal",
             "title": "Well Type"
           }
         },
@@ -1468,6 +5831,7 @@
           "field",
           "status",
           "well_type",
+          "fluid_type",
           "profile",
           "lat",
           "lon",
@@ -1742,6 +6106,7 @@
     },
     "/api/v1/correlation": {
       "get": {
+        "description": "One column per well, in the order given, with formation / casing / mud / cement /\nevent tracks on a shared aligned axis. Unknown well ids answer 404.",
         "operationId": "correlation_api_v1_correlation_get",
         "parameters": [
           {
@@ -1768,18 +6133,21 @@
             }
           },
           {
+            "description": "Formation to flatten on (FLATTEN_ON_TOP)",
             "in": "query",
             "name": "top",
             "required": false,
             "schema": {
               "anyOf": [
                 {
+                  "maxLength": 100,
                   "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
+              "description": "Formation to flatten on (FLATTEN_ON_TOP)",
               "title": "Top"
             }
           }
@@ -1788,7 +6156,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/CorrelationPanel"
+                }
               }
             },
             "description": "Successful Response"
@@ -1815,6 +6185,106 @@
           }
         },
         "summary": "Correlation panel data",
+        "tags": [
+          "correlation"
+        ]
+      }
+    },
+    "/api/v1/correlation/formation-stats": {
+      "get": {
+        "description": "Either an explicit ``wells`` list, or ``well_id`` plus ``radius_km`` (default 5 km):\nthe well and its surface offsets. Rows are in stratigraphic order.",
+        "operationId": "formation_stats_api_v1_correlation_formation_stats_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "wells",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "maxItems": 100,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wells"
+            }
+          },
+          {
+            "in": "query",
+            "name": "well_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Well Id"
+            }
+          },
+          {
+            "description": "Radius around well_id's surface location (km)",
+            "in": "query",
+            "name": "radius_km",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "maximum": 100,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Radius around well_id's surface location (km)",
+              "title": "Radius Km"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormationStats"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Planned, not implemented in this phase"
+          }
+        },
+        "summary": "Per-formation offset statistics",
         "tags": [
           "correlation"
         ]
@@ -1870,6 +6340,52 @@
                 }
               ],
               "title": "Doc Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "extract_status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pending",
+                    "running",
+                    "done",
+                    "failed",
+                    "skipped"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Extract Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "index_status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pending",
+                    "running",
+                    "done",
+                    "failed",
+                    "skipped"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Index Status"
             }
           },
           {
@@ -2189,21 +6705,44 @@
     },
     "/api/v1/events": {
       "get": {
+        "description": "Active events matching every given filter, ordered by (well name, md_m, id).\n\n``formation`` matches a formation name or synonym (case-insensitive). With ``radius_km``\nthe events of ``well_id`` *and* of every well whose surface location lies within the\nradius are returned; without it, only ``well_id``'s. Rejected events are never listed.",
         "operationId": "list_events_api_v1_events_get",
         "parameters": [
           {
+            "description": "Repeat to match any of several types",
             "in": "query",
             "name": "event_type",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "items": {
+                    "enum": [
+                      "LOSS",
+                      "KICK",
+                      "STUCK",
+                      "TIGHT",
+                      "TORQUE",
+                      "INSTAB",
+                      "BALLING",
+                      "OVERP",
+                      "GAS",
+                      "CEMENT",
+                      "CASING",
+                      "FISH",
+                      "EQUIP",
+                      "WAIT",
+                      "OTHER_NPT"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
                 },
                 {
                   "type": "null"
                 }
               ],
+              "description": "Repeat to match any of several types",
               "title": "Event Type"
             }
           },
@@ -2214,6 +6753,7 @@
             "schema": {
               "anyOf": [
                 {
+                  "maxLength": 100,
                   "type": "string"
                 },
                 {
@@ -2240,6 +6780,7 @@
             }
           },
           {
+            "description": "Radius around well_id's surface location (km)",
             "in": "query",
             "name": "radius_km",
             "required": false,
@@ -2254,6 +6795,7 @@
                   "type": "null"
                 }
               ],
+              "description": "Radius around well_id's surface location (km)",
               "title": "Radius Km"
             }
           },
@@ -2288,13 +6830,118 @@
               ],
               "title": "Tvdss To M"
             }
+          },
+          {
+            "in": "query",
+            "name": "date_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          },
+          {
+            "description": "Only verified / unverified",
+            "in": "query",
+            "name": "verified",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only verified / unverified",
+              "title": "Verified"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_confidence",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1,
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Confidence"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "description": "Page size",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page's next_cursor",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opaque cursor from the previous page's next_cursor",
+              "title": "Cursor"
+            }
           }
         ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/EventPage"
+                }
               }
             },
             "description": "Successful Response"
@@ -2321,6 +6968,192 @@
           }
         },
         "summary": "Search drilling events",
+        "tags": [
+          "events"
+        ]
+      },
+      "post": {
+        "description": "Stores the event with ``source='manual'``, ``verified=false``; depth references\n(``tvd_m``/``tvdss_m``) and the formation are derived from ``md_m`` when not given.\n404 if the well does not exist; 422 if evidence spans are not on the cited page.",
+        "operationId": "create_event_api_v1_events_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Planned, not implemented in this phase"
+          }
+        },
+        "summary": "Record an event manually",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/events/{event_id}": {
+      "get": {
+        "description": "One event (active or rejected) with its mitigations in the order tried.",
+        "operationId": "get_event_api_v1_events__event_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Planned, not implemented in this phase"
+          }
+        },
+        "summary": "Event detail with mitigations, evidence and lesson card",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/v1/events/{event_id}/verify": {
+      "patch": {
+        "description": "Sets ``verified``/``verified_by``/``verified_at`` (and ``status`` when given) and\ncloses any pending review items for the event.",
+        "operationId": "verify_event_api_v1_events__event_id__verify_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventVerify"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Planned, not implemented in this phase"
+          }
+        },
+        "summary": "Verify, un-verify or reject an event",
         "tags": [
           "events"
         ]
@@ -2584,15 +7417,129 @@
     },
     "/api/v1/review-queue": {
       "get": {
+        "description": "Items ordered by confidence (lowest first), then id. Pass ``status`` explicitly to\nsee decided items; ``status_counts`` always covers every status.",
         "operationId": "list_review_queue_api_v1_review_queue_get",
+        "parameters": [
+          {
+            "description": "Default: pending only",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pending",
+                    "accepted",
+                    "corrected",
+                    "rejected"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "pending",
+              "description": "Default: pending only",
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "event",
+                    "mitigation",
+                    "casing",
+                    "cement",
+                    "mud",
+                    "alias",
+                    "other"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "document_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Document Id"
+            }
+          },
+          {
+            "description": "Page size",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "description": "Page size",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Opaque cursor from the previous page's next_cursor",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opaque cursor from the previous page's next_cursor",
+              "title": "Cursor"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewPage"
+                }
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           },
           "501": {
             "content": {
@@ -2613,6 +7560,7 @@
     },
     "/api/v1/review-queue/{item_id}": {
       "post": {
+        "description": "Applies the decision to the target record (verified / corrected / rejected), records\n``decided_by``/``decided_at`` and returns the updated item. 409 if already decided.",
         "operationId": "review_item_api_v1_review_queue__item_id__post",
         "parameters": [
           {
@@ -2625,14 +7573,47 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ReviewAccept"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ReviewCorrect"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ReviewReject"
+                  }
+                ],
+                "title": "Decision"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewItem"
+                }
               }
             },
             "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
           },
           "422": {
             "content": {
@@ -2663,6 +7644,7 @@
     },
     "/api/v1/search": {
       "get": {
+        "description": "Full-text (tsvector) and dense (pgvector) retrieval fused with RRF (k = 60) after the\nfilters are applied; returns cited passages and the lesson cards of matching events.\n``no_record_found`` is true when nothing clears the relevance floor.",
         "operationId": "search_api_v1_search_get",
         "parameters": [
           {
@@ -2675,13 +7657,169 @@
               "title": "Q",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "well_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Well Id"
+            }
+          },
+          {
+            "description": "Radius around well_id's surface location (km)",
+            "in": "query",
+            "name": "radius_km",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "exclusiveMinimum": 0,
+                  "maximum": 100,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Radius around well_id's surface location (km)",
+              "title": "Radius Km"
+            }
+          },
+          {
+            "in": "query",
+            "name": "formation",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Formation"
+            }
+          },
+          {
+            "description": "Repeat to match any of several types",
+            "in": "query",
+            "name": "event_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "enum": [
+                      "LOSS",
+                      "KICK",
+                      "STUCK",
+                      "TIGHT",
+                      "TORQUE",
+                      "INSTAB",
+                      "BALLING",
+                      "OVERP",
+                      "GAS",
+                      "CEMENT",
+                      "CASING",
+                      "FISH",
+                      "EQUIP",
+                      "WAIT",
+                      "OTHER_NPT"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Repeat to match any of several types",
+              "title": "Event Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "doc_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 20,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Doc Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
           }
         ],
         "responses": {
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -2764,6 +7902,46 @@
                 }
               ],
               "title": "Q"
+            }
+          },
+          {
+            "description": "Map viewport 'min_lon,min_lat,max_lon,max_lat' (WGS84 degrees)",
+            "in": "query",
+            "name": "bbox",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Map viewport 'min_lon,min_lat,max_lon,max_lat' (WGS84 degrees)",
+              "title": "Bbox"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fluid_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "oil",
+                    "gas",
+                    "water"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fluid Type"
             }
           },
           {
@@ -2860,8 +8038,72 @@
         ]
       }
     },
+    "/api/v1/wells/{well_id}/events/timeline": {
+      "get": {
+        "description": "Active events of the well plus its DDR NPT lines, for the Well 360 Events tab.",
+        "operationId": "get_event_timeline_api_v1_wells__well_id__events_timeline_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "well_id",
+            "required": true,
+            "schema": {
+              "title": "Well Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventTimeline"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Planned, not implemented in this phase"
+          }
+        },
+        "summary": "Chronological event list for one well",
+        "tags": [
+          "events"
+        ]
+      }
+    },
     "/api/v1/wells/{well_id}/offsets": {
       "get": {
+        "description": "``SURFACE``: wellhead-to-wellhead distance. ``AT_FORMATION`` (needs ``formation``):\ndistance between the two wells' entry points into that formation; wells that never\nreach it are listed in ``excluded``. ``CLOSEST_APPROACH``: minimum 3D distance between\nthe wellbore paths inside the optional TVDSS window. ``radius_km`` bounds the distance in\nevery mode.",
         "operationId": "get_offsets_api_v1_wells__well_id__offsets_get",
         "parameters": [
           {
@@ -2895,19 +8137,58 @@
             }
           },
           {
+            "description": "AT_FORMATION: formation to compare at",
             "in": "query",
             "name": "formation",
             "required": false,
             "schema": {
               "anyOf": [
                 {
+                  "maxLength": 100,
                   "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
+              "description": "AT_FORMATION: formation to compare at",
               "title": "Formation"
+            }
+          },
+          {
+            "description": "CLOSEST_APPROACH: TVDSS window start (m)",
+            "in": "query",
+            "name": "tvdss_from_m",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "CLOSEST_APPROACH: TVDSS window start (m)",
+              "title": "Tvdss From M"
+            }
+          },
+          {
+            "description": "CLOSEST_APPROACH: TVDSS window end (m)",
+            "in": "query",
+            "name": "tvdss_to_m",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "CLOSEST_APPROACH: TVDSS window end (m)",
+              "title": "Tvdss To M"
             }
           }
         ],
@@ -3054,6 +8335,151 @@
           }
         },
         "summary": "Survey stations and 3D path",
+        "tags": [
+          "wells"
+        ]
+      },
+      "post": {
+        "description": "Replaces the primary wellbore's stations, recomputes them by minimum curvature,\nrebuilds ``path_geom`` and formation entry points, and clears ``trajectory_assumed``.",
+        "operationId": "upload_survey_api_v1_wells__well_id__trajectory_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "well_id",
+            "required": true,
+            "schema": {
+              "title": "Well Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SurveyUpload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrajectoryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Planned, not implemented in this phase"
+          }
+        },
+        "summary": "Upload survey stations and recompute the trajectory",
+        "tags": [
+          "wells"
+        ]
+      }
+    },
+    "/api/v1/wells/{well_id}/trajectory/at-depth": {
+      "get": {
+        "description": "Minimum-curvature interpolation between the bracketing stations; 422 when ``md_m``\nis beyond the last station.",
+        "operationId": "get_trajectory_at_depth_api_v1_wells__well_id__trajectory_at_depth_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "well_id",
+            "required": true,
+            "schema": {
+              "title": "Well Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "md_m",
+            "required": true,
+            "schema": {
+              "maximum": 15000,
+              "minimum": 0,
+              "title": "Md M",
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrajectoryAtDepth"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Planned, not implemented in this phase"
+          }
+        },
+        "summary": "Interpolated position at a measured depth",
         "tags": [
           "wells"
         ]

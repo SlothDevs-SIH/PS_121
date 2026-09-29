@@ -1,6 +1,9 @@
 """Celery application. Run: ``celery -A app.workers.celery_app worker -l INFO``.
 
-Queues (master plan S1/S2 batch work lands here from B1): ``ingest``, ``extract``, ``default``.
+Queues (docs/BACKEND_PLAN.md section 9):
+- ``ingest``: ``ingest.process_document`` (OCR-heavy);
+- ``extract``: ``extract.process_document`` and ``search.index_document`` (LLM / embedding);
+- ``default``: ``system.ping`` and light housekeeping.
 """
 
 from datetime import UTC, datetime
@@ -15,7 +18,7 @@ celery_app = Celery(
     "smriti",
     broker=settings.redis_url,
     backend=settings.redis_url,
-    include=["app.ingest.tasks"],
+    include=["app.ingest.tasks", "app.extract.tasks", "app.search.tasks"],
 )
 celery_app.conf.update(
     task_default_queue="default",
@@ -27,6 +30,12 @@ celery_app.conf.update(
     result_expires=3600,
     timezone="UTC",
     broker_connection_retry_on_startup=True,
+    # Explicit routes so a producer that only knows the task name still hits the right queue.
+    task_routes={
+        "ingest.*": {"queue": "ingest"},
+        "extract.*": {"queue": "extract"},
+        "search.*": {"queue": "extract"},
+    },
 )
 
 

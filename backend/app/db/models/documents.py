@@ -1,28 +1,44 @@
-"""S1 tables: documents, pages, text spans (with bounding boxes) and search chunks."""
+"""S1 tables: documents, pages, text spans (with bounding boxes) and search chunks.
+
+B2 adds the per-document extraction/indexing stage columns (migration 0005) and the chunk
+search columns (migration 0006).
+"""
 
 from datetime import date, datetime
 
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    CheckConstraint,
+    Computed,
     Date,
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
     func,
+    text,
 )
-from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.dialects.postgresql import ARRAY, TSVECTOR
+from sqlalchemy.orm import Mapped, deferred, mapped_column, relationship
 
 from app.db.base import Base
+from app.db.types import Vector
+from app.db.vocab import STAGE_STATUSES, in_list
+
+EMBEDDING_DIM = 1024  # BGE-M3 dense size; the "hash" provider emits the same size
 
 
 class Document(Base):
     __tablename__ = "document"
+    __table_args__ = (
+        CheckConstraint(in_list("extract_status", STAGE_STATUSES), name="extract_status"),
+        CheckConstraint(in_list("index_status", STAGE_STATUSES), name="index_status"),
+    )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     sha256: Mapped[str] = mapped_column(String(64), unique=True)
@@ -43,6 +59,16 @@ class Document(Base):
     uploaded_by: Mapped[str | None] = mapped_column(String(100))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # S2 extraction and S5 indexing run after ingestion: pending | running | done | failed | skipped
+    extract_status: Mapped[str] = mapped_column(
+        String(10), default="pending", server_default=text("'pending'"), index=True
+    )
+    index_status: Mapped[str] = mapped_column(
+        String(10), default="pending", server_default=text("'pending'"), index=True
+    )
+    extract_error: Mapped[str | None] = mapped_column(Text)
+    extracted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    indexed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     pages: Mapped[list["Page"]] = relationship(
         back_populates="document", cascade="all, delete-orphan", order_by="Page.page_no"
@@ -87,6 +113,15 @@ class TextSpan(Base):
 
 class Chunk(Base):
     __tablename__ = "chunk"
+    __table_args__ = (
+        Index("ix_chunk_tsv", "tsv", postgresql_using="gin"),
+        Index(
+            "ix_chunk_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
+    )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     document_id: Mapped[int] = mapped_column(
@@ -99,3 +134,9 @@ class Chunk(Base):
     page_to: Mapped[int] = mapped_column(Integer)
     span_ids: Mapped[list[int]] = mapped_column(ARRAY(BigInteger))
     text: Mapped[str] = mapped_column(Text)
+    # Search columns (0006). Deferred: large, and only the search module reads them.
+    embedding: Mapped[list[float] | None] = deferred(mapped_column(Vector(EMBEDDING_DIM)))
+    tsv: Mapped[str | None] = deferred(
+        mapped_column(TSVECTOR, Computed("to_tsvector('english', text)", persisted=True))
+    )
+    embedded_with: Mapped[str | None] = mapped_column(String(100))  # "<provider>:<model>"

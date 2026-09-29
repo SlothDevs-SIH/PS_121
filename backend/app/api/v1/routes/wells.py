@@ -1,19 +1,24 @@
-"""Wells, offsets, trajectories and formations (B1). Correlation, risk profile and the
-Offset Risk Brief remain skeletons until their phases."""
+"""Wells, offsets, trajectories and formations (B1). B2 adds the map bbox / fluid filters,
+the AT_FORMATION and CLOSEST_APPROACH offset modes, trajectory-at-depth and survey upload
+(contract only until the geo engineer lands them). The risk profile and the Offset Risk Brief
+remain skeletons until their phases. Correlation moved to correlation.py."""
 
-from enum import StrEnum
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.api.v1.params import NOT_FOUND, check_range, parse_bbox
 from app.api.v1.schemas.wells import (
     FormationOut,
     OffsetOut,
     OffsetsOut,
     PathPoint,
+    ProximityMode,
     StationOut,
+    SurveyUpload,
+    TrajectoryAtDepth,
     TrajectoryOut,
     WellDetail,
     WellList,
@@ -21,23 +26,14 @@ from app.api.v1.schemas.wells import (
 from app.core.errors import NOT_IMPLEMENTED, NotFoundError, NotImplementedYetError
 from app.db.models import Field, Formation
 from app.db.session import get_session
+from app.db.vocab import FluidType
 from app.geo.service import path_latlon, surface_offsets
 from app.normalise.wells_service import get_well_or_404, list_wells, well_detail
 
 router = APIRouter()
 DbSession = Annotated[Session, Depends(get_session)]
 
-
-class ProximityMode(StrEnum):
-    SURFACE = "SURFACE"
-    AT_FORMATION = "AT_FORMATION"
-    CLOSEST_APPROACH = "CLOSEST_APPROACH"
-
-
-class Alignment(StrEnum):
-    TVDSS = "TVDSS"
-    FLATTEN_ON_TOP = "FLATTEN_ON_TOP"
-    FORMATION_RELATIVE = "FORMATION_RELATIVE"
+SURFACE_DISTANCE_LABEL = "Surface distance between wellheads"
 
 
 @router.get("/wells", tags=["wells"], summary="List and filter wells", response_model=WellList)
@@ -46,9 +42,19 @@ def get_wells(
     field: str | None = None,
     status: str | None = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
+    bbox: Annotated[
+        str | None,
+        Query(
+            max_length=100,
+            description="Map viewport 'min_lon,min_lat,max_lon,max_lat' (WGS84 degrees)",
+        ),
+    ] = None,
+    fluid_type: FluidType | None = None,
     limit: Annotated[int, Query(ge=1, le=500)] = 200,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> WellList:
+    if parse_bbox(bbox) is not None or fluid_type is not None:
+        raise NotImplementedYetError("Well list bbox / fluid_type filters (S3/S4)", "B2")
     items, total = list_wells(session, field, status, q, limit, offset)
     return WellList(items=items, total=total)
 
@@ -72,8 +78,22 @@ def get_offsets(
     session: DbSession,
     radius_km: Annotated[float, Query(gt=0, le=100)] = 5.0,
     mode: ProximityMode = ProximityMode.SURFACE,
-    formation: str | None = None,
+    formation: Annotated[
+        str | None, Query(max_length=100, description="AT_FORMATION: formation to compare at")
+    ] = None,
+    tvdss_from_m: Annotated[
+        float | None, Query(description="CLOSEST_APPROACH: TVDSS window start (m)")
+    ] = None,
+    tvdss_to_m: Annotated[
+        float | None, Query(description="CLOSEST_APPROACH: TVDSS window end (m)")
+    ] = None,
 ) -> OffsetsOut:
+    """``SURFACE``: wellhead-to-wellhead distance. ``AT_FORMATION`` (needs ``formation``):
+    distance between the two wells' entry points into that formation; wells that never
+    reach it are listed in ``excluded``. ``CLOSEST_APPROACH``: minimum 3D distance between
+    the wellbore paths inside the optional TVDSS window. ``radius_km`` bounds the distance in
+    every mode."""
+    check_range("tvdss_from_m", tvdss_from_m, "tvdss_to_m", tvdss_to_m)
     if mode is not ProximityMode.SURFACE:
         raise NotImplementedYetError(f"Offset search, mode {mode.value} (S4)", "B2")
     get_well_or_404(session, well_id)
@@ -83,6 +103,7 @@ def get_offsets(
         mode=mode.value,
         radius_km=radius_km,
         formation=formation,
+        distance_label=SURFACE_DISTANCE_LABEL,
         offsets=[OffsetOut.model_validate(r.__dict__) for r in rows],
     )
 
@@ -111,6 +132,34 @@ def get_trajectory(well_id: int, session: DbSession) -> TrajectoryOut:
 
 
 @router.get(
+    "/wells/{well_id}/trajectory/at-depth",
+    tags=["wells"],
+    summary="Interpolated position at a measured depth",
+    response_model=TrajectoryAtDepth,
+    responses={**NOT_IMPLEMENTED, **NOT_FOUND},
+)
+def get_trajectory_at_depth(
+    well_id: int, md_m: Annotated[float, Query(ge=0, le=15000)]
+) -> TrajectoryAtDepth:
+    """Minimum-curvature interpolation between the bracketing stations; 422 when ``md_m``
+    is beyond the last station."""
+    raise NotImplementedYetError("Trajectory at depth (S4)", "B2")
+
+
+@router.post(
+    "/wells/{well_id}/trajectory",
+    tags=["wells"],
+    summary="Upload survey stations and recompute the trajectory",
+    response_model=TrajectoryOut,
+    responses={**NOT_IMPLEMENTED, **NOT_FOUND},
+)
+def upload_survey(well_id: int, body: Annotated[SurveyUpload, Body()]) -> TrajectoryOut:
+    """Replaces the primary wellbore's stations, recomputes them by minimum curvature,
+    rebuilds ``path_geom`` and formation entry points, and clears ``trajectory_assumed``."""
+    raise NotImplementedYetError("Survey upload (S4)", "B2")
+
+
+@router.get(
     "/formations", tags=["wells"], summary="Formation dictionary", response_model=list[FormationOut]
 )
 def get_formations(session: DbSession, basin: str | None = None) -> list[FormationOut]:
@@ -130,20 +179,6 @@ def get_risk_profile(
     well_id: int, sigma_km: Annotated[float | None, Query(gt=0, le=50)] = None
 ) -> None:
     raise NotImplementedYetError("Offset prior risk (S7a)", "B3")
-
-
-@router.get(
-    "/correlation",
-    tags=["correlation"],
-    summary="Correlation panel data",
-    responses=NOT_IMPLEMENTED,
-)
-def correlation(
-    wells: Annotated[list[int], Query(min_length=1, max_length=20)],
-    align: Alignment = Alignment.TVDSS,
-    top: str | None = None,
-) -> None:
-    raise NotImplementedYetError("Correlation panel (S6)", "B2")
 
 
 @router.get(
