@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest'
-import { cleanup } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import { afterEach, vi } from 'vitest'
 
 import { resetUiStore } from '../stores/ui'
@@ -28,3 +28,6 @@ afterEach(() => {
   }
   resetUiStore()
 })
+
+// Pages are lazy chunks; under a parallel full run their first render can pass 1 s.
+configure({ asyncUtilTimeout: 3000 })

@@ -45,7 +45,7 @@ export interface ScreenSpec {
   icon: LucideIcon
 }
 
-export const CURRENT_FRONTEND_PHASE: FrontendPhase = 'F1'
+export const CURRENT_FRONTEND_PHASE: FrontendPhase = 'F2'
 
 export const SCREENS: ScreenSpec[] = [
   {
@@ -91,11 +91,11 @@ export const SCREENS: ScreenSpec[] = [
     navPath: '/wells/1',
     title: 'Well 360',
     purpose:
-      'Everything known about one well: casing, cement, mud program, events timeline, lessons, documents, data-quality score.',
+      'Everything known about one well: wellbore sketch, casing and cement, mud programme, events timeline, 3D trajectory with offsets, lessons, documents, and a data-quality score with its reasons.',
     audiences: ['office'],
     psRefs: ['O-iii'],
     phase: 'F2',
-    status: 'planned',
+    status: 'built',
     endpoints: [
       { method: 'GET', path: '/api/v1/wells/1' },
       { method: 'GET', path: '/api/v1/wells/1/trajectory' },
@@ -109,11 +109,11 @@ export const SCREENS: ScreenSpec[] = [
     navPath: '/correlation',
     title: 'Correlation Panel',
     purpose:
-      'Offset wells aligned by TVDSS or formation tops, with events, casing shoes and mud weights on depth tracks.',
+      'Offset wells side by side on TVDSS, flattened on a formation top, or formation-relative, with formations, casing and cement, mud weight and events (each linked to its report page).',
     audiences: ['office', 'field'],
     psRefs: ['O-iv', 'G-iii'],
     phase: 'F2',
-    status: 'planned',
+    status: 'built',
     endpoints: [{ method: 'GET', path: '/api/v1/correlation?wells=1&wells=2&align=TVDSS' }],
     icon: Columns3,
   },
@@ -160,11 +160,11 @@ export const SCREENS: ScreenSpec[] = [
     navPath: '/search',
     title: 'Knowledge Search',
     purpose:
-      'Hybrid search over drilling history with lessons cards and page-level citations; copilot side panel (F5).',
+      'Hybrid search over drilling history: lessons cards first, then report passages with page-level citations; says "no record found" plainly. Copilot side panel in F5.',
     audiences: ['office', 'field'],
     psRefs: ['O-iii', 'G-ii'],
     phase: 'F2',
-    status: 'planned',
+    status: 'built',
     endpoints: [
       { method: 'GET', path: '/api/v1/search?q=lost%20circulation' },
       { method: 'GET', path: '/api/v1/events?event_type=LOSS' },
@@ -194,7 +194,7 @@ export const SCREENS: ScreenSpec[] = [
     navPath: '/documents',
     title: 'Documents Library',
     purpose:
-      'Upload reports and follow each through text/OCR, extraction and indexing; open any page with its extracted lines. The review queue for low-confidence extractions joins in Part 3.',
+      'Upload reports and follow each through text/OCR, extraction and indexing; open any page with its extracted lines; review low-confidence extractions against their page (accept, correct, reject).',
     audiences: ['office'],
     psRefs: ['O-i'],
     phase: 'F1',

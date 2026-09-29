@@ -18,11 +18,29 @@ import { useUiStore } from '../stores/ui'
 
 const WellMap = lazy(() => import('../components/map/WellMap'))
 
-const MODES: { id: ProximityMode; label: string; part?: string }[] = [
-  { id: 'SURFACE', label: 'Surface' },
-  { id: 'AT_FORMATION', label: 'At formation', part: 'Part 3' },
-  { id: 'CLOSEST_APPROACH', label: 'Closest approach', part: 'Part 3' },
+const MODES: { id: ProximityMode; label: string; hint: string }[] = [
+  { id: 'SURFACE', label: 'Surface', hint: 'Wellhead to wellhead' },
+  {
+    id: 'AT_FORMATION',
+    label: 'At formation',
+    hint: 'Between the points where both wells enter the chosen formation',
+  },
+  {
+    id: 'CLOSEST_APPROACH',
+    label: 'Closest approach',
+    hint: 'Closest 3D distance between the two well paths',
+  },
 ]
+
+function parseMode(raw: string | null): ProximityMode {
+  return raw === 'AT_FORMATION' || raw === 'CLOSEST_APPROACH' ? raw : 'SURFACE'
+}
+
+function num(raw: string | null): number | null {
+  if (raw === null || raw.trim() === '') return null
+  const n = Number(raw)
+  return Number.isFinite(n) ? n : null
+}
 
 function clampRadius(v: number): number {
   return Number.isFinite(v) ? Math.min(20, Math.max(1, v)) : 5
@@ -68,17 +86,37 @@ export function WellMapPage() {
   const defaultWell = items.find((w) => w.status === 'planned') ?? items[0]
   const wellId = Number(params.get('well')) || defaultWell?.id || null
   const radiusParam = clampRadius(Number(params.get('r') ?? 5))
-  const mode: ProximityMode = 'SURFACE' // other modes land with the Part 3 map work
+  const mode = parseMode(params.get('mode'))
   const [radiusDraft, setRadiusDraft] = useState<number | null>(null)
   const radiusKm = useDeferredValue(radiusDraft ?? radiusParam)
 
   const well = useWell(wellId)
   const trajectory = useTrajectory(wellId)
-  const offsets = useOffsets(wellId, radiusKm, mode)
+  const tops = well.data?.formation_tops ?? []
+  const fmParam = params.get('fm')
+  const formation =
+    mode === 'AT_FORMATION'
+      ? (tops.find((t) => t.formation === fmParam)?.formation ??
+        tops[Math.floor(tops.length / 2)]?.formation ??
+        null)
+      : null
+  const tvdssFrom = mode === 'CLOSEST_APPROACH' ? num(params.get('from')) : null
+  const tvdssTo = mode === 'CLOSEST_APPROACH' ? num(params.get('to')) : null
+  const windowError = tvdssFrom !== null && tvdssTo !== null && tvdssFrom >= tvdssTo
+  const offsets = useOffsets(
+    wellId,
+    radiusKm,
+    mode,
+    { formation, tvdssFrom, tvdssTo },
+    (mode !== 'AT_FORMATION' || formation !== null) && !windowError,
+  )
 
-  const update = (patch: Record<string, string>) => {
+  const update = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params)
-    for (const [k, v] of Object.entries(patch)) next.set(k, v)
+    for (const [k, v] of Object.entries(patch)) {
+      if (v === null || v === '') next.delete(k)
+      else next.set(k, v)
+    }
     setParams(next, { replace: true })
   }
   const select = (id: number) => {
@@ -128,7 +166,12 @@ export function WellMapPage() {
     {
       key: 'name',
       header: 'Well',
-      render: (o) => <span className="font-medium whitespace-nowrap">{o.name}</span>,
+      render: (o) => (
+        <span className="font-medium whitespace-nowrap">
+          {o.name}
+          {o.status === 'planned' && <span className="font-normal text-muted"> · planned</span>}
+        </span>
+      ),
       sortValue: (o) => o.name,
     },
     {
@@ -151,6 +194,40 @@ export function WellMapPage() {
       sortValue: (o) => o.fluid_type,
     },
     { key: 'status', header: 'Status', render: (o) => o.status, sortValue: (o) => o.status },
+    ...(mode === 'AT_FORMATION'
+      ? [
+          {
+            key: 'entry',
+            header: 'Enters formation',
+            render: (o: OffsetOut) => (
+              <span className="num whitespace-nowrap">
+                {o.entry_tvdss_m !== null && o.entry_tvdss_m !== undefined
+                  ? formatDepth(o.entry_tvdss_m, units, 'TVDSS')
+                  : '—'}
+              </span>
+            ),
+            sortValue: (o: OffsetOut) => o.entry_tvdss_m,
+            align: 'right' as const,
+          },
+        ]
+      : []),
+    ...(mode === 'CLOSEST_APPROACH'
+      ? [
+          {
+            key: 'closest',
+            header: 'Closest at',
+            render: (o: OffsetOut) => (
+              <span className="num whitespace-nowrap">
+                {o.closest_tvdss_m !== null && o.closest_tvdss_m !== undefined
+                  ? formatDepth(o.closest_tvdss_m, units, 'TVDSS')
+                  : '—'}
+              </span>
+            ),
+            sortValue: (o: OffsetOut) => o.closest_tvdss_m,
+            align: 'right' as const,
+          },
+        ]
+      : []),
     {
       key: 'td',
       header: 'TD',
@@ -164,6 +241,11 @@ export function WellMapPage() {
     },
   ]
 
+  // Bearing and TD describe wellheads; in the subsurface modes the depth column replaces them.
+  const shownColumns =
+    mode === 'SURFACE'
+      ? columns
+      : columns.filter((c) => !['bearing', 'td', 'status'].includes(c.key))
   const anySynthetic = items.some((w) => w.synthetic)
   const shownOffsets = offsets.data?.offsets ?? []
 
@@ -240,21 +322,23 @@ export function WellMapPage() {
             />
             <fieldset className="mt-2">
               <legend className="mb-1 text-xs font-medium text-muted">Distance measured</legend>
-              <div className="flex flex-wrap gap-1" role="radiogroup">
+              <div
+                className="flex flex-wrap gap-1"
+                role="radiogroup"
+                aria-label="Distance measured"
+                data-testid="proximity-mode"
+              >
                 {MODES.map((m) => (
                   <button
                     key={m.id}
                     type="button"
                     role="radio"
                     aria-checked={mode === m.id}
-                    disabled={Boolean(m.part)}
-                    title={
-                      m.part ? `On the map in ${m.part} (the API already supports it)` : undefined
-                    }
+                    title={m.hint}
+                    onClick={() => update({ mode: m.id === 'SURFACE' ? null : m.id })}
                     className={cn(
                       'rounded-md border border-border px-2 py-0.5 text-xs',
                       mode === m.id ? 'bg-accent text-accent-contrast' : 'text-text',
-                      m.part && 'opacity-55',
                     )}
                   >
                     {m.label}
@@ -262,6 +346,65 @@ export function WellMapPage() {
                 ))}
               </div>
             </fieldset>
+            {mode === 'AT_FORMATION' && (
+              <label className="mt-2 block text-xs font-medium text-muted">
+                Formation
+                <select
+                  className="mt-1 w-full rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text"
+                  value={formation ?? ''}
+                  onChange={(e) => update({ fm: e.target.value })}
+                  data-testid="formation-select"
+                  disabled={tops.length === 0}
+                >
+                  {tops.length === 0 && <option value="">no formation tops for this well</option>}
+                  {tops.map((t) => (
+                    <option key={t.formation} value={t.formation}>
+                      {t.formation}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {mode === 'CLOSEST_APPROACH' && (
+              <fieldset className="mt-2">
+                <legend className="mb-1 text-xs font-medium text-muted">
+                  TVDSS window (optional, m)
+                </legend>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    aria-label="TVDSS window from (m)"
+                    placeholder="from"
+                    defaultValue={params.get('from') ?? ''}
+                    onBlur={(e) => update({ from: e.target.value })}
+                    onKeyDown={(e) => e.key === 'Enter' && update({ from: e.currentTarget.value })}
+                    className="w-full rounded-lg border border-border bg-surface px-2 py-1 text-sm text-text"
+                    data-testid="tvdss-from"
+                  />
+                  <span className="text-muted">–</span>
+                  <input
+                    type="number"
+                    aria-label="TVDSS window to (m)"
+                    placeholder="to"
+                    defaultValue={params.get('to') ?? ''}
+                    onBlur={(e) => update({ to: e.target.value })}
+                    onKeyDown={(e) => e.key === 'Enter' && update({ to: e.currentTarget.value })}
+                    className="w-full rounded-lg border border-border bg-surface px-2 py-1 text-sm text-text"
+                    data-testid="tvdss-to"
+                  />
+                </div>
+                {windowError && (
+                  <p className="mt-1 text-xs text-danger" role="alert">
+                    The window's top must be shallower than its base.
+                  </p>
+                )}
+              </fieldset>
+            )}
+            {mode !== 'SURFACE' && (
+              <p className="mt-2 text-[0.7rem] text-muted">
+                The radius bounds this 3D distance; the circle on the map is drawn at the surface.
+              </p>
+            )}
           </div>
 
           {/* Legend with per-fluid visibility, bottom-left. */}
@@ -366,7 +509,7 @@ export function WellMapPage() {
                     to={`/wells/${well.data.id}`}
                     className="inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline"
                   >
-                    Well 360 (Part 3) <ArrowRight size={14} aria-hidden />
+                    Open Well 360 <ArrowRight size={14} aria-hidden />
                   </Link>
                 </>
               ) : (
@@ -388,7 +531,7 @@ export function WellMapPage() {
                 <DataTable
                   testId="offset-table"
                   caption="Offset wells"
-                  columns={columns}
+                  columns={shownColumns}
                   rows={shownOffsets}
                   rowKey={(o) => o.well_id}
                   initialSort={{ key: 'distance', dir: 'asc' }}
@@ -398,7 +541,26 @@ export function WellMapPage() {
               ) : (
                 <SkeletonBlock className="h-40 w-full" />
               )}
-              <p className="text-xs text-muted">{offsets.data?.distance_label}</p>
+              <p className="text-xs text-muted" data-testid="distance-label">
+                {offsets.data?.distance_label}
+              </p>
+              {offsets.data && offsets.data.excluded.length > 0 && (
+                <details className="text-xs text-muted" data-testid="excluded-wells">
+                  <summary className="cursor-pointer">
+                    {offsets.data.excluded.length === 1
+                      ? '1 well within reach was left out'
+                      : `${offsets.data.excluded.length} wells within reach were left out`}{' '}
+                    — why?
+                  </summary>
+                  <ul className="mt-1 space-y-0.5">
+                    {offsets.data.excluded.map((x) => (
+                      <li key={x.well_id}>
+                        <span className="text-text">{x.name}</span>: {x.reason}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
             </motion.aside>
           )}
         </AnimatePresence>

@@ -22,6 +22,18 @@ const IngestPage = lazy(() =>
 const DashboardPage = lazy(() =>
   import('../pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
 )
+// oxlint-disable-next-line react/only-export-components
+const CorrelationPage = lazy(() =>
+  import('../pages/CorrelationPage').then((m) => ({ default: m.CorrelationPage })),
+)
+// oxlint-disable-next-line react/only-export-components
+const Well360Page = lazy(() =>
+  import('../pages/Well360Page').then((m) => ({ default: m.Well360Page })),
+)
+// oxlint-disable-next-line react/only-export-components
+const SearchPage = lazy(() =>
+  import('../pages/SearchPage').then((m) => ({ default: m.SearchPage })),
+)
 
 /** Built screens map to real components; everything else renders its PlannedScreen. */
 const builtScreens: Record<string, ComponentType> = {
@@ -29,6 +41,9 @@ const builtScreens: Record<string, ComponentType> = {
   system: SystemStatus,
   map: WellMapPage,
   documents: IngestPage,
+  correlation: CorrelationPage,
+  well360: Well360Page,
+  search: SearchPage,
 }
 
 const loading = (

@@ -22,3 +22,22 @@ export function makePdf(lines: string[]): Buffer {
   out += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`
   return Buffer.from(out, 'latin1')
 }
+
+/** The daily report the backend's B2 integration test uses to land an event in review: the
+ * NPT row names no problem and no depth unit, so extraction can't be confident. The date and
+ * depth differ from that test's report so the two events are never merged. */
+export function lowConfidenceDdr(nonce: string, date = '2021-06-10'): Buffer {
+  return makePdf([
+    'DAILY DRILLING REPORT',
+    'SYNTHETIC DATA - NOT OIL INDIA DATA',
+    `Well: SYN-ASM-01    Rig: Rig SYN-1    Report No: 96    Date: ${date}`,
+    `Depth at 24:00: 1,500 m    Hole size: 12-1/4 in    Nonce ${nonce}`,
+    'TIME LOG',
+    'From  To  Hrs  Depth (m)  Code  Operation',
+    '00:00  06:00  6.0  1495  DRL  Drilled ahead',
+    '06:00  09:00  3.0  1495  NPT-LOSS  Operations suspended',
+    '09:00  24:00  15.0  1495  CIRC  Circulated',
+    'REMARKS',
+    'See time log.',
+  ])
+}

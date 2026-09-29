@@ -16,11 +16,14 @@ describe('screen registry', () => {
     expect(numbers).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
   })
 
-  it('uses valid phases; Part 2 built the Dashboard, Map Explorer and Documents Library', () => {
+  it('uses valid phases; Part 3 (F2) built Well 360, the Correlation Panel and Search', () => {
     expect(SCREENS.every((s) => PHASES.has(s.phase))).toBe(true)
     expect(SCREENS.filter((s) => s.status === 'built').map((s) => s.id)).toEqual([
       'dashboard',
       'map',
+      'well360',
+      'correlation',
+      'search',
       'documents',
       'system',
     ])

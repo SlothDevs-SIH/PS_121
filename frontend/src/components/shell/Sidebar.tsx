@@ -248,7 +248,7 @@ function NavItem({
           {planned && (
             <span
               className={cn(
-                'relative text-[0.65rem] text-muted opacity-70 transition-opacity',
+                'relative text-[0.65rem] text-muted transition-opacity',
                 collapsed && 'opacity-0',
               )}
               aria-label={`planned ${screen.phase}`}

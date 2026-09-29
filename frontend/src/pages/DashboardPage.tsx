@@ -18,24 +18,13 @@ import { KpiCard } from '../components/ui/KpiCard'
 import { SkeletonBlock } from '../components/ui/Skeleton'
 import { useTheme } from '../app/themeContext'
 import { useDocuments, useEvents, useReviewCounts, useWells } from '../lib/api/hooks'
+import { eventMeta } from '../lib/eventTypes'
 import { formatDepth } from '../lib/format/units'
 import { staggerContainer, staggerItem } from '../lib/motion'
 import { FLUID_ORDER, FLUIDS, fluidOf, matchesFilter } from '../lib/wellTypes'
 import { useUiStore } from '../stores/ui'
 
 const WellMap = lazy(() => import('../components/map/WellMap'))
-
-const EVENT_LABEL: Record<string, string> = {
-  LOSS: 'Lost circulation',
-  KICK: 'Kick',
-  STUCK: 'Stuck pipe',
-  TIGHT: 'Tight hole',
-  TORQUE: 'High torque',
-  INSTAB: 'Instability',
-  BALLING: 'Bit balling',
-  OVERP: 'Overpressure',
-  CEMENT: 'Cementing',
-}
 
 export function DashboardPage() {
   const { units } = useTheme()
@@ -225,7 +214,7 @@ export function DashboardPage() {
                     />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-text">
-                        {EVENT_LABEL[e.event_type] ?? e.event_type}
+                        {eventMeta(e.event_type).label}
                         {e.subtype ? ` (${e.subtype})` : ''}
                       </p>
                       <p className="truncate text-xs text-muted">

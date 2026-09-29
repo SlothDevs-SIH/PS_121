@@ -21,6 +21,30 @@
   --well-gas: #f2c94c;
   --well-water: #00b4d8;
 
+  /* Drilling event types (same in every theme; always paired with a shape and a code). */
+  --ev-loss: #3b82f6;
+  --ev-kick: #ef4444;
+  --ev-gas: #22c55e;
+  --ev-overp: #f43f5e;
+  --ev-stuck: #a855f7;
+  --ev-tight: #f59e0b;
+  --ev-torque: #84cc16;
+  --ev-instab: #b45309;
+  --ev-balling: #14b8a6;
+  --ev-cement: #94a3b8;
+  --ev-other: #64748b;
+
+  /* Formation fills on depth tracks, by stratigraphic order (translucent: any theme). */
+  --fm-1: rgb(214 196 150 / 0.3);
+  --fm-2: rgb(190 164 118 / 0.3);
+  --fm-3: rgb(158 146 196 / 0.3);
+  --fm-4: rgb(236 196 96 / 0.34);
+  --fm-5: rgb(118 140 150 / 0.34);
+  --fm-6: rgb(104 118 146 / 0.36);
+  --fm-7: rgb(128 190 214 / 0.32);
+  --fm-8: rgb(196 158 128 / 0.32);
+  --fm-9: rgb(204 118 118 / 0.3);
+
   --sidebar-full: 15rem;
   --sidebar-rail: 4.5rem;
   --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
@@ -241,23 +265,36 @@ body {
   color: var(--text-muted);
 }
 
-/* Well marker: a coloured pin; drilling wells get an expanding pulse ring. */
+/* Well marker: a coloured pin inside a 24 px hit area (WCAG 2.2 target size); drilling wells
+   get an expanding pulse ring. The pin is drawn by ::after so the button can stay larger. */
 .well-marker {
   position: relative;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.well-marker::after {
+  content: '';
   width: var(--size, 12px);
   height: var(--size, 12px);
   border-radius: 9999px;
   background: var(--c);
   border: 2px solid var(--surface);
   box-shadow: 0 0 0 1px var(--c);
-  cursor: pointer;
   transition: transform 160ms var(--ease-out-expo);
 }
-.well-marker:hover {
+.well-marker:hover::after {
   transform: scale(1.25);
 }
 .well-marker[data-role='active'] {
   --size: 18px;
+}
+.well-marker[data-role='active']::after {
   box-shadow:
     0 0 0 2px var(--accent),
     0 0 18px var(--c);
@@ -274,7 +311,7 @@ body {
 .well-marker[data-live='true']::before {
   content: '';
   position: absolute;
-  inset: -2px;
+  inset: calc((24px - var(--size, 12px)) / 2 - 2px);
   border-radius: 9999px;
   border: 2px solid var(--c);
   animation: pulse-ring 1.6s ease-out infinite;

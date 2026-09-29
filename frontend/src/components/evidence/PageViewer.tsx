@@ -5,6 +5,7 @@ import { useDocumentPage } from '../../lib/api/hooks'
 import { cn } from '../../lib/cn'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
+import { PageImage } from './PageImage'
 
 interface Props {
   documentId: number
@@ -108,39 +109,12 @@ export function PageViewer({
             {isPending && <p className="text-sm text-muted">Loading page…</p>}
             {isError && <p className="text-sm text-danger">Page could not be loaded.</p>}
             {page && (
-              <div className="relative w-full" data-testid="page-image-wrap">
-                <img
-                  src={page.image_url}
-                  alt={`Page ${page.page_no} of document ${documentId}`}
-                  className="block w-full rounded border border-border bg-white"
-                />
-                {page.spans.map((s) => {
-                  const [x0 = 0, y0 = 0, x1 = 0, y1 = 0] = s.bbox
-                  const on = selected.has(s.id)
-                  return (
-                    <button
-                      key={s.id}
-                      type="button"
-                      title={s.text}
-                      aria-label={`Line ${s.line_no + 1}: ${s.text}`}
-                      data-highlighted={on}
-                      onClick={() => toggle(s.id)}
-                      className={cn(
-                        'absolute rounded-sm border',
-                        on
-                          ? 'border-accent bg-accent/25 ring-2 ring-accent'
-                          : 'border-transparent hover:border-accent/60',
-                      )}
-                      style={{
-                        left: `${x0 * 100}%`,
-                        top: `${y0 * 100}%`,
-                        width: `${(x1 - x0) * 100}%`,
-                        height: `${(y1 - y0) * 100}%`,
-                      }}
-                    />
-                  )
-                })}
-              </div>
+              <PageImage
+                page={page}
+                documentId={documentId}
+                selected={selected}
+                onToggle={toggle}
+              />
             )}
           </div>
           <ol

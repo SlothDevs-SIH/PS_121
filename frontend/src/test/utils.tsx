@@ -219,6 +219,12 @@ export const OFFSETS = {
     mode: 'SURFACE',
     radius_km: 5,
     formation: null,
+    distance_label: 'Surface distance between wellheads',
+    excluded: [] as { well_id: number; name: string; reason: string }[],
+    subject_entry_md_m: null,
+    subject_entry_tvdss_m: null,
+    tvdss_from_m: null,
+    tvdss_to_m: null,
     offsets: [
       {
         well_id: 3,
@@ -414,4 +420,370 @@ export function fullBackend(extra: Record<string, Route> = {}) {
     'GET /api/v1/documents': DOCUMENTS,
     ...extra,
   })
+}
+
+// ─── Part 3 (F2) fixtures ────────────────────────────────────────────────────────────────
+
+const EV_REF = {
+  document_id: 7,
+  page_no: 1,
+  span_ids: [102],
+  filename: 'SYN-ASM-01_DDR.pdf',
+  doc_type: 'DDR',
+}
+
+function corrWell(id: number, name: string, shift: number, extra: Record<string, unknown> = {}) {
+  return {
+    well_id: id,
+    name,
+    status: 'completed',
+    fluid_type: 'oil',
+    synthetic: true,
+    fallback_to_tvdss: false,
+    reason: null,
+    td_aligned: 3400 + shift,
+    tracks: {
+      formations: [
+        {
+          name: 'Girujan Clay',
+          strat_order: 3,
+          lithology: 'mottled clay',
+          top: 1200 + shift,
+          base: 2150 + shift,
+          top_tvdss_m: 1200 + shift,
+          base_tvdss_m: 2150 + shift,
+        },
+        {
+          name: 'Tipam Sandstone',
+          strat_order: 4,
+          lithology: 'sandstone',
+          top: 2150 + shift,
+          base: 2860 + shift,
+          top_tvdss_m: 2150 + shift,
+          base_tvdss_m: 2860 + shift,
+        },
+        {
+          name: 'Barail',
+          strat_order: 5,
+          lithology: 'shale, coal',
+          top: 2860 + shift,
+          base: null,
+          top_tvdss_m: 2860 + shift,
+          base_tvdss_m: null,
+        },
+      ],
+      casing_shoes: [
+        {
+          casing_id: id * 10,
+          od_in: 9.625,
+          hole_size_in: 12.25,
+          shoe_md_m: 2360,
+          shoe_tvdss_m: 2230 + shift,
+          aligned: 2230 + shift,
+          confidence: 0.95,
+          verified: false,
+          evidence: [EV_REF],
+        },
+      ],
+      cement_tops: [],
+      mud: [
+        {
+          mud_interval_id: id * 10,
+          md_from_m: 800,
+          md_to_m: 2360,
+          tvdss_from_m: 680,
+          tvdss_to_m: 2230,
+          top: 680 + shift,
+          base: 2230 + shift,
+          mw_sg: 1.18,
+          ecd_sg: null,
+          mud_type: 'water-based',
+          confidence: 0.95,
+          verified: false,
+          evidence: [EV_REF],
+        },
+      ],
+      events: [
+        {
+          event_id: id * 100,
+          event_type: 'LOSS',
+          severity: 'high',
+          md_m: 2415,
+          tvdss_m: 2280 + shift,
+          aligned: 2280 + shift,
+          relative_position: 0.2,
+          npt_hours: 3.5,
+          confidence: 0.95,
+          verified: false,
+          evidence: [EV_REF],
+        },
+      ],
+    },
+    ...extra,
+  }
+}
+
+export const CORRELATION = {
+  status: 200,
+  body: {
+    align: 'TVDSS',
+    top: null,
+    depth_axis: { label: 'TVDSS (m)', unit: 'm', min: -120, max: 3500 },
+    wells: [
+      corrWell(2, 'SYN-ASM-P01', 0, { status: 'planned' }),
+      corrWell(1, 'SYN-ASM-01', 40),
+      corrWell(3, 'SYN-ASM-03', 80, { fallback_to_tvdss: true, reason: 'no Tipam Sandstone top' }),
+    ],
+  },
+}
+
+export const FORMATION_STATS = {
+  status: 200,
+  body: {
+    wells: [2, 1, 3],
+    rows: [
+      {
+        formation: 'Tipam Sandstone',
+        strat_order: 4,
+        wells_penetrating: 3,
+        events_by_type: { LOSS: 2 },
+        wells_with_event_by_type: { LOSS: 2 },
+        median_mw_sg: 1.3,
+        median_npt_hours: 3.5,
+      },
+      {
+        formation: 'Barail',
+        strat_order: 5,
+        wells_penetrating: 3,
+        events_by_type: {},
+        wells_with_event_by_type: {},
+        median_mw_sg: 1.4,
+        median_npt_hours: null,
+      },
+    ],
+  },
+}
+
+export function eventDetail(id: number, wellId = 1) {
+  const summary = EVENTS.body.items[0]!
+  return {
+    status: 200,
+    body: {
+      ...summary,
+      id,
+      well_id: wellId,
+      description: 'Partial losses of 45 bbl/hr at 2,415 m in Tipam',
+      cause_text: null,
+      params: {
+        loss_rate_m3_h: 7.2,
+        total_loss_m3: null,
+        pit_gain_m3: null,
+        sidpp_kpa: null,
+        sicp_kpa: null,
+        kill_mw_sg: null,
+        overpull_kn: null,
+        torque_knm: null,
+        jarring_h: null,
+        gas_pct: null,
+        h2s_ppm: null,
+        ecd_sg: null,
+        time_to_cure_h: null,
+      },
+      mitigations: [
+        {
+          id: 501,
+          seq: 1,
+          action_code: 'LCM_PILL_FINE',
+          action_text: 'Pumped fine LCM pill',
+          outcome: 'fail',
+          npt_hours_after: 1.5,
+          recurrence: null,
+          t_start: null,
+          volume_lost_m3: null,
+          confidence: 0.9,
+          verified: false,
+          evidence: [EV_REF],
+        },
+        {
+          id: 502,
+          seq: 2,
+          action_code: 'LCM_PILL_COARSE',
+          action_text: 'Pumped coarse LCM pill',
+          outcome: 'success',
+          npt_hours_after: 2,
+          recurrence: null,
+          t_start: null,
+          volume_lost_m3: null,
+          confidence: 0.9,
+          verified: false,
+          evidence: [EV_REF],
+        },
+      ],
+      lesson_card: {
+        problem: 'Losses',
+        likely_cause: null,
+        action_taken: 'LCM',
+        outcome: 'Cured',
+        lesson: 'Go coarse sooner in Tipam.',
+        generated_by: 'template:v1',
+      },
+      created_at: '2026-09-28T10:00:00Z',
+      updated_at: '2026-09-28T10:00:00Z',
+      verified_at: null,
+      verified_by: null,
+      evidence: [EV_REF],
+    },
+  }
+}
+
+export const LESSON = {
+  event_id: 11,
+  well_id: 1,
+  well_name: 'SYN-ASM-01',
+  synthetic: true,
+  event_type: 'LOSS',
+  formation: 'Tipam Sandstone',
+  md_m: 2415,
+  tvdss_m: 2280,
+  problem: 'Lost circulation (partial) at 2415 m MD in Tipam Sandstone.',
+  likely_cause: 'Weak sand, as stated in the report',
+  action_taken: '1. Pumped coarse LCM pill (success)',
+  outcome: 'Resolved on attempt 1 of 1; 3.5 h NPT.',
+  lesson:
+    'Coarse LCM worked first time here; check the ledger across offsets before relying on it.',
+  confidence: 0.95,
+  verified: false,
+  evidence: [EV_REF],
+}
+
+export const TIMELINE = {
+  status: 200,
+  body: {
+    well_id: 1,
+    well_name: 'SYN-ASM-01',
+    synthetic: true,
+    spud_date: '2010-01-01',
+    completion_date: '2010-03-01',
+    td_md_m: 3500,
+    total_npt_hours: 15.5,
+    counts_by_type: { LOSS: 1, STUCK: 1 },
+    events: [
+      EVENTS.body.items[0],
+      { ...EVENTS.body.items[1], well_id: 1, well_name: 'SYN-ASM-01' },
+    ],
+    npt_operations: [
+      {
+        id: 9,
+        document_id: 7,
+        page_no: 1,
+        report_date: '2010-02-01',
+        t_from: '06:00',
+        t_to: '09:30',
+        hours: 3.5,
+        activity_code: 'NPT-LOSS',
+        npt_category: 'LOSS',
+        description: 'Partial losses, pumped LCM',
+        md_m: 2415,
+        is_npt: true,
+        event_id: 11,
+        evidence: [EV_REF],
+      },
+    ],
+  },
+}
+
+export const TRAJECTORY_1 = {
+  status: 200,
+  body: {
+    well_id: 1,
+    wellbore_id: 1,
+    assumed: false,
+    crs_epsg: 32646,
+    stations: [0, 1000, 2000, 3500].map((md, i) => ({
+      md_m: md,
+      inc_deg: i === 0 ? 0 : 10 + i,
+      azi_deg: 145,
+      tvd_m: md * 0.98,
+      tvdss_m: md * 0.98 - 120,
+      north_m: -i * 60,
+      east_m: i * 40,
+      dls_deg_30m: i === 2 ? 1.5 : 0.4,
+    })),
+    path: [
+      { lat: 27.4, lon: 95.25, tvdss_m: -120 },
+      { lat: 27.398, lon: 95.252, tvdss_m: 3310 },
+    ],
+  },
+}
+
+export const SEARCH_RESULT = {
+  status: 200,
+  body: {
+    query: 'lost circulation Tipam',
+    took_ms: 28,
+    embedding_provider: 'hash:v1',
+    no_record_found: false,
+    lessons: [LESSON],
+    passages: [
+      {
+        chunk_id: 47,
+        document_id: 7,
+        filename: 'SYN-ASM-01_DDR.pdf',
+        doc_type: 'DDR',
+        well_id: 1,
+        well_name: 'SYN-ASM-01',
+        synthetic: true,
+        page_from: 1,
+        page_to: 1,
+        span_ids: [102],
+        snippet: 'Lost circulation (Severe) in Tipam Sandstone.',
+        highlights: [
+          [0, 4],
+          [5, 16],
+          [29, 34],
+        ],
+        score: 0.03,
+        lexical_rank: 1,
+        dense_rank: 2,
+      },
+    ],
+  },
+}
+
+export const NO_RECORD = {
+  status: 200,
+  body: {
+    query: 'unicorn',
+    took_ms: 5,
+    embedding_provider: 'hash:v1',
+    no_record_found: true,
+    lessons: [],
+    passages: [],
+  },
+}
+
+export function reviewItem(id: number, extra: Record<string, unknown> = {}) {
+  return {
+    id,
+    kind: 'casing',
+    target_id: 36,
+    document_id: 7,
+    filename: 'SYN-ASM-01_WCR_scan.pdf',
+    doc_type: 'WCR',
+    well_id: 1,
+    well_name: 'SYN-ASM-01',
+    page_no: 1,
+    span_ids: [102],
+    evidence: [EV_REF],
+    field: null,
+    reason: "casing size unreadable ('T')",
+    confidence: 0.47,
+    proposed: { od_in: null, returns: 'full', toc_md_m: 2383, shoe_md_m: 3900, hole_size_in: 8.5 },
+    status: 'pending',
+    decided_by: null,
+    decided_at: null,
+    correction: null,
+    created_at: '2026-09-29T05:53:18Z',
+    ...extra,
+  }
 }

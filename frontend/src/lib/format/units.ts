@@ -53,3 +53,15 @@ export function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${formatNumber(bytes / 1024)} KB`
   return `${formatNumber(bytes / 1024 / 1024, 1)} MB`
 }
+
+const EIGHTHS = ['', '⅛', '¼', '⅜', '½', '⅝', '¾', '⅞']
+
+/** Casing and hole sizes the way drillers write them: 9.625 → 9⅝″, 12.25 → 12¼″. */
+export function formatInches(inches: number | null | undefined): string {
+  if (inches === null || inches === undefined) return '—'
+  const whole = Math.floor(inches + 1e-6)
+  const eighth = Math.round((inches - whole) * 8)
+  if (eighth === 8) return `${whole + 1}″`
+  if (Math.abs((inches - whole) * 8 - eighth) > 0.01) return `${formatNumber(inches, 3)}″`
+  return `${whole}${EIGHTHS[eighth]}″`
+}

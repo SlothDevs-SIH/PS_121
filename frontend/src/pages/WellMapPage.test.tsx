@@ -59,11 +59,10 @@ describe('Map Explorer', () => {
     expect(useUiStore.getState().forceRail).toBe(false)
   })
 
-  it('switches wells from the offset list; other distance modes wait for Part 3', async () => {
+  it('switches wells from the offset list', async () => {
     backend()
     renderApp('/map?well=2&r=5')
     await screen.findByTestId('offset-table')
-    expect(screen.getByRole('radio', { name: /At formation/ })).toBeDisabled()
     expect(screen.getByRole('radio', { name: 'Surface' })).toHaveAttribute('aria-checked', 'true')
     await userEvent.click(within(screen.getByTestId('offset-table')).getByText('SYN-ASM-01'))
     expect(
@@ -81,5 +80,69 @@ describe('Map Explorer', () => {
     await waitFor(() => expect(map).toHaveTextContent('4 wells · 2 dimmed'))
     await userEvent.click(screen.getByRole('button', { name: 'Hide oil wells' }))
     expect(map).toHaveTextContent('2 wells · 0 dimmed')
+  })
+
+  it('measures at a formation entry or by closest approach, and says who was left out', async () => {
+    const detail = wellDetail(2)
+    const tops = [
+      {
+        formation: 'Girujan Clay',
+        strat_order: 3,
+        top_md_m: 1300,
+        top_tvd_m: 1300,
+        top_tvdss_m: 1180,
+      },
+      {
+        formation: 'Tipam Sandstone',
+        strat_order: 4,
+        top_md_m: 2280,
+        top_tvd_m: 2270,
+        top_tvdss_m: 2150,
+      },
+    ]
+    const atFm = {
+      status: 200,
+      body: {
+        ...OFFSETS.body,
+        mode: 'AT_FORMATION',
+        formation: 'Tipam Sandstone',
+        distance_label: '3D distance between entry points into Tipam Sandstone',
+        offsets: [{ ...OFFSETS.body.offsets[0], entry_md_m: 2300, entry_tvdss_m: 2161 }],
+        excluded: [{ well_id: 4, name: 'SYN-ASM-41', reason: 'no Tipam Sandstone top' }],
+      },
+    }
+    const fetchMock = fullBackend({
+      '/api/v1/wells/2': { status: 200, body: { ...detail.body, formation_tops: tops } },
+      '/api/v1/wells/2/trajectory': TRAJ(2),
+      '/api/v1/wells/2/offsets?radius_km=5&mode=SURFACE': OFFSETS,
+      '/api/v1/wells/2/offsets?radius_km=5&mode=AT_FORMATION&formation=Tipam+Sandstone': atFm,
+      '/api/v1/wells/2/offsets?radius_km=5&mode=CLOSEST_APPROACH': OFFSETS,
+      '/api/v1/wells/2/offsets?radius_km=5&mode=CLOSEST_APPROACH&tvdss_from_m=2000': OFFSETS,
+    })
+    renderApp('/map?well=2&r=5')
+    await screen.findByTestId('offset-table')
+    await userEvent.click(screen.getByRole('radio', { name: 'At formation' }))
+    await userEvent.selectOptions(await screen.findByTestId('formation-select'), 'Tipam Sandstone')
+    expect(await screen.findByTestId('distance-label')).toHaveTextContent(
+      'entry points into Tipam Sandstone',
+    )
+    expect(screen.getByText('2,161 m TVDSS')).toBeInTheDocument()
+    expect(screen.getByTestId('excluded-wells')).toHaveTextContent(
+      'SYN-ASM-41: no Tipam Sandstone top',
+    )
+    expect(screen.queryByRole('columnheader', { name: /Bearing/ })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('radio', { name: 'Closest approach' }))
+    const from = await screen.findByTestId('tvdss-from')
+    await userEvent.type(from, '2000{Enter}')
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(([u]) =>
+          String(u).endsWith('mode=CLOSEST_APPROACH&tvdss_from_m=2000'),
+        ),
+      ).toBe(true),
+    )
+    await userEvent.type(screen.getByTestId('tvdss-to'), '1500{Enter}')
+    expect(await screen.findByRole('alert')).toHaveTextContent('shallower than its base')
   })
 })
