@@ -1,0 +1,186 @@
+{
+  "what": "S7b real-time classifiers on SYNTHETIC drilling data (planted precursors)",
+  "measured_at": "2026-09-29T16:09:18+00:00",
+  "commit": "0ad33d4",
+  "model": "rt-hgb-v1",
+  "horizon_min": 30.0,
+  "protocol": "grouped 5-fold CV by well on the training field (wells 61-180); then the final models on the seeded field's wells 1-40, never seen in training",
+  "cross_validation": {
+    "rows": 36669,
+    "wells": 120,
+    "hours_without_precursor": 420.1,
+    "types": {
+      "LOSS": {
+        "positives": 2550,
+        "pr_auc": 0.9565,
+        "pr_auc_physics_threshold": 0.9437,
+        "pr_auc_chance": 0.0695,
+        "brier": 0.00607,
+        "threshold": 0.25,
+        "false_alarms_per_12h": 0.885,
+        "fires_on_other_types": 0.0003,
+        "events": 85,
+        "events_caught": 85,
+        "median_lead_min": 30.0
+      },
+      "KICK": {
+        "positives": 570,
+        "pr_auc": 0.9775,
+        "pr_auc_physics_threshold": 0.9712,
+        "pr_auc_chance": 0.0155,
+        "brier": 0.00051,
+        "threshold": 0.2,
+        "false_alarms_per_12h": 0.0,
+        "fires_on_other_types": 0.0006,
+        "events": 19,
+        "events_caught": 19,
+        "median_lead_min": 30.0
+      },
+      "STUCK": {
+        "positives": 2490,
+        "pr_auc": 0.911,
+        "pr_auc_physics_threshold": 0.4256,
+        "pr_auc_chance": 0.0679,
+        "brier": 0.01539,
+        "threshold": 0.4521,
+        "false_alarms_per_12h": 1.0,
+        "fires_on_other_types": 0.0258,
+        "events": 83,
+        "events_caught": 83,
+        "median_lead_min": 29.0
+      },
+      "TORQUE": {
+        "positives": 750,
+        "pr_auc": 0.5316,
+        "pr_auc_physics_threshold": 0.1681,
+        "pr_auc_chance": 0.0205,
+        "brier": 0.01219,
+        "threshold": 0.5,
+        "false_alarms_per_12h": 0.971,
+        "fires_on_other_types": 0.0016,
+        "events": 25,
+        "events_caught": 25,
+        "median_lead_min": 17.0
+      },
+      "OVERP": {
+        "positives": 780,
+        "pr_auc": 0.9858,
+        "pr_auc_physics_threshold": 0.4714,
+        "pr_auc_chance": 0.0213,
+        "brier": 0.00083,
+        "threshold": 0.2,
+        "false_alarms_per_12h": 0.514,
+        "fires_on_other_types": 0.0016,
+        "events": 26,
+        "events_caught": 26,
+        "median_lead_min": 30.0
+      },
+      "BALLING": {
+        "positives": 1350,
+        "pr_auc": 0.9677,
+        "pr_auc_physics_threshold": 0.9058,
+        "pr_auc_chance": 0.0368,
+        "brier": 0.00325,
+        "threshold": 0.25,
+        "false_alarms_per_12h": 0.914,
+        "fires_on_other_types": 0.0007,
+        "events": 45,
+        "events_caught": 45,
+        "median_lead_min": 30.0
+      }
+    }
+  },
+  "held_out_field": {
+    "rows": 10867,
+    "wells": 40,
+    "hours_without_precursor": 131.6,
+    "types": {
+      "LOSS": {
+        "positives": 630,
+        "pr_auc": 0.9512,
+        "pr_auc_physics_threshold": 0.9436,
+        "pr_auc_chance": 0.058,
+        "brier": 0.00516,
+        "threshold": 0.25,
+        "false_alarms_per_12h": 0.547,
+        "fires_on_other_types": 0.0009,
+        "events": 21,
+        "events_caught": 21,
+        "median_lead_min": 30.0
+      },
+      "KICK": {
+        "positives": 150,
+        "pr_auc": 1.0,
+        "pr_auc_physics_threshold": 0.9994,
+        "pr_auc_chance": 0.0138,
+        "brier": 7e-05,
+        "threshold": 0.2,
+        "false_alarms_per_12h": 0.091,
+        "fires_on_other_types": 0.0011,
+        "events": 5,
+        "events_caught": 5,
+        "median_lead_min": 30.0
+      },
+      "STUCK": {
+        "positives": 540,
+        "pr_auc": 0.9067,
+        "pr_auc_physics_threshold": 0.3621,
+        "pr_auc_chance": 0.0497,
+        "brier": 0.01148,
+        "threshold": 0.4521,
+        "false_alarms_per_12h": 1.276,
+        "fires_on_other_types": 0.0132,
+        "events": 18,
+        "events_caught": 18,
+        "median_lead_min": 25.5
+      },
+      "TORQUE": {
+        "positives": 150,
+        "pr_auc": 0.552,
+        "pr_auc_physics_threshold": 0.1431,
+        "pr_auc_chance": 0.0138,
+        "brier": 0.00798,
+        "threshold": 0.5,
+        "false_alarms_per_12h": 0.274,
+        "fires_on_other_types": 0.0025,
+        "events": 5,
+        "events_caught": 5,
+        "median_lead_min": 17.0
+      },
+      "OVERP": {
+        "positives": 210,
+        "pr_auc": 0.9723,
+        "pr_auc_physics_threshold": 0.4433,
+        "pr_auc_chance": 0.0193,
+        "brier": 0.00143,
+        "threshold": 0.2,
+        "false_alarms_per_12h": 0.729,
+        "fires_on_other_types": 0.0018,
+        "events": 7,
+        "events_caught": 7,
+        "median_lead_min": 30.0
+      },
+      "BALLING": {
+        "positives": 480,
+        "pr_auc": 0.9423,
+        "pr_auc_physics_threshold": 0.8851,
+        "pr_auc_chance": 0.0442,
+        "brier": 0.0054,
+        "threshold": 0.25,
+        "false_alarms_per_12h": 1.003,
+        "fires_on_other_types": 0.0016,
+        "events": 16,
+        "events_caught": 16,
+        "median_lead_min": 30.0
+      }
+    }
+  },
+  "train_seconds": 26.3,
+  "score_ms_per_sample_all_types": 13.55,
+  "notes": [
+    "SYNTHETIC: precursors are planted by app/synthetic/realtime.py; these numbers say the pipeline recovers them, not how it would do on Assam wells.",
+    "false_alarms_per_12h counts every minute-row above the threshold on precursor-free time; the stream's hysteresis (2 in a row) and alert budget lower the rate that reaches a user.",
+    "median_lead_min is capped at the 30-min horizon (rows further ahead are not labelled), so 30.0 means 'as early as the label allows'.",
+    "TIGHT and INSTAB have no model: their planted precursors overlap STUCK and TORQUE and there are too few episodes; Deja Vu and the physics rules cover them."
+  ]
+}

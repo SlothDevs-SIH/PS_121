@@ -1,0 +1,108 @@
+{
+  "what": "End-to-end replay of the SYNTHETIC drilling well: alerts vs planted events",
+  "measured_at": "2026-09-29T16:20:24+00:00",
+  "commit": "0ad33d4",
+  "well": "SYN-ASM-41",
+  "speed": 60.0,
+  "rows": 1918,
+  "data_hours": 5.33,
+  "wall_seconds": 327.2,
+  "planted": [
+    {
+      "event_type": "BALLING",
+      "t_start": "2026-09-28T19:30:00+00:00",
+      "md_at_start_m": 2235.3,
+      "alerted": true,
+      "first_alert_type": "ANOMALY_ML",
+      "first_alert_minutes_before_event": 28.2,
+      "sources": [
+        "ANOMALY_ML"
+      ],
+      "timeline": [
+        "ANOMALY_ML"
+      ]
+    },
+    {
+      "event_type": "LOSS",
+      "t_start": "2026-09-28T22:19:40+00:00",
+      "md_at_start_m": 2279.8,
+      "alerted": true,
+      "first_alert_type": "LOOKAHEAD",
+      "first_alert_minutes_before_event": 123.8,
+      "sources": [
+        "LOOKAHEAD",
+        "ANOMALY_ML",
+        "PHYSICS",
+        "DEJA_VU"
+      ],
+      "timeline": [
+        "LOOKAHEAD",
+        {
+          "source": "ANOMALY_ML",
+          "minutes_before_event": 25.8
+        },
+        {
+          "source": "PHYSICS",
+          "minutes_before_event": 17.2
+        },
+        {
+          "source": "DEJA_VU",
+          "minutes_before_event": 10.8
+        }
+      ]
+    }
+  ],
+  "alerts": [
+    {
+      "t_data": "2026-09-28T19:01:50Z",
+      "event_type": "BALLING",
+      "alert_type": "ANOMALY_ML",
+      "sources": [
+        "ANOMALY_ML"
+      ],
+      "severity": "warning",
+      "score": 1.0,
+      "score_kind": "probability",
+      "evidence_items": 4,
+      "recommendations": 2
+    },
+    {
+      "t_data": "2026-09-28T20:15:50Z",
+      "event_type": "LOSS",
+      "alert_type": "FUSED",
+      "sources": [
+        "LOOKAHEAD",
+        "ANOMALY_ML",
+        "PHYSICS",
+        "DEJA_VU"
+      ],
+      "severity": "warning",
+      "score": 0.363,
+      "score_kind": "prior",
+      "evidence_items": 11,
+      "recommendations": 3
+    }
+  ],
+  "false_alerts_by_type": {},
+  "latency_ms": {
+    "n": 5,
+    "median": 49.2,
+    "max": 184.9
+  },
+  "notes": [
+    "SYNTHETIC: the precursors were planted by our simulator; one scenario, one run. This shows the pipeline end to end, not detection skill on real wells.",
+    "Lead time is in data minutes (the replay's clock), before the planted start.",
+    "Latency is wall time from publishing the triggering sample to storing the alert (includes evidence and ledger lookups), at this replay speed.",
+    "Latency also depends on replay speed: above ~90 samples/s (about 900x) publishing outruns scoring and alerts queue; the integration test at 1500x saw 4-7 s."
+  ],
+  "earlier_run_under_cpu_load": {
+    "measured_at": "2026-09-29T16:14:10+00:00",
+    "latency_ms": {
+      "n": 5,
+      "median": 133.3,
+      "max": 16424.7
+    },
+    "same_alerts_and_lead_times": true,
+    "why": "ran while scripts/eval_realtime.py was training on every core; the first alert waited 16.4 s in the queue. Kept to show latency depends on free CPU, not only on the code."
+  }
+}

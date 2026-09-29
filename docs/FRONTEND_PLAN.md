@@ -2,17 +2,43 @@
 
 **Team:** Slothdevs · **Solution:** SMRITI (working name) · **Problem Statement:** PS 121 — eRTMAC-NWIS (Oil India Limited)
 **Parent documents:** [`SMRITI_MASTER_PLAN.md`](../SMRITI_MASTER_PLAN.md) (product) · [`BACKEND_PLAN.md`](BACKEND_PLAN.md) (API and data). This document is the source of truth for the web app. When they disagree, fix all of them in the same PR.
-**Document date:** 2026-09-28 (v1.0) · **updated 2026-09-29 (v1.1, Part 2):** the design-system revamp of `docs/SPEC_RECONCILIATION.md` §5 (themes, motion, shell, ⌘K palette, MapLibre, Documents Library, Dashboard) is built; see §0.1, §5, §8, §13, Appendix B3.
-**Updated 2026-09-29 (v1.2, Part 3):** F2 Knowledge screens built (Correlation Panel, Well 360 with a 3D trajectory, Knowledge Search, review queue, map proximity modes) with axe checks in e2e; see §0.0, the log (V-F14–V-F17), §5, §6, §9, §10, §13, Appendix B4.
-**Frontend phase:** F0 ✅ · F1 ✅ (Part 1) · P2 ✅ (Part 2) · **F2 — Knowledge: ✅ COMPLETE (2026-09-29, Part 3)**. Next: **F3 — Mitigation Ledger and risk curves** (Part 4), on the B3 API that is already live.
+**Document date:** 2026-09-28 (v1.0) · **updated 2026-09-29 (v1.1, Part 2):** the design-system revamp of `docs/SPEC_RECONCILIATION.md` §5 (themes, motion, shell, ⌘K palette, MapLibre, Documents Library, Dashboard) is built; see §0.2 (numbered §0.1 then), §5, §8, §13, Appendix B3.
+**Updated 2026-09-29 (v1.2, Part 3):** F2 Knowledge screens built (Correlation Panel, Well 360 with a 3D trajectory, Knowledge Search, review queue, map proximity modes) with axe checks in e2e; see §0.1 (numbered §0.0 then), the log (V-F14–V-F17), §5, §6, §9, §10, §13, Appendix B4.
+**Updated 2026-09-29 (v1.3, Part 4):** F3 built (Mitigation Ledger screen, `IntervalBar`, `RiskCurve` on Well 360 / the map panel / the correlation hazard strip, the 5-step risk scale) with axe checks in all three themes; B4's real-time API is live for F4. See §0.0, the log (V-F18–V-F19), §5, §6, §8, §13, §16, Appendix B5.
+**Frontend phase:** F0 ✅ · F1 ✅ (Part 1) · P2 ✅ (Part 2) · F2 ✅ (Part 3) · **F3 — Risk & ledger: ✅ COMPLETE (2026-09-29, Part 4)**. Next: **F4 — Live Well Monitor and Alerts** (Part 5), on the B4 WebSockets that are already live.
 
-> ⚠️ **Same honesty rule as the master and backend plans:** a "✅" must point to a file and a test that passed. Every number in §0 and Appendix B was measured in this repository on the date given. Everything from F3 onward is a **plan**.
+> ⚠️ **Same honesty rule as the master and backend plans:** a "✅" must point to a file and a test that passed. Every number in §0 and Appendix B was measured in this repository on the date given. Everything from F4 onward is a **plan**.
 
 ---
 
 ## 0. Where the frontend actually stands right now (2026-09-29)
 
-### 0.0 F2 — Knowledge screens (built in Part 3, 2026-09-29)
+### 0.0 F3 — Mitigation Ledger and risk curves (built in Part 4, 2026-09-29)
+
+**Built and verified** (evidence: Appendix B5):
+- **Mitigation Ledger** (`src/pages/LedgerPage.tsx`, screen 7, `/ledger`):
+  - Problem, formation and severity pickers, kept in the URL (`?type=LOSS&fm=…&sev=…`).
+  - The **caveat above the table**: "Associated with better outcomes; observational data, not causal", the backend's confounding note, and "Outcome unknown is never counted as a success or a failure".
+  - Ranked table (n ≥ `min_n`, **in the API's order**): action, "k of n" (partials named), an **`IntervalBar`** (posterior mean with its 90% credible-interval whisker; the raw rate as a hollow tick when it differs; an accessible label reading the numbers), median NPT, n, unknown outcomes.
+  - Rows expand to **every case**: well (link to its Well 360 events), date, formation, severity, the order the action was tried in, outcome (dashed when unverified), "recurred (recorded success)" when the recurrence rule turned a success into partial, NPT after, and the **report page** (`EvidenceLink`). Severity strata under the summary.
+  - "Insufficient evidence (n < 3, not ranked)" listed separately with the same cases; an empty ranking says so and suggests widening the scope.
+- **`RiskCurve`** (`components/risk/RiskCurve.tsx`, `lib/risk.ts`): per formation interval each event type's offset prior as a **step with its 90% CI band**, formation bands with TVDSS tops, **prognosed intervals dashed** (below a drilling well's TD; tops estimated from offsets), a TD marker on drilling wells, a legend whose buttons focus one type, a text summary for screen readers, and a **table of every number** ("36% (21%–53%) · 15/36 offsets"). The three highest-peak types are drawn by default.
+  - **Well 360 → Risk tab** (`components/well360/RiskTab.tsx`): the curve plus the highest risk per formation, each with **"What worked for …" → the ledger** filtered to that problem and formation.
+  - **Map panel**: a compact curve for the selected well with a link to the full numbers.
+  - **Correlation hazard strip**: a 5-px band left of the first well's formation track, coloured by that formation's highest prior on the **5-step risk scale** (`--risk-0…4`, the same in every theme), with the label in a tooltip and a legend.
+- **Accessibility:** axe (WCAG 2.2 AA) passes on the ledger (with a case list open) and the risk tab in **all three themes**, Command Blue included for the first time; one contrast fix was forced (case rows moved from `surface-2` to the card surface).
+- **Tests:** 100 unit tests (+10: risk helpers 4, ledger 4, risk tab 1, hazard strip 1) and `e2e/part4.spec.ts` (5 scenarios × 2 viewports): the ledger's rows equal the API's ranking, which the test first checks is sorted by posterior mean; cases link to wells and pages; the drilling well's curve shows prognosed intervals and a TD marker and links into the ledger; the map panel and the hazard strip render; axe in three themes.
+
+**Exit criterion "the ledger shows the planted ranking":** the screen shows exactly the API's order (e2e); that order's agreement with the planted rates is the backend's measurement (ρ = 0.837, BACKEND_PLAN §0.1, V-B19). The screen adds nothing to or takes nothing from it.
+
+**Found while building F3:**
+1. **The TD marker first sat on the prognosed top**, because the last real interval's base is the next (prognosed) top. The risk profile now reports TD itself (`td_md_m`, `td_tvdss_m`).
+2. **`role="listitem"` on the legend buttons hid them from assistive tech as buttons** (and made `aria-pressed` invalid); caught by a test querying by role. Now a list of buttons.
+3. **Command Blue's accent on `surface-2` fails contrast** for links; earlier axe runs covered only two themes. Part 4 checks all three.
+
+**Not built in F3 (stated, not hidden):** risk intervals are formations, not 25 m bins (BACKEND V-B20), so the curve is a step per formation; no visual-regression baselines yet (V-F16).
+
+### 0.1 F2 — Knowledge screens (built in Part 3, 2026-09-29)
 
 **Built and verified** (evidence: Appendix B4):
 - **Correlation Panel** (`src/pages/CorrelationPage.tsx`, `components/correlation/*`, `lib/correlation.ts`), the screen judges will remember:
@@ -39,9 +65,9 @@
 
 **Not built in F2 (stated, not hidden):**
 - **No visual-regression screenshots** (V-F16): pixel baselines differ between this sandbox and CI runners. The correlation scale maths is unit-tested and the panel is checked functionally in e2e instead.
-- The hazard strip on the correlation panel and risk curves belong to F3 (Part 4).
+- The hazard strip on the correlation panel and risk curves belong to F3: built in Part 4 (§0.0).
 
-### 0.1 Part 2 — Design system, shell, MapLibre, Documents Library, Dashboard (2026-09-29)
+### 0.2 Part 2 — Design system, shell, MapLibre, Documents Library, Dashboard (2026-09-29)
 
 **Built and verified** (evidence: Appendix B3):
 - **Design system** (`src/styles/index.css`, `src/lib/motion.ts`, `src/lib/wellTypes.ts`):
@@ -88,7 +114,7 @@
 4. **At map-page zoom, offset wells vanished into clusters**, so "click an offset well" was impossible. Active and offset wells now come from a separate, unclustered source.
 5. **The shell bundle crossed the 180 kB budget** (181.4 kB gzip) once cmdk was added. The palette now loads on first use: shell 164 kB.
 
-### 0.2 F1 — Map & ingestion (built in Part 1, 2026-09-28)
+### 0.3 F1 — Map & ingestion (built in Part 1, 2026-09-28)
 
 **Built and verified** (evidence: Appendix B2):
 - **Well Map** (`/map`, master plan screen 1):
@@ -129,7 +155,7 @@
 1. **The map overflowed the phone layout by 18 px.** Grid items default to `min-width: auto`, and Leaflet's internal panes are huge. The phone-width e2e test caught it; fixed with `min-w-0`.
 2. **Offset-table well names and depths wrapped mid-token** ("SYN-/ASM-/09"), found in the screenshot review. Those cells are now non-wrapping inside the table's horizontal scroll.
 
-### 0.3 F0 — Skeleton (built earlier on 2026-09-28)
+### 0.4 F0 — Skeleton (built earlier on 2026-09-28)
 
 **Built and verified in F0** (evidence in Appendix B):
 
@@ -194,6 +220,8 @@
 | V-F15 | 3D trajectory in SVG, not three.js | three.js would be a ~150 kB gzip chunk for a few polylines | ADR-F17; revisit if surfaces (horizons, uncertainty cones) are needed | ✅ Decided |
 | V-F16 | No visual-regression screenshots yet (§9 planned them from F2) | Baselines made here would not match CI's renderer | Generate baselines in CI (artifact) when the design settles; functional e2e + unit-tested maths meanwhile | ⏳ Open |
 | V-F17 | Map pins of wells on one pad overlap, so axe flags target size | WCAG 2.5.8 "equivalent" exception: every well can also be picked from the offset table and the well picker | e2e excludes `.maplibregl-marker` from axe with that reason in a comment; pins now have 24 px hit areas | ✅ Decided |
+| V-F18 | Part 3's axe runs covered Deep Rig and Daylight only | Command Blue failed contrast on the ledger's case rows | Part 4 runs axe in all three themes; re-run the Part 3 screens in Command Blue in F4 | ⏳ Open |
+| V-F19 | Hazard strip on the first correlation column only | The prior is per subject well; drawing it on offsets would show *their* prior, not their history | By design; offsets show their events. Revisit if users ask for per-column priors | ✅ Decided |
 
 ---
 
@@ -487,7 +515,7 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 14b | Knowledge Search | F2 | ✅ | `src/pages/SearchPage.tsx`, `components/knowledge/LessonCardView.tsx`, `lib/highlight.tsx` · `SearchPage.test.tsx` (4), e2e "knowledge search" |
 | 14c | Review queue | F2 | ✅ | `components/review/ReviewQueue.tsx`, `lib/review.ts`, `components/evidence/PageImage.tsx` · `review.test.ts` (3), `ReviewQueue.test.tsx` (3), e2e "review queue" (uploads its own low-confidence DDR) |
 | 14d | Automated accessibility checks | F2 | ✅ | `e2e/part3.spec.ts` axe scenarios (2 themes × 2 viewports) |
-| 15 | Mitigation Ledger, risk curves on Map/Well 360 | F3 | 📋 | §4.6 |
+| 15 | Mitigation Ledger, risk curves on Map/Well 360, correlation hazard strip | F3 | ✅ | `src/pages/LedgerPage.tsx`, `components/risk/*`, `components/well360/RiskTab.tsx`, `lib/risk.ts` · `risk.test.ts` (4), `LedgerPage.test.tsx` (4), `Well360Page.test.tsx`, `CorrelationPage.test.tsx`, e2e `part4.spec.ts` |
 | 16 | Live Well Monitor, Alerts, Déjà Vu overlay | F4 | 📋 | §4.7–4.8 |
 | 17 | Copilot panel, Analytics, Offset Risk Brief button, PWA offline well pack | F5 | 📋 | §4.5, §4.9, §12 |
 | 18 | OIDC login (PKCE), role-aware UI, Admin, hidden source maps, perf budget enforcement | F6 | 📋 | §4.10, §11 |
@@ -502,10 +530,10 @@ Frontend phases follow the backend phases they depend on, typically starting a f
 |---|---|---|---|---|
 | **F0 Skeleton** | B0 | P0 | Shell, theming, field mode, API layer, System Status, planned screens, nginx image, CI | ✅ **Met 2026-09-28**, including a green GitHub CI run — Appendix B |
 | **F1 Map & ingestion** | B1 | P1 | Well Map (surface mode), upload + job status, `EvidenceLink`/`PageViewer`, `ConfidenceValue`, `DataTable`, units formatter, route-level code splitting, tile decision | ✅ **Met 2026-09-28** on synthetic wells (no Volve data, see BACKEND_PLAN V-B13): radius search end to end in the browser; uploads tracked to `processed` and viewable with evidence; e2e covers both |
-| **P2 Revamp** (Part 2) | B2 | — | `SPEC_RECONCILIATION.md` §5: themes, motion, collapsible sidebar, top bar with well-type switcher, ⌘K palette, MapLibre map, Documents Library revamp, Dashboard shell | ✅ **Met 2026-09-29** — §0.1, Appendix B3 |
-| **F2 Knowledge** (Part 3) | B2 ✅ | P2 | Review queue, Well 360, **Correlation Panel**, Knowledge Search, at-formation/closest-approach modes on the map, axe checks in e2e | ✅ **Met 2026-09-29 (Part 3):** 6 wells re-aligned in 183 ms (first render 699 ms incl. page load) with evidence links; review round trip in e2e; search with citations and "no record"; axe clean. No visual-regression baseline (V-F16). §0.0, Appendix B4 |
-| **F3 Risk & ledger** | B3 | P3a | Mitigation Ledger, `RiskCurve` on Map/Well 360/Correlation hazard strip | Ledger shows the planted ranking; risk curves show n and CI |
-| **F4 Real-time** | B4 | P3b | Live Well Monitor, Alerts list/detail, Déjà Vu overlay, WebSocket client with reconnect/stale handling | Replay → alerts appear in the UI ≤ 5 s after the backend emits them (measured); tablet smoothness target met |
+| **P2 Revamp** (Part 2) | B2 | — | `SPEC_RECONCILIATION.md` §5: themes, motion, collapsible sidebar, top bar with well-type switcher, ⌘K palette, MapLibre map, Documents Library revamp, Dashboard shell | ✅ **Met 2026-09-29** — §0.2, Appendix B3 |
+| **F2 Knowledge** (Part 3) | B2 ✅ | P2 | Review queue, Well 360, **Correlation Panel**, Knowledge Search, at-formation/closest-approach modes on the map, axe checks in e2e | ✅ **Met 2026-09-29 (Part 3):** 6 wells re-aligned in 183 ms (first render 699 ms incl. page load) with evidence links; review round trip in e2e; search with citations and "no record"; axe clean. No visual-regression baseline (V-F16). §0.1, Appendix B4 |
+| **F3 Risk & ledger** (Part 4) | B3 ✅ | P3a | Mitigation Ledger, `RiskCurve` on Map/Well 360/Correlation hazard strip | ✅ **Met 2026-09-29 (Part 4):** the ledger shows the API's ranking (whose agreement with the planted rates is the backend's ρ = 0.837); risk curves show n, n_eff in labels and the 90% CI; axe clean in three themes. §0.0, Appendix B5 |
+| **F4 Real-time** (Part 5) | B4 ✅ | P3b | Live Well Monitor, Alerts list/detail, Déjà Vu overlay, WebSocket client with reconnect/stale handling | Replay → alerts appear in the UI ≤ 5 s after the backend emits them (measured); tablet smoothness target met |
 | **F5 Copilot & polish** | B5 | P4 | Copilot panel (SSE), Analytics, Offset Risk Brief download, PWA with an offline well pack | Copilot answers with clickable citations; field view usable offline for a cached well (knowledge views only) |
 | **F6 Hardening** | B6 | P5 | OIDC PKCE login, role-aware UI, Admin, hidden source maps, bundle budget in CI, usability test (master plan §13.6) | SUS ≥ 70 measured; performance budgets (§10) met and recorded |
 
@@ -551,7 +579,7 @@ Per-viewer preferences in localStorage (guarded; not reliable state): `smriti.th
 
 **Motion** (`src/lib/motion.ts`): page transition (fade + 10 px rise), stagger lists, spring active pill, slide-in panel; only `transform` and `opacity` animate. KPI numbers count up; live states pulse (drilling wells, "drilling now" card). All motion respects "reduce motion".
 
-**Planned semantic tokens (F3/F4):** an event-type palette (colour-blind-safe, paired with icons) and a 5-step sequential risk scale.
+**Semantic tokens:** the event-type palette (`--ev-*`, paired with marker shapes and codes; Part 3) and the **5-step sequential risk scale** `--risk-0…4` (Part 4: <5%, 5–15%, 15–30%, 30–50%, ≥50%), the same in every theme and always shown next to the number.
 
 **Field view:** larger type and a reduced navigation (Map, Correlation, Live, Alerts, Search, Ledger, System); Deep Rig is the recommended theme for control rooms; touch targets ≥ 44 px from F4.
 
@@ -637,6 +665,7 @@ Per-viewer preferences in localStorage (guarded; not reliable state): `smriti.th
 | ADR-F15 | CSS grid-column transition for the sidebar | Framer `width` animation | Spec §7 rule 4: the browser interpolates one property; no per-frame JS layout |
 | ADR-F16 | Depth tracks as React SVG with our own scale maths | D3 (ADR-F7's plan) | Linear scales, ticks and the alignment inverse are small and unit-tested; React owns the DOM, no second rendering model; memoised columns keep the crosshair cheap |
 | ADR-F17 | 3D trajectory as an orthographic SVG camera | three.js / react-three-fiber | A few polylines and markers need no WebGL; no new dependency or 150 kB chunk; works in jsdom tests, in screenshots and under the strict CSP |
+| ADR-F18 | `RiskCurve` and `IntervalBar` as React SVG | ECharts (planned for the live strips) | Step curves with CI bands per formation are a few rects and lines; no chart library in the ledger/Well 360 chunks; the same components serve the map panel and, in F4, alert recommendations |
 
 ---
 
@@ -678,12 +707,13 @@ One codebase serves office laptops, RTMAC wall screens and rig tablets, with no 
 
 ## 16. Immediate Next Actions (frontend)
 
-*(Updated 2026-09-29 after Part 3.)*
+*(Updated 2026-09-29 after Part 4.)*
 
-1. **Part 4 (F3):** the Mitigation Ledger screen on `GET /api/v1/ledger` (live, B3): ranked table with `IntervalBar`s, "insufficient evidence" section, cases with evidence, the observational caveat. Then `RiskCurve` from `GET /wells/{id}/risk-profile` on Well 360, the map panel and the correlation hazard strip.
-2. **Visual-regression baselines** generated in CI (V-F16).
-3. **Self-hosted tile pack** for the demo area, so the map has a basemap offline (V-F10 follow-up) — UI eng. + infra.
-4. **`docker save`** the node/nginx base images for the finale machine (V-F8).
+1. **Part 5 (F4):** Live Well Monitor on `WS /ws/wells/{id}/live` + `GET /wells/{id}/realtime` (big numbers, look-ahead bar from the prognosed intervals, channel strips with the rig-state ribbon, risk gauges, stale banner, "REPLAY ×60" banner, replay controls) and Alerts on `GET /alerts` + `WS /ws/alerts` (feed, detail with evidence tabs, Déjà Vu overlay from `detail.matches`, ranked mitigations with `IntervalBar`, ack/dismiss/feedback). Measure "backend emits → UI shows" (≤ 5 s).
+2. **axe on the Part 3 screens in Command Blue** (V-F18).
+3. **Visual-regression baselines** generated in CI (V-F16).
+4. **Self-hosted tile pack** for the demo area, so the map has a basemap offline (V-F10 follow-up) — UI eng. + infra.
+5. **`docker save`** the node/nginx base images for the finale machine (V-F8).
 
 ---
 
@@ -783,6 +813,21 @@ Clean run against the freshly seeded stack at commit `bce0acb` (BACKEND_PLAN App
 | Timing | `part3.spec.ts` annotations | correlation first render 699 ms, re-align 183 ms; review round trip 915 ms |
 | Visual review | Playwright screenshots at 1440 px of every new screen | Found and fixed here: clipped cursor label, faint casing shoes, offset labels colliding at pad wellheads, clipped depth columns on the map panel |
 | CI | GitHub Actions on `bce0acb` | all three jobs green |
+
+## Appendix B5 — Part 4 (F3) Verification Record (2026-09-29)
+
+Clean run against the freshly seeded stack at commit `0ad33d4` (BACKEND_PLAN Appendix B5).
+
+| Check | Command | Result |
+|---|---|---|
+| Unit/component tests | `npm test` | **100 passed** (22 files) |
+| Lint / format / types / contract | `npm run lint`, `format:check`, `typecheck`, `gen:api` | clean; `schema.d.ts` regenerated from the B4 contract |
+| Build | `npm run build` | shell **165.4 kB gzip** (budget 180; +0.2 kB); `LedgerPage`, `RiskCurve`, `risk` in their own lazy chunks |
+| Browser e2e | `npx playwright test` through nginx with the strict CSP | **56 passed, 2 skipped** (desktop + tablet) |
+| Accessibility | axe in `part4.spec.ts`, Deep Rig, Daylight and Command Blue | 0 violations on the ledger (case list open) and the Well 360 risk tab |
+| Small field | the same e2e against a 12-well field (CI's size) | 24 passed (`part4` + `smoke`) |
+| Visual review | Playwright screenshots at 1440 px (ledger, risk tab, map panel, correlation) | Found and fixed here: the risk tab's grid squeezed the side list; odd axis ticks (19%, 37%); TD marker on the prognosed top |
+| CI | GitHub Actions on `0ad33d4` | all three jobs green |
 
 ## Appendix C — Document Maintenance Rules
 

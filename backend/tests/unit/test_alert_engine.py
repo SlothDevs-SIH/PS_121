@@ -2,7 +2,10 @@
 
 from datetime import datetime, timedelta
 
-from app.alerts.engine import BUDGET, AlertEngine, Candidate, severity_for
+from hypothesis import given, settings
+from hypothesis import strategies as st
+
+from app.alerts.engine import BUDGET, BUDGET_WINDOW, AlertEngine, Candidate, severity_for
 
 T0 = datetime(2026, 9, 28, 18, 0)
 EV = [{"kind": "stream", "wellbore_id": 1}]
@@ -68,3 +71,45 @@ def test_severity_rules() -> None:
     assert severity_for("KICK", strong=False) == "critical"
     assert severity_for("LOSS", strong=True) == "warning"
     assert severity_for("LOSS", strong=False) == "info"
+
+
+SOURCES = ("ANOMALY_ML", "PHYSICS", "DEJA_VU", "LOOKAHEAD")
+TYPES = ("LOSS", "KICK", "STUCK", "BALLING")
+
+
+@settings(max_examples=200, deadline=None)
+@given(
+    st.lists(
+        st.tuples(
+            st.sampled_from(SOURCES),
+            st.sampled_from(TYPES),
+            st.floats(0, 24 * 60),
+            st.floats(1500, 2500),
+            st.booleans(),
+            st.booleans(),
+        ),
+        max_size=60,
+    )
+)
+def test_property_no_alert_without_evidence_and_kicks_never_budgeted(
+    stream: list[tuple[str, str, float, float, bool, bool]],
+) -> None:
+    eng = AlertEngine()
+    for i, (src, et, minutes, tvdss, has_ev, ack) in enumerate(sorted(stream, key=lambda s: s[2])):
+        c = cand(src, et, minutes, tvdss, severity_for(et, strong=True), EV if has_ev else [])
+        d = eng.decide(c)
+        if not has_ev:
+            assert d.action == "suppress" and d.reason == "no evidence"
+        if et == "KICK" and has_ev:
+            assert d.reason != "budget"
+        if d.action == "create":
+            t = eng.created(i, c)
+            if ack:
+                eng.closed(t.id, "ack", c.t_data)
+        elif d.action == "fuse":
+            assert d.target is not None and d.target.event_type == et
+            eng.fused(d.target, c)
+    created = [a for a in eng.alerts if not a.budget_exempt]
+    for a in created:  # never more than the budget inside any 12-h window
+        window = [b for b in created if timedelta(0) <= a.t_data - b.t_data < BUDGET_WINDOW]
+        assert len(window) <= BUDGET

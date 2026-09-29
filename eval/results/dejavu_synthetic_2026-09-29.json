@@ -1,0 +1,139 @@
+{
+  "what": "S7d Deja Vu pattern matching on SYNTHETIC drilling data",
+  "measured_at": "2026-09-29T16:10:50+00:00",
+  "commit": "0ad33d4",
+  "protocol": "library = seeded field wells 1-40; tau calibrated on precursor-free windows of training-field wells (seed 1); queries from other training-field episodes (seed 2), never in the library",
+  "library": {
+    "signatures": 99,
+    "by_type": {
+      "BALLING": 16,
+      "INSTAB": 9,
+      "KICK": 5,
+      "LOSS": 21,
+      "OVERP": 7,
+      "STUCK": 18,
+      "TIGHT": 18,
+      "TORQUE": 5
+    }
+  },
+  "tau": 1.0731,
+  "alert_similarity": 0.8,
+  "results": {
+    "at_event": {
+      "queries": 123,
+      "precision_at_1": 0.992,
+      "baseline_random_by_type_mix": 0.148,
+      "baseline_depth_nearest": 0.415,
+      "alert_recall": 0.463,
+      "alert_precision": 1.0,
+      "by_type": {
+        "BALLING": {
+          "queries": 16,
+          "precision_at_1": 1.0,
+          "alert_recall": 1.0
+        },
+        "INSTAB": {
+          "queries": 17,
+          "precision_at_1": 1.0,
+          "alert_recall": 0.118
+        },
+        "KICK": {
+          "queries": 7,
+          "precision_at_1": 1.0,
+          "alert_recall": 1.0
+        },
+        "LOSS": {
+          "queries": 24,
+          "precision_at_1": 1.0,
+          "alert_recall": 0.833
+        },
+        "OVERP": {
+          "queries": 7,
+          "precision_at_1": 1.0,
+          "alert_recall": 1.0
+        },
+        "STUCK": {
+          "queries": 22,
+          "precision_at_1": 1.0,
+          "alert_recall": 0.182
+        },
+        "TIGHT": {
+          "queries": 20,
+          "precision_at_1": 0.95,
+          "alert_recall": 0.05
+        },
+        "TORQUE": {
+          "queries": 10,
+          "precision_at_1": 1.0,
+          "alert_recall": 0.0
+        }
+      }
+    },
+    "15_min_before": {
+      "queries": 123,
+      "precision_at_1": 0.886,
+      "baseline_random_by_type_mix": 0.148,
+      "baseline_depth_nearest": 0.415,
+      "alert_recall": 0.276,
+      "alert_precision": 1.0,
+      "by_type": {
+        "BALLING": {
+          "queries": 16,
+          "precision_at_1": 1.0,
+          "alert_recall": 0.75
+        },
+        "INSTAB": {
+          "queries": 17,
+          "precision_at_1": 0.882,
+          "alert_recall": 0.0
+        },
+        "KICK": {
+          "queries": 7,
+          "precision_at_1": 1.0,
+          "alert_recall": 0.857
+        },
+        "LOSS": {
+          "queries": 24,
+          "precision_at_1": 1.0,
+          "alert_recall": 0.5
+        },
+        "OVERP": {
+          "queries": 7,
+          "precision_at_1": 1.0,
+          "alert_recall": 0.571
+        },
+        "STUCK": {
+          "queries": 22,
+          "precision_at_1": 0.818,
+          "alert_recall": 0.0
+        },
+        "TIGHT": {
+          "queries": 20,
+          "precision_at_1": 0.85,
+          "alert_recall": 0.0
+        },
+        "TORQUE": {
+          "queries": 10,
+          "precision_at_1": 0.5,
+          "alert_recall": 0.0
+        }
+      }
+    }
+  },
+  "false_match_rate": {
+    "precursor_free_windows": 320,
+    "reaching_alert_similarity": 4,
+    "rate": 0.0125,
+    "calibration_target": 0.01
+  },
+  "latency_ms": {
+    "p50": 100.7,
+    "p95": 138.0,
+    "library_size": 99
+  },
+  "notes": [
+    "SYNTHETIC: every precursor comes from our own simulator; precision here says the matcher separates the planted shapes, not that it finds Assam incidents.",
+    "Similarity = exp(-D/tau) is a similarity, never a probability.",
+    "Weak on mechanical precursors (TIGHT, TORQUE): their planted signal is spiky and shape-poor at 30-s resolution; the classifiers carry those types."
+  ]
+}

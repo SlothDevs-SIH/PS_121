@@ -3,17 +3,54 @@
 **Team:** Slothdevs · **Solution:** SMRITI (working name) · **Problem Statement:** PS 121 — eRTMAC-NWIS (Oil India Limited)
 **Parent document:** [`SMRITI_MASTER_PLAN.md`](../SMRITI_MASTER_PLAN.md). That is the product source of truth; **this** document is the source of truth for the backend. When the two disagree, fix both in the same PR.
 **Document date:** 2026-09-28 (v1.0) · **updated 2026-09-28 (v1.1):** frontend F0 landed (V-B4 resolved); new `app.cli openapi` command exports the API contract for the frontend (+1 unit test → 31); CI jobs restructured (`backend-checks`, `frontend-checks`, `integration`).
-**Updated 2026-09-29 (v1.2, Part 2):** B2 knowledge layer built on the contract drafted in `f621a3e` (data model, migrations 0005–0006, typed API); §0.1, §5, §6, §13, §16 and Appendix B3 record it.
-**Updated 2026-09-29 (v1.3, Part 3):** B3 batch intelligence built (offset prior risk, physics indicators, Mitigation Effectiveness Ledger) and evaluated; §0.0, the log (V-B19–V-B24), §5, §6, §16 and Appendix B4 record it.
-**Backend phase:** B0 ✅ · B1 ✅ (Part 1) · B2 ✅ (Part 2) · **B3 — Batch intelligence: ✅ COMPLETE (2026-09-29, Part 3)**, with the ledger's exit criterion met on the seeded field and a stated sample-size caveat (V-B19). Next: **B4 — Real-time** (Part 4).
+**Updated 2026-09-29 (v1.2, Part 2):** B2 knowledge layer built on the contract drafted in `f621a3e` (data model, migrations 0005–0006, typed API); §0.2 (numbered §0.1 then), §5, §6, §13, §16 and Appendix B3 record it.
+**Updated 2026-09-29 (v1.3, Part 3):** B3 batch intelligence built (offset prior risk, physics indicators, Mitigation Effectiveness Ledger) and evaluated; §0.1 (numbered §0.0 then), the log (V-B19–V-B24), §5, §6, §16 and Appendix B4 record it.
+**Updated 2026-09-29 (v1.4, Part 4):** B4 real-time built (stream + replay + WITS0, rig state, classifiers, Déjà Vu, alert engine, WebSockets) and evaluated on SYNTHETIC data; §0.0, the log (V-B25–V-B31), §4.10–4.12, §5, §6, §10, §13 (ADR-B18–B20), §16 and Appendix B5 record it.
+**Backend phase:** B0 ✅ · B1 ✅ (Part 1) · B2 ✅ (Part 2) · B3 ✅ (Part 3) · **B4 — Real-time: ✅ COMPLETE (2026-09-29, Part 4)** on synthetic data only: no Volve well was replayed (V-B13, V-B25). Next: **B5 — Copilot & reports** (Part 5).
 
-> ⚠️ **Same honesty rule as the master plan and DHRUVA:** a "✅" must point to a file and a test that passed. Every number in §0 was measured in this repository on the date given. Everything from B4 onward is a **plan**.
+> ⚠️ **Same honesty rule as the master plan and DHRUVA:** a "✅" must point to a file and a test that passed. Every number in §0 was measured in this repository on the date given. Everything from B5 onward is a **plan**.
 
 ---
 
 ## 0. Where the backend actually stands right now (2026-09-29)
 
-### 0.0 B3 — Batch intelligence (built in Part 3, 2026-09-29)
+### 0.0 B4 — Real-time (built in Part 4, 2026-09-29)
+
+**Everything real-time here runs on SYNTHETIC data.** The 10-s drilling channels come from our own simulator (`app/synthetic/realtime.py`), which plants each problem type's precursor before the event. So every score below says the pipeline **recovers planted patterns**; none says how it will do on Assam wells (V-B26).
+
+**Built and verified** (evidence: Appendix B5):
+- **S12 stream** (`app/stream/*`, compose service `stream`, `python -m app.stream.run`):
+  - Sources: CSV replay from object storage (the demo path, 1–2000× speed; pause, resume, stop and speed change while running) and a **WITS0 TCP reader** (tested byte by byte and over a real local socket). WITSML/ETP are not built (V-B27).
+  - Every record goes through `channel_mapping` (source + mnemonic → canonical channel + unit; 24 defaults for CSV and WITS0 record 1, seeded). Missing, unreadable or LAS-null values are **flagged, not zeroed**.
+  - Redis Streams `rt:{wellbore}` → consumer groups `persist` (batched, idempotent `INSERT … ON CONFLICT DO NOTHING` into the `rt_sample` hypertable) and `score` (writes `rt_score`, pushes frames to `scores:{wellbore}`, alerts to `alerts`). A heartbeat key drives the compose health check.
+  - TimescaleDB hypertables `rt_sample`, `rt_score` (1-day chunks, compression after 7 days) are **wide**: one row per timestamp (ADR-B20).
+- **Rig state** (`app/risk/rigstate.py`): rules state machine (drilling, reaming, circulating, trip in/out, in slips, stuck, stationary); stuck = overpull ≥ 150 kN over the running string weight, not moving or rotating, for 2 min.
+- **S7b classifiers** (`app/risk/features.py`, `realtime_model.py`):
+  - 16 features compare the last 2/5/15 min with the hour that ended 15 min earlier, in the same rig state.
+  - One histogram gradient-boosted tree per type (LOSS, KICK, STUCK, TORQUE, OVERP, BALLING; scikit-learn, ADR-B18), target "the event starts within 30 min", isotonic calibration on grouped out-of-fold predictions, alert threshold set for ≤ 1 false alarm per 12 h of precursor-free drilling, top drivers by occlusion (not SHAP).
+  - Trained on a separate synthetic training field (wells 61–180, 36,669 rows); the seeded wells are never in training. In the stream: 2 consecutive minutes above the threshold raise, below 0.8 × threshold clears.
+- **S7d Déjà Vu** (`app/risk/dejavu.py`, `pattern_signature`): MASS (FFT sliding z-normalised distance) over each 90-min signature, the match ending within the last 40 min before the past event; banded DTW (10%) on the 20 best, on each channel's change from its first 5 min in typical-range units, normalised by how much both windows change; similarity = exp(−D/τ), τ calibrated so 1% of precursor-free windows reach 0.8. Own well excluded; hole-size class and drilling share must match. Library: the 99 real-time events of the seeded wells, each linked to its extracted event (for the report pages). NumPy implementation (ADR-B19).
+- **Look-ahead** (`app/risk/prior.py`): a drilling well's formations below TD are **prognosed** from its offsets (inverse-distance-squared over the nearest five; weighted spread reported) so the risk profile covers what the bit has not reached. The stream raises LOOKAHEAD when the next formation is ≤ 30 m TVD away and an offset prior there is ≥ 30%.
+- **S7c physics on the stream:** return-flow imbalance ≥ 5% over 2 min (hysteresis: 6 samples on, clear below 3%) and pit change ≥ 0.8 m³ in 15 min, using `ThresholdDetector` (V-B23 resolved).
+- **S9 alert engine** (`app/alerts/engine.py`, `service.py`): pure rules over **data time**: no evidence → never raised (and `alert.evidence` has a CHECK constraint); same type within 30 m TVD → fused (another source) or dropped (same source); 30-min cooldown after ack/dismiss; ≤ 6 non-critical alerts per 12 h, **kicks exempt**. Evidence = the stream window plus offset/matched events with their report pages; recommendations = the ledger's top actions for that problem nearby, with the observational caveat; latency recorded per alert and per fused source. Lifecycle new → ack → dismissed; feedback useful / not useful / false alarm.
+- **API:** `POST/GET /api/v1/replay`, `GET /api/v1/stream/status`, `GET /api/v1/wells/{id}/realtime` (downsampled window + scores + thresholds + stale flag), `GET /api/v1/alerts` (+ `/{id}`), `POST …/ack|dismiss|feedback`; **`WS /ws/wells/{id}/live`** (≤ 1 frame/s, status every 5 s with a stale flag after 30 s without frames) and **`WS /ws/alerts`** (full alert on create and fuse). Risk profile now reports TD (MD, TVDSS) and prognosed intervals.
+- **Assets:** `python -m app.cli realtime` (also run by `seed`, 73 s) trains and stores the model bundle, builds the signature library, calibrates τ, and writes the drilling well's replay CSV (oilfield units, standard mnemonics) and its truth file.
+- **Evaluations** (all SYNTHETIC; `eval/results/*_synthetic_2026-09-29.json`, commit `0ad33d4`):
+  - **Classifiers** (`scripts/eval_realtime.py`), on the 40 seeded wells never seen in training (grouped 5-fold CV on the training field in brackets): PR-AUC LOSS **0.951** (0.957), KICK **1.000** (0.978), STUCK **0.907** (0.911), TORQUE **0.552** (0.532), OVERP **0.972** (0.986), BALLING **0.942** (0.968), against a one-feature physics threshold of 0.944 / 0.999 / 0.362 / 0.143 / 0.443 / 0.885. The ML gain is large for mechanical and overpressure precursors, **small for losses, kicks and balling**, where one flow or ROP feature already separates the planted signal. False alarms 0.09–1.28 per 12 h of precursor-free drilling (per minute-row, before hysteresis); every held-out event caught inside 30 min; median lead 30 min (the horizon's cap) except TORQUE 17 and STUCK 25.5. TORQUE stays weak (PR-AUC 0.55).
+  - **Déjà Vu** (`scripts/eval_dejavu.py`), 123 held-out event queries: precision@1 **0.992** at the event start and **0.886** 15 min earlier, against 0.148 (random by type mix) and 0.415 (nearest by depth). An alert (similarity ≥ 0.8) fires for **46%** of queries at the event start (28% 15 min earlier), with **alert precision 1.0**. Out-of-sample false-match rate **1.25%** (4 of 320 precursor-free windows; target 1%). Per type, alert recall is high for BALLING, KICK, OVERP (1.0) and LOSS (0.83) and **low for STUCK 0.18, INSTAB 0.12, TIGHT 0.05, TORQUE 0** (V-B28). Query latency p50 101 ms, p95 138 ms on 99 signatures.
+  - **End-to-end replay** (`scripts/eval_replay_alerts.py`, SYN-ASM-41 at 60×, 5.3 h of data in 327 s): **both planted events alerted, no false alerts.** Bit balling: a classifier alert **28 min** before it. Losses: the look-ahead **124 min** before (Tipam prognosed 30 m below the bit, offset prior 36%), then the classifier (26 min before), the physics pit-loss rule (17 min) and Déjà Vu (11 min) fused into the same alert, with 11 evidence items and 3 ledger recommendations. Alert latency (sample published → alert stored): **median 49 ms, max 185 ms** (5 measurements). An earlier run while model training saturated the CPU: same alerts, max **16.4 s**; and above ~900× publishing outruns scoring (the integration test at 1500× saw 4–7 s). One scenario on one well: this demonstrates the pipeline, it does not estimate detection rates (V-B26).
+- **Tests:** unit 290 (new: rig state and simulator 6, Déjà Vu 6, mapping/replay 5, WITS0 3 incl. a real socket, alert engine 6 incl. a hypothesis property that no alert exists without evidence and kicks are never budgeted, scorer 3, contract/422 cases); integration `tests/integration/test_b4.py` (7): replay → every row stored and scored, planted losses alerted with evidence, budget/dedupe, both WebSockets push what the API lists, lifecycle rules (409s), replay control, phase registry. Passed on the 40-well field and on CI's 12-well field.
+
+**Found while building B4:**
+1. **LightGBM needs the system `libgomp`**, which the slim image lacks (and this sandbox can't apt-install). scikit-learn's histogram GBDT is the same algorithm and bundles its OpenMP (ADR-B18).
+2. **Zero-padded smoothing invented precursors.** `np.convolve(mode="same")` pads with zeros, so every window's ends looked like a large drop; Déjà Vu alert recall went 0.09 → 0.49 once the edges were padded with the edge value.
+3. **Two quiet windows look alike.** With plain z-normalised shapes, normal drilling matched normal drilling better than events matched events; comparing *changes* in typical-range units and dividing by how much both windows change fixed it.
+4. **The simulator first produced no overpull precursors**, because connections are rare at low ROP; stick-slip torque and hookload scatter while drilling were added so the mechanical precursors are visible.
+5. **CI's 12-well field put the next formation 306 m below TD**, unreachable in a demo; the replay now sizes ROP to reach the next formation in about 3.5 h and, if that is impossible, plants the losses after 4 h where the bit is (the truth file says which).
+
+**Not built in B4 (stated, not hidden):** no Volve or other real real-time data (V-B25); no WITSML/ETP adapters (V-B27); no TIGHT/INSTAB classifier (Déjà Vu and the physics rules cover them, weakly; V-B28); no MLflow registry (the bundle is a versioned object in S3; V-B29); WebSockets are unauthenticated until B6 (V-B30); data-quality flags cover missing and unreadable values, not stale/flat-lined/unit-jump detection (V-B31).
+
+### 0.1 B3 — Batch intelligence (built in Part 3, 2026-09-29)
 
 **Built and verified** (evidence: Appendix B4):
 - **S8 Mitigation Effectiveness Ledger** (`app/ledger/core.py`, `service.py`, `GET /api/v1/ledger`):
@@ -43,7 +80,7 @@
 - No `risk.recompute_prior` / `ledger.recompute` batch tasks: both are computed per request (26–51 ms on the synthetic field), so there is nothing to precompute yet (V-B22).
 - The ledger stratifies by severity but does not adjust for it; confounding by severity is stated in every response, not corrected.
 
-### 0.1 B2 — Knowledge layer (built in Part 2, 2026-09-29)
+### 0.2 B2 — Knowledge layer (built in Part 2, 2026-09-29)
 
 **Built and verified** (evidence: Appendix B3):
 - **S2 extraction** (`app/extract/`), rules first, no LLM needed:
@@ -95,7 +132,7 @@
 - **No hand-annotated gold set and no search Recall@5.** Only synthetic ground truth exists; both need real reports (V-B15).
 - **Kick subtype** (gas / water / oil) is never written in the synthetic reports, so it stays null. That is the 8% subtype "miss".
 
-### 0.2 B1 — Data foundation (built in Part 1, 2026-09-28)
+### 0.3 B1 — Data foundation (built in Part 1, 2026-09-28)
 
 **Built and verified** (evidence: Appendix B2):
 - **Synthetic Upper-Assam-style field** (`app/synthetic/`), seeded and deterministic:
@@ -149,7 +186,7 @@
 - **No LLM classification fallback.** Rules classify every synthetic report correctly; the LLM hook moves to B2 with extraction.
 - **No at-formation or closest-approach offset modes** (B2, as planned).
 
-### 0.3 B0 — Skeleton (built earlier on 2026-09-28)
+### 0.4 B0 — Skeleton (built earlier on 2026-09-28)
 
 **Built and verified in B0**, with the evidence recorded in Appendix B:
 
@@ -206,15 +243,22 @@
 | V-B13 | Synthetic data only | No Volve access in the sandbox | Master plan §12.5 is unchanged; OIL/Volve data goes through the same `import_field` + upload path | ⏳ Open |
 | V-B14 | Dense relevance floor for the `hash` embedder | Short queries against ~1,000-character chunks score low even when relevant. Measured on the synthetic corpus: 13 queries; relevant top-1 ≥ 0.31 for 7 of 8 (0.09 for "high torque", found lexically); irrelevant top-1 ≤ 0.154 | Floor 0.22 for `hash`, 0.45 for `ollama` (`app/search/hybrid.py`). Re-calibrate on real reports and when switching embedder | ✅ Calibrated (synthetic) |
 | V-B15 | Extraction F1 measured on synthetic reports, not the master plan §13.1 gold set | The generator's phrasing is a fixed vocabulary, so 1.0 is an upper bound | Quote it only as "on synthetic reports". Build the gold set from review-queue corrections (the `(proposed, correction)` pairs are stored for this) plus annotated real DDRs | ⏳ Open |
-| V-B16 | Wellbore recreation on re-seed cascaded away extracted data | Found while building B2 | Fixed: update in place (§0.1 bug 1) | ✅ Resolved |
+| V-B16 | Wellbore recreation on re-seed cascaded away extracted data | Found while building B2 | Fixed: update in place (§0.2 bug 1) | ✅ Resolved |
 | V-B17 | LLM extraction pass not built | Rules suffice on synthetic reports | Build it when real reports show the rules' misses; the review queue measures them | ⏳ Open |
 | V-B18 | CLOSEST_APPROACH takes ~0.6 s at 5 km (20 candidate wells, numpy sampling) | Acceptable for an interactive request | If slow on real fields: sample only inside the window's bounding box, or pre-filter with `ST_3DDistance` per pair in SQL | ⏳ Watch |
 | V-B19 | Ledger ρ ≥ 0.8 is sample-size-limited | Seeded field ρ = 0.837, but 10 same-size fields give median 0.65 (2 of 10 ≥ 0.8); 410 wells give 0.956 | Quote the seeded number **with** the scale check. Real value depends on how many recorded outcomes OIL's archive yields; the credible intervals already show the uncertainty to users | ⏳ Stated |
 | V-B20 | Risk intervals are formations, not 25 m TVDSS bins | §Stage 7a allows either; formations are what offsets share reliably | Add TVDSS bins inside thick formations if F3's risk curves need finer steps | ⏳ Open |
 | V-B21 | Base rate floored at 1% (not the raw rate) | Keeps α, β ≥ 0.02 so the posterior mean stays inside its own 90% interval (property test + grid check) | A never-seen event type starts at a 1% prior; documented in the response's `method` text | ✅ Decided |
 | V-B22 | Recency factor fixed at 1.0; no batch recompute tasks | Synthetic wells span 2008–2027 with no practice change to model; per-request computation is 26–51 ms | Add a decay once real data shows practices changing; add Celery recompute only if requests get slow | ✅ Decided |
-| V-B23 | Physics indicators not yet on a live stream | They are pure functions with textbook tests; B4 brings the stream | B4 wires them into the alert engine (S9) | ⏳ B4 |
+| V-B23 | Physics indicators not yet on a live stream | They are pure functions with textbook tests; B4 brings the stream | Done in B4: flow imbalance and pit change run on the stream with hysteresis and raise PHYSICS alerts | ✅ Resolved 2026-09-29 |
 | V-B24 | Cementing checklist uses offset loss mud weights as the fracture-gradient evidence | No LOT/FIT or fracture-gradient data in the synthetic field; centraliser/standoff/excess checks need data we don't extract | Advisory flags only; add FG/LOT and job-design checks when those fields are extracted | ⚠️ Limited |
+| V-B25 | B4 exit criterion names "a Volve well"; only the synthetic drilling well was replayed | No Volve access in the sandbox (V-B13) | The CSV replay and channel mapping take any well log with a TIME column; replay a Volve well when the data is available | ⏳ Open |
+| V-B26 | Real-time models trained and scored on planted synthetic precursors | No real 10-s drilling data here | Every number is quoted as "recovers planted patterns". Retrain on OIL/Volve real-time data with labels from extracted events (the pipeline and grouped CV are ready) | ⚠️ Stated |
+| V-B27 | WITSML 1.4.1.x and ETP adapters not built | WITS0 and CSV cover the demo and many rigs; WITSML needs a store to test against | Add when OIL confirms its eRTMAC feed (the publisher takes any record source) | ⏳ Open |
+| V-B28 | Weak on TIGHT/TORQUE/INSTAB/STUCK pattern matching | Déjà Vu alert recall 0–0.18 for these; TORQUE classifier PR-AUC 0.55 | Mechanical precursors are spiky and shape-poor at 30-s resolution; the STUCK classifier (0.91) carries stuck pipe. Revisit with real torque/hookload data (a torque-oscillation channel was tried and reverted: it fitted our own simulator) | ⚠️ Stated |
+| V-B29 | Model bundle in S3, not an MLflow registry | One versioned artefact (`models/realtime/rt-hgb-v1.joblib` + metrics JSON) is enough for one model family | MLflow profile in B5 as planned | ⏳ B5 |
+| V-B30 | WebSockets unauthenticated | Dev auth everywhere until B6 | Token in the first message (B6) | ⏳ B6 |
+| V-B31 | Stream data-quality flags limited to missing / unreadable / unmapped | Stale, flat-lined and unit-jump detection not built | The live view already flags a stale stream; add per-channel checks with the Live Monitor (F4) | ⏳ Open |
 
 ---
 
@@ -470,6 +514,8 @@ Each module uses the same layout: **Responsibilities · Files · Tables · Endpo
 
 ### 4.10 `stream` — S12 eRTMAC adapters & replay (B4)
 
+> **As built (Part 4):** CSV replay + WITS0 reader, `channel_mapping`, wide `rt_sample`/`rt_score` hypertables (no separate `rig_state` table: the state is a column of `rt_score`), `MAXLEN ~20k` per wellbore stream, `GET /stream/status`. WITSML/ETP not built (V-B27); data-quality flags limited (V-B31). See §0.0.
+
 - **Responsibilities:**
   - A new Compose service `stream` (same image, command `python -m app.stream.run`).
   - Adapters produce canonical `rt_sample` messages: CSV/Parquet **replay** (the demo path, 1×–60× speed); WITSML 1.4.1.x store polling; an ETP WebSocket client; a WITS0 TCP reader.
@@ -486,6 +532,8 @@ Each module uses the same layout: **Responsibilities · Files · Tables · Endpo
 - **Tests:** replay timing (simulated clock); mapping + unit conversion; the persist consumer is idempotent (duplicate delivery doesn't duplicate rows); the WITSML adapter against a mock SOAP server fixture.
 
 ### 4.11 `risk.rigstate`, `risk.realtime`, `risk.dejavu` — S7b, S7d (B4)
+
+> **As built (Part 4):** scikit-learn histogram GBDT instead of LightGBM (ADR-B18), bundle in S3 instead of MLflow (V-B29), occlusion drivers instead of SHAP, scoring every minute of data; Déjà Vu in NumPy (ADR-B19) every 3 min of data, 2 consecutive hits. The designed tests below exist (`test_dejavu.py`, `test_scorer.py`); the latency target is met with room (0.10 s p50 per Déjà Vu query, 14 ms per classifier cycle). See §0.0.
 
 - **Rig state:** a rules state machine (bit depth vs hole depth, hookload, block velocity, RPM, flow, WOB).
 - **Real-time classifiers:**
@@ -504,6 +552,8 @@ Each module uses the same layout: **Responsibilities · Files · Tables · Endpo
   - The scoring loop stays within its latency budget (p95 < 1 s per well per cycle on the demo machine: a **target**).
 
 ### 4.12 `alerts` — S9 (B4)
+
+> **As built (Part 4):** every rule below, over data time; budget = 6 non-critical per rolling 12 h (the "per shift" of the design); lifecycle new → ack → dismissed (actioned/closed are in the schema, not yet exposed). See §0.0.
 
 - **Responsibilities:**
   - Alert types `LOOKAHEAD`, `ANOMALY_ML`, `PHYSICS`, `DEJA_VU`, `PLAN_CHECK`, plus a merged `FUSED` alert.
@@ -552,7 +602,7 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 3 | JSON logging + request IDs | B0 | ✅ | `app/core/logging.py`, `app/core/middleware.py` · `test_request_id_is_echoed_or_generated` |
 | 4 | Error envelope (404/422/501/503/app) | B0 | ✅ | `app/core/errors.py` · `test_api_contract.py` |
 | 5 | `/healthz`, `/readyz` (DB+extensions, Redis, S3 buckets) | B0 | ✅ | `app/main.py`, `app/core/health.py` · `test_health.py` (5) + integration `test_api_is_ready` |
-| 6 | Full §8 API contract mounted (501 + phase) | B0 | ✅ | `app/api/v1/routes/*` · `test_openapi_contains_every_planned_endpoint`, 9 parametrised 501 tests, 2 WebSocket tests |
+| 6 | Full §8 API contract mounted (501 + phase) | B0 | ✅ | `app/api/v1/routes/*` · `test_openapi_contains_every_planned_endpoint`, 501 tests for the B5 routes (the B0 WebSocket 501 tests were replaced by B4's live tests) |
 | 7 | `/api/v1/meta`, `/api/v1/me`, component registry | B0 | ✅ | `routes/system.py`, `core/phases.py` · `test_meta_auth.py` (5) |
 | 8 | Dev auth with prod refusal | B0 | ⚠️ dev-only by design | `app/core/auth.py` · `test_auth_refuses_unconfigured_modes` |
 | 9 | Unit conversions (Appendix D) | B0 | ✅ | `app/core/units.py` · `test_units.py` (3, incl. hypothesis) |
@@ -575,8 +625,14 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 24b | Well 360 enrichment, `fluid_type`, map bbox filter | B2 | ✅ | `app/normalise/well360.py` · integration `test_well_360_enrichment`, `test_well_detail_and_offsets_have_b2_fields` |
 | 25 | S8 Mitigation Effectiveness Ledger | B3 | ✅ | `app/ledger/*`, `routes/knowledge.py` · `test_ledger_core.py` (8), integration `test_ledger_recounts_from_the_events_api`, `test_ledger_rates_ranking_and_cases`, `test_ledger_scopes`; `eval/results/ledger_synthetic_2026-09-29.json` |
 | 25a | S7a offset prior risk | B3 | ✅ | `app/risk/*`, `routes/wells.py` · `test_risk_core.py` (6), integration `test_risk_profile_recomputes_from_its_offsets_and_excludes_the_subject`, `test_base_rates_exclude_the_subject_well`, `test_risk_profile_modes_and_planned_well`; `eval/results/risk_prior_synthetic_2026-09-29.json` |
-| 25b | S7c physics indicators + cementing checklist | B3 | ⚠️ library (live on the stream in B4, V-B23) | `app/physics/indicators.py` · `test_physics.py` (13), integration `test_cementing_check_reads_offsets_in_the_shoe_formation` |
-| 26 | S12 stream/replay, S7b, S7d, S9 alerts, WebSockets | B4 | 📋 | §4.10–4.12 |
+| 25b | S7c physics indicators + cementing checklist | B3 | ✅ (live on the stream since B4, row 25b′) | `app/physics/indicators.py` · `test_physics.py` (13), integration `test_cementing_check_reads_offsets_in_the_shoe_formation` |
+| 25b′ | S7c physics on the stream (imbalance, pit change) | B4 | ✅ | `app/stream/scorer.py` · `test_scorer.py` (3) |
+| 26 | S12 stream: CSV replay + WITS0, channel mapping, persist/score groups, `stream` service | B4 | ⚠️ no WITSML/ETP (V-B27) | `app/stream/*`, migration 0007 · `test_stream_mapping.py` (5), `test_wits0.py` (3), integration `test_every_row_is_stored_and_scored`, `test_replay_control_rules` |
+| 26a | Rig state + S7b classifiers | B4 | ⚠️ synthetic training only (V-B26) | `app/risk/rigstate.py`, `features.py`, `realtime_model.py` · `test_realtime_foundation.py` (6); `eval/results/realtime_synthetic_2026-09-29.json` |
+| 26b | S7d Déjà Vu | B4 | ⚠️ weak on mechanical types (V-B28) | `app/risk/dejavu.py`, migration 0008 · `test_dejavu.py` (6); `eval/results/dejavu_synthetic_2026-09-29.json` |
+| 26c | S9 alert engine + lifecycle + feedback | B4 | ✅ | `app/alerts/*`, migration 0009 · `test_alert_engine.py` (6 incl. property), integration `test_planted_losses_are_alerted_with_evidence`, `test_budget_and_dedupe_hold`, `test_alert_lifecycle`; `eval/results/replay_alerts_synthetic_2026-09-29.json` |
+| 26d | WebSockets `/ws/wells/{id}/live`, `/ws/alerts` | B4 | ⚠️ unauthenticated until B6 (V-B30) | `app/api/v1/routes/ws.py` · integration `test_websockets_pushed_frames_and_alerts`, e2e `smoke.spec.ts` (through nginx) |
+| 26e | Look-ahead: prognosed tops below a drilling well's TD | B4 | ✅ | `app/risk/prior.py` · `test_stream_mapping.py::test_prognosed_top_weights_near_offsets`, `test_scorer.py` |
 | 27 | S10 copilot, reports | B5 | 📋 | §4.13–4.14 |
 | 28 | OIDC/RBAC/audit, digests pinned, perf & security hardening | B6 | 📋 | §4.15, §12 |
 | 29 | Synthetic field generator + `seed` CLI (ground truth for later phases) | B1 | ✅ | `app/synthetic/*`, `app/cli.py seed` · determinism check (byte-identical re-render), re-seed = 0 new documents |
@@ -590,10 +646,10 @@ Backend phases map onto master plan §18 (P0–P5). Durations assume ~7 weeks to
 | Phase | Master plan | When | Scope | Exit criteria (all must be true) |
 |---|---|---|---|---|
 | **B0 Skeleton** | P0 | Days 1–3 | Platform, Compose, migrations, CI, API contract | ✅ **Met 2026-09-28**, including a green GitHub CI run — see Appendix B |
-| **B1 Data foundation** | P1 | W1–W2 | S1 ingestion; S3 master data & datums; S4 min-curvature + surface offsets; migrations 0002–0004; OCR worker image | ✅ **Met 2026-09-28** with one substitution: 151 synthetic DDRs + 40 WCRs (58 DDRs and 7 WCRs scanned) instead of Volve DDRs (V-B13). Endpoints return real data; min-curvature closed-form tests pass; offsets p95 14.6 ms on 10k wells. See §0.1 and Appendix B2 |
-| **B2 Knowledge layer** | P2 | W2–W3 | S2 extraction + review queue + DDR parser; S5 search; S6 correlation; S4 other proximity modes; LLM service; migrations 0005–0006 | ✅ **Met 2026-09-29 (Part 2) with two gaps stated:** event F1 measured and saved, but on synthetic ground truth, not a gold set (V-B15); search Recall@5 **not measured** (needs labelled queries on real reports); correlation JSON for all 3 modes ✅; review round trip ✅. LLM pass deferred (V-B17). See §0.1 and Appendix B3 |
-| **B3 Batch intelligence** | P3 (first half) | W3–W4 | S7a prior, S7c physics, S8 ledger | ✅ **Met 2026-09-29 (Part 3):** risk-profile endpoint live and beating every baseline on leave-one-well-out Brier; physics formula tests pass; ledger ρ = 0.837 on the seeded field (≥ 0.8), **with the caveat that same-size fields give a median of 0.65** (V-B19). See §0.0 and Appendix B4 |
-| **B4 Real-time** | P3 (second half) | W4–W5 | S12 stream + replay; rig state; S7b scoring; S7d Déjà Vu; S9 alerts; WebSockets; migrations 0007–0009 | Replay of a Volve well and a synthetic well produces the expected alerts over the WebSocket; alert latency p95 ≤ 5 s; every alert has evidence (property test) |
+| **B1 Data foundation** | P1 | W1–W2 | S1 ingestion; S3 master data & datums; S4 min-curvature + surface offsets; migrations 0002–0004; OCR worker image | ✅ **Met 2026-09-28** with one substitution: 151 synthetic DDRs + 40 WCRs (58 DDRs and 7 WCRs scanned) instead of Volve DDRs (V-B13). Endpoints return real data; min-curvature closed-form tests pass; offsets p95 14.6 ms on 10k wells. See §0.3 and Appendix B2 |
+| **B2 Knowledge layer** | P2 | W2–W3 | S2 extraction + review queue + DDR parser; S5 search; S6 correlation; S4 other proximity modes; LLM service; migrations 0005–0006 | ✅ **Met 2026-09-29 (Part 2) with two gaps stated:** event F1 measured and saved, but on synthetic ground truth, not a gold set (V-B15); search Recall@5 **not measured** (needs labelled queries on real reports); correlation JSON for all 3 modes ✅; review round trip ✅. LLM pass deferred (V-B17). See §0.2 and Appendix B3 |
+| **B3 Batch intelligence** | P3 (first half) | W3–W4 | S7a prior, S7c physics, S8 ledger | ✅ **Met 2026-09-29 (Part 3):** risk-profile endpoint live and beating every baseline on leave-one-well-out Brier; physics formula tests pass; ledger ρ = 0.837 on the seeded field (≥ 0.8), **with the caveat that same-size fields give a median of 0.65** (V-B19). See §0.1 and Appendix B4 |
+| **B4 Real-time** | P3 (second half) | W4–W5 | S12 stream + replay; rig state; S7b scoring; S7d Déjà Vu; S9 alerts; WebSockets; migrations 0007–0009 | ✅ **Met 2026-09-29 (Part 4) for the synthetic well only:** the replay raises the planted alerts over the WebSocket (integration + 60× eval); alert latency max 185 ms at 60× on a quiet machine (16.4 s once under full CPU load: the p95 ≤ 5 s target holds only with CPU headroom and below ~900×); every alert has evidence (hypothesis property test + DB constraint). **Not met: no Volve well replayed** (V-B25). See §0.0 and Appendix B5 |
 | **B5 Copilot & reports** | P4 | W5–W6 | S10 copilot (SSE); Offset Risk Brief PDF; MLflow profile | Copilot answers the 50-question set with citations measured; unanswerable refusal rate measured; PDF renders |
 | **B6 Hardening** | P5 | W6–W7 | OIDC/RBAC/audit; image digests pinned; Prometheus metrics + Grafana; load test; security review; backups script | All master plan §9 targets measured and recorded in `eval/results/`; `SMRITI_AUTH_MODE=oidc` works end-to-end; no critical findings open |
 
@@ -684,7 +740,9 @@ Compose-level variables (`.env.example`): `POSTGRES_USER/PASSWORD/DB/PORT`, `RED
 
 ---
 
-## 10. Real-Time Pipeline (B4 design)
+## 10. Real-Time Pipeline (B4 design; built in Part 4)
+
+> **As built:** the diagram holds with these changes: adapters = CSV replay and WITS0; samples are wide rows (one per timestamp, ADR-B20), idempotent on (wellbore_id, ts); classifiers every minute of data and Déjà Vu every 3 min of data (the design's 10–30 s would recompute near-identical features); look-ahead every minute. Backpressure skipping is **not** built: at 60× the consumer keeps up (≈ 90 samples/s scored on one core), and the live view shows a stale flag instead.
 
 ```
 adapter (replay | WITSML | ETP | WITS0)
@@ -804,6 +862,9 @@ Redis Stream  rt:{wellbore_id}  (MAXLEN ~200k)
 | ADR-B15 | `hash` embedder as the offline default; Ollama BGE-M3 when configured | Always requiring a model server | Search must work air-gapped and in CI. The embedder's name is in every response, so nobody mistakes lexical hashing for semantics |
 | ADR-B16 | Merge one event across reports (same well + type, ±15 m, ±3 days) | One event per report | Counting a DDR and its WCR summary twice would double every statistic and the ledger (Part 3). The merged event cites every report |
 | ADR-B17 | Template lesson cards | LLM-written cards | Every sentence traces to extracted fields. A card describes one event and points to the ledger for rates. An LLM rewrite can come later as `generated_by` |
+| ADR-B18 | scikit-learn `HistGradientBoostingClassifier` for S7b | LightGBM (the master plan's choice) | Same histogram-GBDT algorithm; LightGBM's wheel needs the system `libgomp`, absent from the slim image and not installable in the build sandbox. sklearn bundles its OpenMP. Revisit if model size or speed needs LightGBM's extras |
+| ADR-B19 | MASS and banded DTW in NumPy | `stumpy` + `tslearn` | ~60 lines, no numba/JIT warm-up in the stream service, exact control of the z-normalisation floors and the deviation representation that fixed quiet-window matches (§0.0 finding 3). p95 query 138 ms on 99 signatures |
+| ADR-B20 | Wide `rt_sample` (one row per wellbore and timestamp, a column per channel) | Narrow (one row per channel), as §10 first drew it | 12× fewer rows; the live view and the scorer read whole timestamps; TimescaleDB compresses the columns. New channels need a migration, acceptable for a fixed canonical set |
 
 ---
 
@@ -846,12 +907,13 @@ MinIO's Docker Hub image wasn't available when we built. Our code speaks plain S
 
 ## 16. Immediate Next Actions (backend)
 
-*(Updated 2026-09-29 after Part 3. B0–B3 are done.)*
+*(Updated 2026-09-29 after Part 4. B0–B4 are done.)*
 
-1. **B4 (Part 4):** replay stream (S12), real-time tables, rig state and classifiers (S7b), Déjà Vu (S7d), the alert engine (S9) evaluating the S7c indicators and S7a priors, WebSockets. The ledger ranks the recommended actions inside alerts.
-2. **Gold set (V-B15):** export the review queue's `(proposed, correction)` pairs, then add annotated real DDRs when data arrives.
-3. **Real data:** try to obtain Volve drilling folders (or OIL samples, V6) and run them through the same `import_field` + upload path (V-B13).
-4. **Save the pinned images** (`docker save`) for the finale machine (RB5) — Infra.
+1. **B5 (Part 5):** copilot (S10) with read-only tools over the built services, the Offset Risk Brief PDF, MLflow profile (V-B29). F4 (Live Monitor and Alerts screens) consumes the B4 WebSockets.
+2. **Real real-time data (V-B25, V-B26):** replay a Volve well through the CSV path; retrain S7b and rebuild the Déjà Vu library on real channels; re-measure every number in §0.0.
+3. **Gold set (V-B15):** export the review queue's `(proposed, correction)` pairs, then add annotated real DDRs when data arrives.
+4. **Real data:** try to obtain Volve drilling folders (or OIL samples, V6) and run them through the same `import_field` + upload path (V-B13).
+5. **Save the pinned images** (`docker save`) for the finale machine (RB5) — Infra.
 
 ---
 
@@ -966,6 +1028,22 @@ Clean run at commit `bce0acb`: images rebuilt, every volume wiped (`docker compo
 | Lint / types | ruff, ruff format, `mypy --strict` | clean |
 | Latency (sandbox, via nginx) | `curl` | ledger (LOSS, all wells) 26 ms · risk profile of the planned well (6 formations, ~40 offsets) 50 ms · cementing check 38 ms |
 | CI | GitHub Actions on `f7ba585` (B3) and `bce0acb` (F2) | all three jobs green |
+
+## Appendix B5 — B4 Verification Record (2026-09-29)
+
+Clean run at commit `0ad33d4`: images rebuilt, every volume wiped (`docker compose down -v`), stack up (7 services incl. `stream`, all healthy), full seed with OCR on the host (V-B10).
+
+| Check | Command | Result |
+|---|---|---|
+| Full seed + real-time assets | `uv run python -m app.cli seed --inline` | 191 reports processed; model bundle trained (36,669 rows), 99 signatures (99 linked to extracted events), τ = 1.073, replay file for SYN-ASM-41; 5 min 0 s in total |
+| Classifiers | `scripts/eval_realtime.py` | held-out PR-AUC LOSS 0.951 · KICK 1.000 · STUCK 0.907 · TORQUE 0.552 · OVERP 0.972 · BALLING 0.942; training 26 s → `eval/results/realtime_synthetic_2026-09-29.json` |
+| Déjà Vu | `scripts/eval_dejavu.py` | precision@1 0.992 (random 0.148, depth 0.415); alert recall 0.463, precision 1.0; false-match 1.25% → `eval/results/dejavu_synthetic_2026-09-29.json` |
+| End-to-end replay at 60× | `scripts/eval_replay_alerts.py --speed 60` | planted balling alerted 28 min ahead, losses 124 min ahead (look-ahead) then fused with ML/physics/Déjà Vu; 0 false alerts; latency median 49 ms, max 185 ms (under CPU load: max 16.4 s, recorded in the same file) → `eval/results/replay_alerts_synthetic_2026-09-29.json` |
+| Unit tests | `uv run pytest` | **290 passed** |
+| Integration tests | `uv run pytest -m integration` | **40 passed** (incl. `test_b4.py` 7); also 40 passed on a 12-well CI-size field |
+| Browser e2e | `npx playwright test` | **56 passed**, 2 skipped (incl. `part4.spec.ts`, axe in 3 themes) |
+| Lint / types | ruff, ruff format, `mypy --strict` | clean |
+| CI | GitHub Actions on `f744792` (B4) and `0ad33d4` (F3) | B4: backend and frontend jobs green, integration red on one Part 3 test pinned to phase "B3" (fixed in `0ad33d4`); `0ad33d4`: all three jobs green |
 
 ## Appendix C — Document Maintenance Rules
 

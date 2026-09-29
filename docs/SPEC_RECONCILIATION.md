@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-29 · **Status:** decided; every later phase follows this file.
 **Sources reconciled:**
-- **SMRITI plans on this branch:** [`SMRITI_MASTER_PLAN.md`](../SMRITI_MASTER_PLAN.md), [`BACKEND_PLAN.md`](BACKEND_PLAN.md), [`FRONTEND_PLAN.md`](FRONTEND_PLAN.md). Phases B0–B1 and F0–F1 ("Part 1") are built and green in CI; **Part 2 (B2 + the frontend revamp) was built on 2026-09-29** (records: BACKEND_PLAN §0.1 / Appendix B3, FRONTEND_PLAN §0.1 / Appendix B3).
+- **SMRITI plans on this branch:** [`SMRITI_MASTER_PLAN.md`](../SMRITI_MASTER_PLAN.md), [`BACKEND_PLAN.md`](BACKEND_PLAN.md), [`FRONTEND_PLAN.md`](FRONTEND_PLAN.md). Phases B0–B1 and F0–F1 ("Part 1") are built and green in CI; **Part 2 (B2 + the frontend revamp), Part 3 (B3 + F2) and Part 4 (B4 + F3) were built on 2026-09-29** (records: BACKEND_PLAN §0.0–§0.2 / Appendices B3–B5, FRONTEND_PLAN §0.0–§0.2 / Appendices B3–B5).
 - **"Final spec" documents** pushed to `main` on 2026-09-29, copied unchanged into [`docs/spec/`](spec/):
   - [`BACKEND_SPEC.md`](spec/BACKEND_SPEC.md) (NWIS backend blueprint);
   - [`FRONTEND_SPEC.md`](spec/FRONTEND_SPEC.md) (NWIS frontend blueprint, "crazy but professional");
@@ -50,15 +50,15 @@ All paths are under `/api/v1`. "✅" means built; the phase column says where th
 | `POST /search/ask` | `POST /copilot/chat` (SSE, read-only tools, cited) | Part 5 |
 | `GET /correlation?well_ids=&formation=` | `GET /correlation?wells=&align=TVDSS\|FLATTEN_ON_TOP\|FORMATION_RELATIVE&top=` | ✅ B2 |
 | `GET /correlation/formation-risk?formation=` | `GET /correlation/formation-stats` | ✅ B2 |
-| — (SMRITI S7a) | `GET /wells/{id}/risk-profile` | B3 |
-| — (SMRITI S8, USP 2) | `GET /ledger` | B3 |
-| `POST /predictions/risk`, `GET /predictions/anomaly`, `GET /predictions/pattern-match`, `POST /predictions/retrain` | same paths | Part 4 |
-| `GET /alerts`, `GET /alerts/{id}` | same | Part 4 |
-| `PATCH /alerts/{id}/acknowledge`, `PATCH /alerts/{id}/dismiss` | `POST /alerts/{id}/ack`, `POST /alerts/{id}/dismiss`, plus `POST /alerts/{id}/feedback` | Part 4 |
-| `GET /wells/{id}/parameters`, `…/parameters/latest` | same | Part 4 |
-| `WS /ws/wells/{id}` | `WS /ws/wells/{id}/live` | Part 4 |
-| `WS /ws/dashboard` | `WS /ws/alerts` (all alerts the user may see; this is the dashboard feed) | Part 4 |
-| — (SMRITI) | `POST /replay`, `GET /reports/offset-brief/{well_id}` | Part 4 / Part 5 |
+| — (SMRITI S7a) | `GET /wells/{id}/risk-profile` (+ prognosed intervals and TD for drilling wells, B4) | ✅ B3 |
+| — (SMRITI S8, USP 2) | `GET /ledger` | ✅ B3; screen ✅ F3 |
+| `POST /predictions/risk`, `GET /predictions/anomaly`, `GET /predictions/pattern-match`, `POST /predictions/retrain` | Not separate routes: prior risk is `GET /wells/{id}/risk-profile`; classifier scores and Déjà Vu matches are in every live frame (`WS /ws/wells/{id}/live`, `GET /wells/{id}/realtime`) and in alerts; retraining is `python -m app.cli realtime` | ✅ B4 (as described) |
+| `GET /alerts`, `GET /alerts/{id}` | same | ✅ B4 |
+| `PATCH /alerts/{id}/acknowledge`, `PATCH /alerts/{id}/dismiss` | `POST /alerts/{id}/ack`, `POST /alerts/{id}/dismiss`, plus `POST /alerts/{id}/feedback` | ✅ B4 |
+| `GET /wells/{id}/parameters`, `…/parameters/latest` | `GET /wells/{id}/realtime?minutes=&max_points=` (window + latest frame + stale flag) | ✅ B4 |
+| `WS /ws/wells/{id}` | `WS /ws/wells/{id}/live` | ✅ B4 |
+| `WS /ws/dashboard` | `WS /ws/alerts` (all alerts the user may see; this is the dashboard feed) | ✅ B4 |
+| — (SMRITI) | `POST /replay` (+ `GET /replay`, `GET /stream/status`); `GET /reports/offset-brief/{well_id}` | ✅ B4 / Part 5 |
 
 ## 3. Data model differences (kept on purpose)
 
@@ -93,8 +93,8 @@ All paths are under `/api/v1`. "✅" means built; the phase column says where th
 | bge-reranker | Optional reranker endpoint; default off | Needs a GPU/model server; RRF alone is measured and reported |
 | instructor / Outlines + spaCy | Rules-first extraction (regex + formation dictionary). Optional LLM pass via an OpenAI-compatible/Ollama endpoint with JSON-schema output + Pydantic validation + span grounding | Rules run everywhere, including CI; the LLM pass is measured separately when a model is available (master plan §13.1 ablation) |
 | tsfresh | Hand-written rolling-window features (mean / std / slope / deviation from baseline) | The planned features are simple; tsfresh is heavy and slow |
-| XGBoost/LightGBM + SHAP | Gradient-boosted trees with native TreeSHAP contributions (`pred_contrib`) | Same explanations without the `shap` package's numba/llvmlite stack; B4 records the final pick |
-| PyOD, stumpy, tslearn | Used if they install cleanly under Python 3.11 + uv; otherwise NumPy implementations (ECOD, MASS, banded DTW) with tests | B4 records the decision |
+| XGBoost/LightGBM + SHAP | **Built (B4):** scikit-learn histogram GBDT (LightGBM's algorithm) with isotonic calibration; top drivers by **occlusion** (probability drop when a feature is reset to its typical value), labelled "not SHAP" | LightGBM needs the system `libgomp`, absent from the slim image (ADR-B18); sklearn has no `pred_contrib`, and occlusion needs no `shap` stack |
+| PyOD, stumpy, tslearn | **Built (B4):** NumPy MASS + banded DTW with tests (ADR-B19). **Unsupervised anomaly scoring (ECOD) not built:** `ANOMALY_ML` alerts come from the supervised classifiers | No numba/JIT in the stream service; the synthetic data has labelled precursors, so a label-free detector would have nothing to prove yet. Add ECOD with real unlabelled streams |
 | Kafka | Redis Streams | Both documents choose Redis Streams for the demo; Kafka stays the production path |
 | Keycloak | Local JWT auth (`SMRITI_AUTH_MODE=jwt`) + RBAC + audit (Part 5); OIDC/Keycloak remains optional | A working login and role checks without running an identity server |
 | MLflow, Prometheus/Grafana | Optional Compose profiles / metrics endpoint in hardening | Not needed to demo the product |
@@ -130,12 +130,12 @@ Kept from the existing app: React/TS/Vite, Tailwind 4 + shadcn-style components,
 | Landing + Login | §4.1 | — | 6 |
 | Dashboard | §4.2 | — | ✅ shell in 2, live in 5 |
 | Map Explorer | §4.3 | 1 Well Map | ✅ MapLibre in 2, proximity modes in 3 |
-| Well Detail (Overview / Trajectory 3D / Parameters / Events / Correlation / Documents) | §4.4 | 2 Well 360 | 3; Parameters tab in 5 |
-| Correlation Panel | §4.4 tab | 3 | 3 |
-| Knowledge Search + Ask | §4.5 | 6 | search in 3, Ask/copilot in 6 |
+| Well Detail (Overview / Trajectory 3D / Parameters / Events / Correlation / Documents) | §4.4 | 2 Well 360 | ✅ 3; Risk tab ✅ 4; Parameters tab in 5 |
+| Correlation Panel | §4.4 tab | 3 | ✅ 3; hazard strip ✅ 4 |
+| Knowledge Search + Ask | §4.5 | 6 | ✅ search in 3, Ask/copilot in 6 |
 | Alerts Center + detail | §4.6 | 5 | 5 |
 | Live Well Monitor | — | 4 | 5 |
-| Mitigation Ledger (USP 2) | — | 7 | 4 |
+| Mitigation Ledger (USP 2) | — | 7 | ✅ 4 |
 | Documents Library + Review queue | §4.7 | 8 | ✅ revamp in 2, review queue in 3 |
 | Analytics | — | 9 | 6 |
 | Admin | — | 10 | 6 |
@@ -156,7 +156,7 @@ Kept from the existing app: React/TS/Vite, Tailwind 4 + shadcn-style components,
 |---|---|---|
 | 2 ✅ | **B2** knowledge layer: extraction + DDR time log + review queue + events API; hybrid search + lessons cards; correlation (3 alignments + formation stats); at-formation and closest-approach offsets; Well 360 enrichment; `fluid_type` | Design-system revamp (themes, motion, collapsible sidebar, top bar with well-type switcher, ⌘K palette), MapLibre map, Documents Library revamp, Dashboard shell |
 | 3 ✅ | **B3** offset prior risk, physics indicators, Mitigation Effectiveness Ledger (evaluated: `eval/results/`) | **F2** Well Detail (incl. 3D trajectory), Correlation Panel, Knowledge Search, Review queue, map proximity modes, axe checks |
-| 4 | **B4** replay stream, real-time tables, rig state, classifiers, anomaly, Déjà Vu, alert engine, WebSockets | **F3** Mitigation Ledger, risk curves |
+| 4 ✅ | **B4** replay stream (CSV + WITS0), real-time tables, rig state, classifiers, Déjà Vu, alert engine, WebSockets, look-ahead (evaluated on synthetic data: `eval/results/`; unsupervised anomaly model not built, see §4) | **F3** Mitigation Ledger, risk curves on Well 360 / map panel / correlation hazard strip, axe in three themes |
 | 5 | **B5** copilot (SSE), Offset Risk Brief, analytics endpoints; JWT auth + RBAC + audit | **F4** Live Well Monitor, Alerts Center, Déjà Vu overlay, live dashboard |
 | 6 | Hardening | **F5/F6** copilot panel, Analytics, Login/Landing, Admin, role-aware UI, PWA well pack |
 

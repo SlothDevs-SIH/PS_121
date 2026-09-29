@@ -1,7 +1,7 @@
 """S7b real-time classifiers: "is this problem developing in the next 30 minutes?"
 
 One gradient-boosted tree model per event type (scikit-learn's histogram GBDT, the LightGBM
-algorithm without its system OpenMP dependency, ADR-B16), isotonic calibration fitted on
+algorithm without its system OpenMP dependency, ADR-B18), isotonic calibration fitted on
 out-of-fold predictions, and occlusion attributions for the top drivers.
 
 Trained on a SYNTHETIC field (app/synthetic/realtime.py) of wells outside any seeded field,

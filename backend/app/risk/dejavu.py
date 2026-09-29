@@ -2,7 +2,7 @@
 
 Library: for every historical event with real-time data, the 90 minutes before it
 (`pattern_signature`). Query: the live well's last 30 minutes. Two stages (master plan
-§Stage 7d), implemented here in NumPy rather than with stumpy/tslearn (ADR-B17):
+§Stage 7d), implemented here in NumPy rather than with stumpy/tslearn (ADR-B19):
 
 A. **MASS** per channel: the z-normalised Euclidean distance of the query at every offset
    inside each 90-minute signature (sliding dot products by FFT), summed over channels. The

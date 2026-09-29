@@ -2,7 +2,7 @@
 
 `rt_sample` and `rt_score` are TimescaleDB hypertables (migration 0007). They are *wide*:
 one row per wellbore and timestamp with a column per canonical channel, rather than one
-row per channel (BACKEND_PLAN V-B25): 12x fewer rows and one-row reads for the live view.
+row per channel (BACKEND_PLAN ADR-B20): 12x fewer rows and one-row reads for the live view.
 """
 
 from datetime import datetime
