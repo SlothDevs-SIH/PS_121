@@ -152,8 +152,15 @@ def _stride(n: int, max_points: int) -> int:
 
 
 def window(
-    session: Session, well_id: int, minutes: int, max_points: int, thresholds: dict[str, float]
+    session: Session,
+    well_id: int,
+    minutes: int,
+    max_points: int,
+    thresholds: dict[str, float],
+    end: datetime | None = None,
 ) -> RealtimeWindow:
+    """The last `minutes` of stream data, ending at the latest sample or at `end` (an alert's
+    data time, for its evidence chart) when that is earlier."""
     well = get_well_or_404(session, well_id)
     rs = _latest_session(session, well_id)
     wb = (
@@ -166,7 +173,7 @@ def window(
     last = (
         session.scalar(
             select(RtSample.ts)
-            .where(RtSample.wellbore_id == wb)
+            .where(RtSample.wellbore_id == wb, *([RtSample.ts <= end] if end else []))
             .order_by(RtSample.ts.desc())
             .limit(1)
         )
@@ -181,14 +188,14 @@ def window(
         samples = list(
             session.scalars(
                 select(RtSample)
-                .where(RtSample.wellbore_id == wb, RtSample.ts > t0)
+                .where(RtSample.wellbore_id == wb, RtSample.ts > t0, RtSample.ts <= last)
                 .order_by(RtSample.ts)
             )
         )
         scores = list(
             session.scalars(
                 select(RtScore)
-                .where(RtScore.wellbore_id == wb, RtScore.ts > t0)
+                .where(RtScore.wellbore_id == wb, RtScore.ts > t0, RtScore.ts <= last)
                 .order_by(RtScore.ts)
             )
         )

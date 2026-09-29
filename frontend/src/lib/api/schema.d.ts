@@ -58,6 +58,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/alerts/{alert_id}/dejavu": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A Déjà Vu alert's live window beside the matched past run-up */
+        get: operations["alert_dejavu_api_v1_alerts__alert_id__dejavu_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/alerts/{alert_id}/dismiss": {
         parameters: {
             query?: never;
@@ -1504,6 +1521,67 @@ export interface components {
             t_from: string | null;
             /** T To */
             t_to: string | null;
+        };
+        /**
+         * DejaVuOverlay
+         * @description The live 30 minutes behind a Déjà Vu alert beside the past incident's run-up it
+         *     matched, each channel as the matcher saw it (operating state only, gaps held).
+         */
+        DejaVuOverlay: {
+            /** Alert Id */
+            alert_id: number;
+            /** Channels */
+            channels: string[];
+            /** Dt S */
+            dt_s: number;
+            /** Event Type */
+            event_type: string;
+            /**
+             * Formation
+             * @description Formation of the past event
+             */
+            formation: string | null;
+            /**
+             * Live
+             * @description The 30 min ending at the alert's data time; null if no longer stored
+             */
+            live: {
+                [key: string]: number[];
+            } | null;
+            /**
+             * Matched
+             * @description The matched 30 min of the signature
+             */
+            matched: {
+                [key: string]: number[];
+            };
+            /** Matched Event Id */
+            matched_event_id: number | null;
+            /** Matched Well Id */
+            matched_well_id: number | null;
+            /** Matched Well Name */
+            matched_well_name: string | null;
+            /**
+             * Minutes Before Event
+             * @description How long before the past event the matched segment ends
+             */
+            minutes_before_event: number;
+            /** Note */
+            note: string;
+            /**
+             * Signature
+             * @description The whole 90-min signature
+             */
+            signature: {
+                [key: string]: number[];
+            };
+            /** Signature Id */
+            signature_id: number;
+            /**
+             * Similarity
+             * @description Similarity at alert time: 0-1, not a probability
+             */
+            similarity: number;
         };
         /** DepthAxis */
         DepthAxis: {
@@ -3762,6 +3840,46 @@ export interface operations {
             };
         };
     };
+    alert_dejavu_api_v1_alerts__alert_id__dejavu_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DejaVuOverlay"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     dismiss_alert_api_v1_alerts__alert_id__dismiss_post: {
         parameters: {
             query?: never;
@@ -5244,6 +5362,8 @@ export interface operations {
             query?: {
                 minutes?: number;
                 max_points?: number;
+                /** @description End the window here (e.g. an alert's t_data) */
+                end?: string | null;
             };
             header?: never;
             path: {

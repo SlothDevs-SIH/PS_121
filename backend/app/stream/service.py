@@ -299,6 +299,7 @@ def store_candidate(
             "title": c.title,
             "message": c.message,
             "latency_ms": latency_ms,
+            "detail": c.detail,  # e.g. the Déjà Vu match, for the overlay
         },
     ]
     alert.detail = {**alert.detail, "fused": fused}

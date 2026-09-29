@@ -2007,6 +2007,152 @@
         "title": "DdrOperationOut",
         "type": "object"
       },
+      "DejaVuOverlay": {
+        "description": "The live 30 minutes behind a D\u00e9j\u00e0 Vu alert beside the past incident's run-up it\nmatched, each channel as the matcher saw it (operating state only, gaps held).",
+        "properties": {
+          "alert_id": {
+            "title": "Alert Id",
+            "type": "integer"
+          },
+          "channels": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Channels",
+            "type": "array"
+          },
+          "dt_s": {
+            "title": "Dt S",
+            "type": "integer"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "formation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Formation of the past event",
+            "title": "Formation"
+          },
+          "live": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "items": {
+                    "type": "number"
+                  },
+                  "type": "array"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The 30 min ending at the alert's data time; null if no longer stored",
+            "title": "Live"
+          },
+          "matched": {
+            "additionalProperties": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "description": "The matched 30 min of the signature",
+            "title": "Matched",
+            "type": "object"
+          },
+          "matched_event_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched Event Id"
+          },
+          "matched_well_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched Well Id"
+          },
+          "matched_well_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched Well Name"
+          },
+          "minutes_before_event": {
+            "description": "How long before the past event the matched segment ends",
+            "title": "Minutes Before Event",
+            "type": "number"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "signature": {
+            "additionalProperties": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "description": "The whole 90-min signature",
+            "title": "Signature",
+            "type": "object"
+          },
+          "signature_id": {
+            "title": "Signature Id",
+            "type": "integer"
+          },
+          "similarity": {
+            "description": "Similarity at alert time: 0-1, not a probability",
+            "title": "Similarity",
+            "type": "number"
+          }
+        },
+        "required": [
+          "alert_id",
+          "signature_id",
+          "event_type",
+          "matched_well_id",
+          "matched_well_name",
+          "matched_event_id",
+          "formation",
+          "similarity",
+          "minutes_before_event",
+          "dt_s",
+          "channels",
+          "live",
+          "matched",
+          "signature",
+          "note"
+        ],
+        "title": "DejaVuOverlay",
+        "type": "object"
+      },
       "DepthAxis": {
         "properties": {
           "label": {
@@ -8882,6 +9028,58 @@
         ]
       }
     },
+    "/api/v1/alerts/{alert_id}/dejavu": {
+      "get": {
+        "operationId": "alert_dejavu_api_v1_alerts__alert_id__dejavu_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "alert_id",
+            "required": true,
+            "schema": {
+              "title": "Alert Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DejaVuOverlay"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "A D\u00e9j\u00e0 Vu alert's live window beside the matched past run-up",
+        "tags": [
+          "alerts"
+        ]
+      }
+    },
     "/api/v1/alerts/{alert_id}/dismiss": {
       "post": {
         "operationId": "dismiss_alert_api_v1_alerts__alert_id__dismiss_post",
@@ -11896,6 +12094,25 @@
               "minimum": 10,
               "title": "Max Points",
               "type": "integer"
+            }
+          },
+          {
+            "description": "End the window here (e.g. an alert's t_data)",
+            "in": "query",
+            "name": "end",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "End the window here (e.g. an alert's t_data)",
+              "title": "End"
             }
           }
         ],

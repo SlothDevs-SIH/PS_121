@@ -181,6 +181,44 @@ def test_alert_lifecycle(replayed: dict[str, Any]) -> None:
     _req("GET", "/api/v1/alerts/999999999", status=404)
 
 
+def test_alert_evidence_windows_and_dejavu_overlay(replayed: dict[str, Any]) -> None:
+    """F4's alert detail: the stream window ending at the alert, and the Déjà Vu overlay
+    (rebuilt from stored samples, it must reproduce the similarity recorded at alert time)."""
+    import numpy as np
+
+    from app.risk import dejavu as dv
+
+    for a in replayed["alerts"]:
+        win = _req(
+            "GET",
+            f"/api/v1/wells/{a['well_id']}/realtime",
+            params={"minutes": 30, "end": a["t_data"]},
+        )
+        assert win["ts"] and win["ts"][-1] <= a["t_data"].replace("+00:00", "Z")
+        if "DEJA_VU" not in a["sources"]:
+            _req("GET", f"/api/v1/alerts/{a['id']}/dejavu", status=404)
+            continue
+        ov = _req("GET", f"/api/v1/alerts/{a['id']}/dejavu")
+        assert ov["channels"] == list(dv.CHANNELS) and 0 < ov["similarity"] <= 1
+        assert "not a probability" in ov["note"]
+        assert ov["live"] is not None, "the module's own replay is still stored"
+        n = dv.QUERY_STEPS
+        assert {len(v) for v in ov["live"].values()} == {len(v) for v in ov["matched"].values()}
+        assert {len(v) for v in ov["matched"].values()} == {n}
+        assert {len(v) for v in ov["signature"].values()} == {dv.SIGNATURE_STEPS}
+        sig = dv.Signature(
+            0, ov["event_type"], {k: np.array(v) for k, v in ov["signature"].items()}, 1.0, None
+        )
+        tau = next(
+            f["detail"]["tau"]
+            for f in [a, *a["detail"].get("fused", [])]
+            if "tau" in f.get("detail", {})
+        )
+        best = dv.search({k: np.array(v) for k, v in ov["live"].items()}, [sig], tau, 1.0, top=1)
+        assert best[0].similarity == pytest.approx(ov["similarity"], abs=0.01)
+        assert best[0].minutes_before_event == pytest.approx(ov["minutes_before_event"], abs=0.2)
+
+
 def test_replay_control_rules(replayed: dict[str, Any]) -> None:
     wid = replayed["well"]["id"]
     # The module's replay has finished: it cannot be paused or stopped any more.

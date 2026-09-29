@@ -166,3 +166,28 @@ class AlertFeedbackOut(ResponseModel):
 
 
 AlertOut.model_rebuild()
+
+
+class DejaVuOverlay(ResponseModel):
+    """The live 30 minutes behind a Déjà Vu alert beside the past incident's run-up it
+    matched, each channel as the matcher saw it (operating state only, gaps held)."""
+
+    alert_id: int
+    signature_id: int
+    event_type: str
+    matched_well_id: int | None
+    matched_well_name: str | None
+    matched_event_id: int | None
+    formation: str | None = Field(description="Formation of the past event")
+    similarity: float = Field(description="Similarity at alert time: 0-1, not a probability")
+    minutes_before_event: float = Field(
+        description="How long before the past event the matched segment ends"
+    )
+    dt_s: int
+    channels: list[str]
+    live: dict[str, list[float]] | None = Field(
+        description="The 30 min ending at the alert's data time; null if no longer stored"
+    )
+    matched: dict[str, list[float]] = Field(description="The matched 30 min of the signature")
+    signature: dict[str, list[float]] = Field(description="The whole 90-min signature")
+    note: str

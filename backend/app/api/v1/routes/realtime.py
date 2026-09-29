@@ -2,11 +2,13 @@
 
 import json
 import time
+from datetime import datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Body, Depends, Query
 from sqlalchemy.orm import Session
 
+from app.alerts import overlay
 from app.alerts import service as alerts
 from app.api.v1.params import NOT_FOUND
 from app.api.v1.schemas.realtime import (
@@ -15,6 +17,7 @@ from app.api.v1.schemas.realtime import (
     AlertFeedbackOut,
     AlertOut,
     AlertPage,
+    DejaVuOverlay,
     RealtimeWindow,
     ReplayRequest,
     ReplaySessionOut,
@@ -87,6 +90,18 @@ def list_alerts(
 )
 def get_alert(alert_id: int, session: DbSession) -> AlertOut:
     return alerts.get_alert(session, alert_id)
+
+
+@router.get(
+    "/alerts/{alert_id}/dejavu",
+    dependencies=[Depends(require("read_live"))],
+    tags=["alerts"],
+    summary="A Déjà Vu alert's live window beside the matched past run-up",
+    response_model=DejaVuOverlay,
+    responses=NOT_FOUND,
+)
+def alert_dejavu(alert_id: int, session: DbSession) -> DejaVuOverlay:
+    return overlay.dejavu(session, alert_id)
 
 
 @router.post(
@@ -197,5 +212,8 @@ def realtime_window(
     session: DbSession,
     minutes: Annotated[int, Query(ge=1, le=24 * 60)] = 120,
     max_points: Annotated[int, Query(ge=10, le=5000)] = 720,
+    end: Annotated[
+        datetime | None, Query(description="End the window here (e.g. an alert's t_data)")
+    ] = None,
 ) -> RealtimeWindow:
-    return control.window(session, well_id, minutes, max_points, model_thresholds())
+    return control.window(session, well_id, minutes, max_points, model_thresholds(), end)
