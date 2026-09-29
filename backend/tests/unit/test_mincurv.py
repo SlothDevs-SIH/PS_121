@@ -7,7 +7,12 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from app.geo.mincurv import directional_stations, minimum_curvature, vertical_stations
+from app.geo.mincurv import (
+    directional_stations,
+    interpolate_at_md,
+    minimum_curvature,
+    vertical_stations,
+)
 
 
 def test_vertical_well_tvd_equals_md() -> None:
@@ -80,3 +85,29 @@ def test_tvd_never_exceeds_md_and_path_length_is_md(inc: float, az: float, td: f
     assert t.tvd[-1] <= td + 1e-6
     length = math.sqrt(t.north[-1] ** 2 + t.east[-1] ** 2 + (t.tvd[-1] - t.tvd[0]) ** 2)
     assert length == pytest.approx(td, rel=1e-9)
+
+
+@pytest.mark.parametrize("build_rate", [1.5, 3.0])
+def test_interpolation_lies_exactly_on_the_arc(build_rate: float) -> None:
+    kop, azimuth = 600.0, 60.0
+    md, inc, azi = directional_stations(2000, kop, build_rate, 80, azimuth, step_m=30)
+    t = minimum_curvature(md, inc, azi)
+    radius = 30 * 180 / (math.pi * build_rate)
+    for m in (645.0, 700.3, 1111.1):  # between stations, on the build arc
+        n, e, tvd, i_deg, a_deg = interpolate_at_md(t, m)
+        i = math.radians((m - kop) * build_rate / 30)
+        assert i_deg == pytest.approx(math.degrees(i), abs=1e-6)
+        assert a_deg == pytest.approx(azimuth, abs=1e-6)
+        assert tvd == pytest.approx(kop + radius * math.sin(i), abs=1e-6)
+        disp = radius * (1 - math.cos(i))
+        assert n == pytest.approx(disp * math.cos(math.radians(azimuth)), abs=1e-6)
+        assert e == pytest.approx(disp * math.sin(math.radians(azimuth)), abs=1e-6)
+
+
+def test_interpolation_at_stations_and_out_of_range() -> None:
+    md, inc, azi = vertical_stations(1000)
+    t = minimum_curvature(md, inc, azi)
+    assert interpolate_at_md(t, 300.0)[2] == pytest.approx(300.0)
+    assert interpolate_at_md(t, 1000.0)[2] == pytest.approx(1000.0)
+    with pytest.raises(ValueError):
+        interpolate_at_md(t, 1000.5)

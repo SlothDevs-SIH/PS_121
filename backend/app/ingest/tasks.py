@@ -26,7 +26,11 @@ def process_document_task(document_id: int) -> dict[str, object]:
     try:
         with session_scope() as session:
             doc = process_document(session, document_id)
-            return {"document_id": doc.id, "status": doc.ingest_status, "pages": doc.page_count}
+            result: dict[str, object] = {
+                "document_id": doc.id,
+                "status": doc.ingest_status,
+                "pages": doc.page_count,
+            }
     except TRANSIENT:
         raise
     except (BotoCoreError, Exception) as exc:  # permanent failure: record it on the row
@@ -34,3 +38,6 @@ def process_document_task(document_id: int) -> dict[str, object]:
         with session_scope() as session:
             mark_failed(session, document_id, f"{type(exc).__name__}: {exc}")
         return {"document_id": document_id, "status": "failed"}
+    # Next stage by name, so ingestion doesn't import the extraction code.
+    celery_app.send_task("extract.process_document", args=[document_id])
+    return result

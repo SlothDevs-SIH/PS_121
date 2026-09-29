@@ -202,7 +202,7 @@ def test_b2_settings_defaults_and_env(monkeypatch: pytest.MonkeyPatch) -> None:
         Settings()
 
 
-def test_b2_task_stubs_are_registered_on_the_extract_queue() -> None:
+def test_b2_tasks_are_registered_on_the_extract_queue() -> None:
     from app.extract.tasks import process_document_task
     from app.search.tasks import index_document_task
     from app.workers.celery_app import celery_app
@@ -211,5 +211,5 @@ def test_b2_task_stubs_are_registered_on_the_extract_queue() -> None:
     assert index_document_task.name == "search.index_document"
     for task in (process_document_task, index_document_task):
         assert task.queue == "extract"
-        assert task.run(7) == {"document_id": 7, "status": "not_implemented"}
+        assert task.max_retries == 3  # transient DB/S3/embedder errors are retried
     assert {"app.extract.tasks", "app.search.tasks"} <= set(celery_app.conf.include)

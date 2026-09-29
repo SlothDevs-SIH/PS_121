@@ -5,6 +5,9 @@ Rules that involve several parameters are checked here and answer the same envel
 client sees one error shape whichever rule it broke.
 """
 
+import base64
+import binascii
+import json
 from dataclasses import dataclass
 from datetime import date
 from typing import Annotated, Any, TypeVar
@@ -83,3 +86,31 @@ def parse_bbox(raw: str | None) -> BBox | None:
             "bbox", "bbox corners must be valid WGS84 degrees with min < max on both axes"
         )
     return box
+
+
+CONFLICT: dict[int | str, dict[str, Any]] = {
+    409: {"model": ErrorResponse, "description": "Conflicts with the current state"}
+}
+
+
+class ConflictError(AppError):
+    status_code = 409
+    code = "conflict"
+
+
+def encode_cursor(values: list[Any]) -> str:
+    """Opaque keyset cursor: the sort key of the last row returned."""
+    raw = json.dumps(values, separators=(",", ":"), default=str).encode()
+    return base64.urlsafe_b64encode(raw).decode().rstrip("=")
+
+
+def decode_cursor(raw: str | None, n: int) -> list[Any] | None:
+    if raw is None:
+        return None
+    try:
+        values = json.loads(base64.urlsafe_b64decode(raw + "=" * (-len(raw) % 4)))
+    except (ValueError, binascii.Error) as exc:
+        raise InvalidParamsError("cursor", "cursor is not one this API issued") from exc
+    if not isinstance(values, list) or len(values) != n:
+        raise InvalidParamsError("cursor", "cursor is not one this API issued")
+    return values

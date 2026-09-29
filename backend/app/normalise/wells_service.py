@@ -3,6 +3,7 @@
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.api.v1.params import BBox
 from app.api.v1.schemas.wells import (
     DataQuality,
     FormationTopOut,
@@ -37,6 +38,7 @@ def _summary(w: Well, field_name: str, docs: int) -> dict[str, object]:
         "field": field_name,
         "status": w.status,
         "well_type": w.well_type,
+        "fluid_type": w.fluid_type,
         "profile": w.profile,
         "lat": w.lat,
         "lon": w.lon,
@@ -48,9 +50,25 @@ def _summary(w: Well, field_name: str, docs: int) -> dict[str, object]:
 
 
 def list_wells(
-    session: Session, field: str | None, status: str | None, q: str | None, limit: int, offset: int
+    session: Session,
+    field: str | None,
+    status: str | None,
+    q: str | None,
+    limit: int,
+    offset: int,
+    bbox: BBox | None = None,
+    fluid_type: str | None = None,
 ) -> tuple[list[WellSummary], int]:
     stmt = select(Well, Field.name).join(Field, Field.id == Well.field_id)
+    if bbox is not None:
+        stmt = stmt.where(
+            Well.lon >= bbox.min_lon,
+            Well.lon <= bbox.max_lon,
+            Well.lat >= bbox.min_lat,
+            Well.lat <= bbox.max_lat,
+        )
+    if fluid_type:
+        stmt = stmt.where(Well.fluid_type == fluid_type)
     if field:
         stmt = stmt.where(Field.name == field)
     if status:

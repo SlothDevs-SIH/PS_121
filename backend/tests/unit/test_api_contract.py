@@ -1,7 +1,7 @@
-"""The skeleton must expose every endpoint in master plan §8, each with a 501 envelope.
-
-B2 routes are contract-only in this revision: they validate their inputs (422) and answer
-501 with phase B2. The implementers replace the 501 cases with behaviour tests.
+"""Every endpoint in master plan §8 is exposed; routes of later phases answer a 501 envelope
+naming their phase. B2 routes are implemented: here they are checked for their declared
+response models and input validation (422); their behaviour is covered by
+tests/integration/test_b2.py against the seeded stack.
 """
 
 import pytest
@@ -105,68 +105,6 @@ def test_b2_routes_declare_their_response_model(client: TestClient, method: str,
 @pytest.mark.parametrize(
     ("method", "url", "body", "phase"),
     [
-        # B2: the contract exists; implementers replace these with behaviour tests.
-        ("get", "/api/v1/events", None, "B2"),
-        (
-            "get",
-            "/api/v1/events?event_type=LOSS&event_type=STUCK&formation=Barail&well_id=3"
-            "&radius_km=5&tvdss_from_m=1000&tvdss_to_m=2500&date_from=2019-01-01"
-            "&date_to=2020-12-31&verified=true&min_confidence=0.75&limit=20&cursor=abc",
-            None,
-            "B2",
-        ),
-        ("get", "/api/v1/events/42", None, "B2"),
-        ("post", "/api/v1/events", EVENT_BODY, "B2"),
-        ("patch", "/api/v1/events/42/verify", {"verified": True}, "B2"),
-        ("patch", "/api/v1/events/42/verify", {"verified": False, "status": "rejected"}, "B2"),
-        ("get", "/api/v1/wells/7/events/timeline", None, "B2"),
-        ("get", "/api/v1/review-queue", None, "B2"),
-        (
-            "get",
-            "/api/v1/review-queue?status=accepted&kind=event&document_id=4&limit=10",
-            None,
-            "B2",
-        ),
-        ("post", "/api/v1/review-queue/9", {"action": "accept"}, "B2"),
-        ("post", "/api/v1/review-queue/9", {"action": "correct", "fields": {"md_m": 1850}}, "B2"),
-        ("post", "/api/v1/review-queue/9", {"action": "reject", "reason": "not an event"}, "B2"),
-        ("get", "/api/v1/search?q=lost%20circulation", None, "B2"),
-        (
-            "get",
-            "/api/v1/search?q=losses&well_id=3&radius_km=10&formation=Tipam&event_type=LOSS"
-            "&doc_type=DDR&date_from=2019-01-01&date_to=2020-01-01&limit=50",
-            None,
-            "B2",
-        ),
-        ("get", "/api/v1/correlation?wells=1&wells=2&align=TVDSS", None, "B2"),
-        ("get", "/api/v1/correlation?wells=1&wells=2&align=FLATTEN_ON_TOP&top=Barail", None, "B2"),
-        ("get", "/api/v1/correlation?wells=1&align=FORMATION_RELATIVE", None, "B2"),
-        ("get", "/api/v1/correlation/formation-stats?wells=1&wells=2", None, "B2"),
-        ("get", "/api/v1/correlation/formation-stats?well_id=1&radius_km=5", None, "B2"),
-        ("get", "/api/v1/wells?bbox=94.9,27.1,95.4,27.6", None, "B2"),
-        ("get", "/api/v1/wells?fluid_type=gas", None, "B2"),
-        ("get", "/api/v1/wells/7/trajectory/at-depth?md_m=1234.5", None, "B2"),
-        ("post", "/api/v1/wells/7/trajectory", SURVEY_BODY, "B2"),
-        (
-            "post",
-            "/api/v1/wells/7/trajectory",
-            {"stations": STATIONS, "azi_ref": "magnetic", "correction_deg": -0.8},
-            "B2",
-        ),
-        (
-            "get",
-            "/api/v1/wells/7/offsets?radius_km=5&mode=AT_FORMATION&formation=Barail",
-            None,
-            "B2",
-        ),
-        ("get", "/api/v1/wells/7/offsets?mode=AT_FORMATION", None, "B2"),
-        (
-            "get",
-            "/api/v1/wells/7/offsets?mode=CLOSEST_APPROACH&tvdss_from_m=1000&tvdss_to_m=2000",
-            None,
-            "B2",
-        ),
-        ("get", "/api/v1/wells/7/offsets?mode=CLOSEST_APPROACH", None, "B2"),
         # Later phases
         ("get", "/api/v1/wells/7/risk-profile", None, "B3"),
         ("get", "/api/v1/ledger?event_type=LOSS", None, "B3"),

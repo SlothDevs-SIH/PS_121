@@ -2,6 +2,9 @@
 
 bootstrap  wait for dependencies, apply migrations, create object-storage buckets
 check      print the readiness report (and optionally round-trip a Celery task)
+seed       generate the synthetic field and ingest its reports
+extract    (re-)run S2 extraction over ingested reports
+index      (re-)run S5 search indexing (embeddings + lesson cards)
 """
 
 import json
@@ -149,6 +152,16 @@ def seed(
                     if not stored.duplicate:
                         new_ids.append(stored.document.id)
         typer.echo(f"[seed] reports: {len(docs)} selected, {len(new_ids)} new")
+    else:  # keep the report list of an earlier seed (the extraction eval reads it)
+        try:
+            earlier = json.loads(
+                get_s3_client()
+                .get_object(Bucket=settings.s3_bucket_raw, Key="synthetic/truth.json")["Body"]
+                .read()
+            )
+            truth["documents"] = earlier.get("documents", [])
+        except Exception:
+            truth["documents"] = []
     get_s3_client().put_object(
         Bucket=settings.s3_bucket_raw,
         Key="synthetic/truth.json",
@@ -159,9 +172,17 @@ def seed(
         "[seed] ground truth written to s3://" + settings.s3_bucket_raw + "/synthetic/truth.json"
     )
     if inline:
+        from app.extract.service import extract_document
+        from app.search.service import index_document
+
         for doc_id in new_ids:
             with session_scope() as session:
                 process_document(session, doc_id)
+        for doc_id in new_ids:  # after all ingestion: one report's events merge with the next
+            with session_scope() as session:
+                extract_document(session, doc_id)
+            with session_scope() as session:
+                index_document(session, doc_id)
     else:
         from app.ingest.tasks import process_document_task
 
@@ -171,11 +192,15 @@ def seed(
         deadline = time.monotonic() + timeout_s
         while True:
             with session_scope() as session:
+                # Every stage: ingestion, then extraction, then search indexing.
                 pending = (
                     session.scalar(
                         select(func.count()).where(
                             Document.id.in_(new_ids),
-                            Document.ingest_status.in_(("queued", "processing")),
+                            Document.ingest_status.in_(("queued", "processing"))
+                            | Document.extract_status.in_(("pending", "running"))
+                            | Document.index_status.in_(("pending", "running")),
+                            Document.ingest_status != "failed",
                         )
                     )
                     or 0
@@ -191,6 +216,89 @@ def seed(
             select(Document.ingest_status, func.count()).group_by(Document.ingest_status)
         ).all()
     typer.echo(f"[seed] document status: {dict((str(k), int(v)) for k, v in rows)}")
+
+
+def _select_documents(document_id: int | None, all_: bool, status_col: str) -> list[int]:
+    from sqlalchemy import select
+
+    from app.db.models import Document
+    from app.db.session import session_scope
+
+    with session_scope() as session:
+        q = select(Document.id).where(Document.ingest_status.in_(("processed", "needs_review")))
+        if document_id is not None:
+            q = q.where(Document.id == document_id)
+        elif not all_:
+            q = q.where(getattr(Document, status_col).in_(("pending", "failed")))
+        return list(session.scalars(q.order_by(Document.id)))
+
+
+@cli.command()
+def extract(
+    document_id: Annotated[int | None, typer.Option(help="Only this document")] = None,
+    all_: Annotated[bool, typer.Option("--all", help="Re-extract every document")] = False,
+    queue: Annotated[
+        bool, typer.Option(help="Enqueue on the worker instead of running here")
+    ] = False,
+) -> None:
+    """Default: documents whose extraction is pending or failed, in upload order."""
+    from app.db.session import session_scope
+    from app.extract.service import extract_document, mark_failed
+
+    configure_logging(json_output=False)
+    ids = _select_documents(document_id, all_, "extract_status")
+    totals: dict[str, int] = {}
+    for doc_id in ids:
+        if queue:
+            from app.workers.celery_app import celery_app
+
+            celery_app.send_task("extract.process_document", args=[doc_id, False])
+            continue
+        try:
+            with session_scope() as session:
+                result = extract_document(session, doc_id)
+        except Exception as exc:
+            with session_scope() as session:
+                mark_failed(session, doc_id, f"{type(exc).__name__}: {exc}")
+            result = {"status": "failed"}
+            typer.echo(f"[extract] document {doc_id}: FAILED {type(exc).__name__}: {exc}")
+        for k, v in result.items():
+            if isinstance(v, int) and k != "document_id":
+                totals[k] = totals.get(k, 0) + v
+        totals[f"status_{result['status']}"] = totals.get(f"status_{result['status']}", 0) + 1
+    typer.echo(f"[extract] {len(ids)} document(s) {'queued' if queue else 'done'}: {totals}")
+
+
+@cli.command()
+def index(
+    document_id: Annotated[int | None, typer.Option(help="Only this document")] = None,
+    all_: Annotated[bool, typer.Option("--all", help="Re-index every document")] = False,
+    queue: Annotated[
+        bool, typer.Option(help="Enqueue on the worker instead of running here")
+    ] = False,
+) -> None:
+    """Embed chunks and (re)build lesson cards. Default: pending or failed documents."""
+    from app.db.session import session_scope
+    from app.search.service import index_document, mark_failed
+
+    configure_logging(json_output=False)
+    ids = _select_documents(document_id, all_, "index_status")
+    done = 0
+    for doc_id in ids:
+        if queue:
+            from app.workers.celery_app import celery_app
+
+            celery_app.send_task("search.index_document", args=[doc_id])
+            continue
+        try:
+            with session_scope() as session:
+                index_document(session, doc_id)
+            done += 1
+        except Exception as exc:
+            with session_scope() as session:
+                mark_failed(session, doc_id, f"{type(exc).__name__}: {exc}")
+            typer.echo(f"[index] document {doc_id}: FAILED {type(exc).__name__}: {exc}")
+    typer.echo(f"[index] {len(ids)} document(s) {'queued' if queue else f'processed, {done} ok'}")
 
 
 if __name__ == "__main__":

@@ -25,6 +25,7 @@ _PURPOSES = {
     "mud": 6,
     "docs": 7,
     "rt": 8,
+    "fluid": 9,
 }
 
 
@@ -110,6 +111,7 @@ class Well:
     casing: list[CasingString]
     mud: list[MudInterval]
     events: list[Event]
+    fluid_type: str = "oil"  # oil | gas | water (own seeded stream: adding it changed nothing else)
 
 
 @dataclass
@@ -353,7 +355,12 @@ def _make_well(
     completion = None
     if status == "completed":
         completion = (spud_day + timedelta(days=int(td_md / 150) + 12)).isoformat()
+    fluid = "oil"
+    if status == "completed":
+        u = float(_rng(idx, _PURPOSES["fluid"]).random())
+        fluid = "oil" if u < 0.68 else ("gas" if u < 0.88 else "water")
     return Well(
+        fluid_type=fluid,
         index=idx,
         name=name,
         aliases=ali,

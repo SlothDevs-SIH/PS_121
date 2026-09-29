@@ -129,3 +129,43 @@ def directional_stations(
         inc = np.where(md > drop_start_m, np.maximum(dropped, final_inc_deg), inc)
     azi = np.full_like(md, azimuth_deg % 360.0)
     return md, inc, azi
+
+
+def _unit(inc_deg: float, azi_deg: float) -> FloatArray:
+    i, a = np.radians(inc_deg), np.radians(azi_deg)
+    return np.array([np.sin(i) * np.cos(a), np.sin(i) * np.sin(a), np.cos(i)])
+
+
+def interpolate_at_md(traj: Trajectory, md: float) -> tuple[float, float, float, float, float]:
+    """(north, east, tvd, inc, azi) at ``md`` on the minimum-curvature arc between the
+    bracketing stations: the tangent is rotated along the arc (spherical interpolation)
+    and the partial segment is integrated with the same formula, so the result lies
+    exactly on the arc. Raises ValueError outside [first, last] station."""
+    if md < traj.md[0] or md > traj.md[-1]:
+        raise ValueError(f"md {md} is outside the surveyed range")
+    k = int(np.searchsorted(traj.md, md, side="right")) - 1
+    if k >= len(traj.md) - 1 or traj.md[k] == md:
+        k = min(k, len(traj.md) - 1)
+        return (
+            float(traj.north[k]),
+            float(traj.east[k]),
+            float(traj.tvd[k]),
+            float(traj.inc[k]),
+            float(traj.azi[k]),
+        )
+    t1 = _unit(traj.inc[k], traj.azi[k])
+    t2 = _unit(traj.inc[k + 1], traj.azi[k + 1])
+    f = (md - traj.md[k]) / (traj.md[k + 1] - traj.md[k])
+    beta = float(np.arccos(np.clip(np.dot(t1, t2), -1.0, 1.0)))
+    slerp = (np.sin((1 - f) * beta) * t1 + np.sin(f * beta) * t2) / max(np.sin(beta), 1e-12)
+    t = t1 if beta < 1e-9 else slerp
+    inc = float(np.degrees(np.arccos(np.clip(t[2], -1.0, 1.0))))
+    azi = float(np.degrees(np.arctan2(t[1], t[0])) % 360.0) if inc > 1e-9 else float(traj.azi[k])
+    part = minimum_curvature([traj.md[k], md], [traj.inc[k], inc], [traj.azi[k], azi])
+    return (
+        float(traj.north[k] + part.north[1]),
+        float(traj.east[k] + part.east[1]),
+        float(traj.tvd[k] + (part.tvd[1] - part.tvd[0])),
+        inc,
+        azi,
+    )

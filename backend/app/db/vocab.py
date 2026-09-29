@@ -67,6 +67,9 @@ ActionCode = Literal[
     # Generic (TIGHT, INSTAB, BALLING, OVERP, GAS, CASING, FISH, EQUIP, WAIT, OTHER_NPT)
     "REAM",
     "WIPER_TRIP",
+    "ADD_LUBRICANT",  # TORQUE
+    "REDUCE_RPM",  # TORQUE
+    "ADD_DETERGENT",  # BALLING
     "INCREASE_MW",
     "CIRCULATE",
     "CHANGE_BHA",

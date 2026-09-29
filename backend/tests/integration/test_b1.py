@@ -76,10 +76,10 @@ def test_trajectory_and_well_detail() -> None:
     assert _get("/api/v1/formations").json()[0]["strat_order"] == 1
 
 
-def test_unknown_well_is_404_and_unbuilt_mode_is_501() -> None:
+def test_unknown_well_is_404_and_unbuilt_route_is_501() -> None:
     assert _get("/api/v1/wells/999999").json()["error"]["code"] == "not_found"
-    r = _get("/api/v1/wells/1/offsets", mode="AT_FORMATION")
-    assert r.status_code == 501 and r.json()["error"]["details"]["phase"] == "B2"
+    r = _get("/api/v1/wells/1/risk-profile")
+    assert r.status_code == 501 and r.json()["error"]["details"]["phase"] == "B3"
 
 
 def _unique_ddr() -> bytes:

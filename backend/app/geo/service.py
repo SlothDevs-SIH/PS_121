@@ -56,6 +56,7 @@ class OffsetRow:
     name: str
     status: str
     well_type: str | None
+    fluid_type: str | None
     lat: float
     lon: float
     td_md_m: float | None
@@ -68,7 +69,8 @@ def surface_offsets(session: Session, well_id: int, radius_m: float) -> list[Off
     rows = session.execute(
         text(
             """
-            SELECT o.id, o.canonical_name, o.status, o.well_type, o.lat, o.lon, o.td_md_m,
+            SELECT o.id, o.canonical_name, o.status, o.well_type, o.fluid_type, o.lat, o.lon,
+                   o.td_md_m,
                    o.synthetic,
                    ST_Distance(o.surface_loc, a.surface_loc) AS distance_m,
                    degrees(ST_Azimuth(a.surface_loc, o.surface_loc)) AS bearing_deg
@@ -86,6 +88,7 @@ def surface_offsets(session: Session, well_id: int, radius_m: float) -> list[Off
             name=r.canonical_name,
             status=r.status,
             well_type=r.well_type,
+            fluid_type=r.fluid_type,
             lat=r.lat,
             lon=r.lon,
             td_md_m=r.td_md_m,

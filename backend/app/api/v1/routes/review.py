@@ -2,14 +2,19 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Query
+from fastapi import APIRouter, Body, Depends, Query
+from sqlalchemy.orm import Session
 
-from app.api.v1.params import NOT_FOUND, Cursor, Limit
+from app.api.v1.params import CONFLICT, NOT_FOUND, Cursor, Limit
 from app.api.v1.schemas.review import ReviewDecision, ReviewItem, ReviewPage
-from app.core.errors import NOT_IMPLEMENTED, NotImplementedYetError
+from app.core.auth import CurrentUser, get_current_user
+from app.db.session import get_session
 from app.db.vocab import ReviewKind, ReviewStatus
+from app.extract import review_service
 
-router = APIRouter(tags=["review"], responses=NOT_IMPLEMENTED)
+router = APIRouter(tags=["review"])
+DbSession = Annotated[Session, Depends(get_session)]
+User = Annotated[CurrentUser, Depends(get_current_user)]
 
 
 @router.get(
@@ -18,6 +23,7 @@ router = APIRouter(tags=["review"], responses=NOT_IMPLEMENTED)
     response_model=ReviewPage,
 )
 def list_review_queue(
+    session: DbSession,
     status_: Annotated[
         ReviewStatus | None, Query(alias="status", description="Default: pending only")
     ] = "pending",
@@ -28,16 +34,22 @@ def list_review_queue(
 ) -> ReviewPage:
     """Items ordered by confidence (lowest first), then id. Pass ``status`` explicitly to
     see decided items; ``status_counts`` always covers every status."""
-    raise NotImplementedYetError("Review queue (S2)", "B2")
+    return review_service.list_items(
+        session, status=status_, kind=kind, document_id=document_id, limit=limit, cursor=cursor
+    )
 
 
 @router.post(
     "/review-queue/{item_id}",
     summary="Accept, correct or reject",
     response_model=ReviewItem,
-    responses=NOT_FOUND,
+    responses={**NOT_FOUND, **CONFLICT},
 )
-def review_item(item_id: int, decision: Annotated[ReviewDecision, Body()]) -> ReviewItem:
+def review_item(
+    item_id: int, decision: Annotated[ReviewDecision, Body()], session: DbSession, user: User
+) -> ReviewItem:
     """Applies the decision to the target record (verified / corrected / rejected), records
     ``decided_by``/``decided_at`` and returns the updated item. 409 if already decided."""
-    raise NotImplementedYetError("Review decision (S2)", "B2")
+    item = review_service.decide(session, item_id, decision, user.user_id)
+    session.commit()
+    return item

@@ -51,6 +51,7 @@ def import_field(session: Session, data: SyntheticField, synthetic: bool = True)
         well.field_id = field.id
         well.status = w.status
         well.well_type = w.well_type
+        well.fluid_type = w.fluid_type
         well.profile = w.profile
         well.lat, well.lon = w.lat, w.lon
         well.rkb_elev_m, well.gl_elev_m = w.rkb_elev_m, w.gl_elev_m
@@ -70,10 +71,16 @@ def import_field(session: Session, data: SyntheticField, synthetic: bool = True)
             {"lon": w.lon, "lat": w.lat, "id": well.id},
         )
 
-        well.wellbores.clear()
+        # Update the wellbore in place: extracted events, casing, mud and DDR lines hang
+        # off it (ON DELETE CASCADE), so re-seeding must not recreate it.
+        wb = well.wellbores[0] if well.wellbores else None
+        if wb is None:
+            wb = Wellbore(well_id=well.id, name="OH", trajectory_assumed=False)
+            well.wellbores.append(wb)
+        wb.trajectory_assumed = False
+        wb.tops.clear()
+        wb.stations.clear()  # flushed first: new stations reuse the (wellbore, md) keys
         session.flush()
-        wb = Wellbore(well_id=well.id, name="OH", trajectory_assumed=False)
-        well.wellbores.append(wb)
         traj = build_stations(wb, [(s[0], s[1], s[2]) for s in w.stations], w.rkb_elev_m)
         session.flush()
         x0, y0 = projected_xy(w.lat, w.lon, data.crs_epsg)

@@ -3626,6 +3626,9 @@
               "LIGHTWEIGHT_SLURRY",
               "REAM",
               "WIPER_TRIP",
+              "ADD_LUBRICANT",
+              "REDUCE_RPM",
+              "ADD_DETERGENT",
               "INCREASE_MW",
               "CIRCULATE",
               "CHANGE_BHA",
@@ -3750,6 +3753,9 @@
               "LIGHTWEIGHT_SLURRY",
               "REAM",
               "WIPER_TRIP",
+              "ADD_LUBRICANT",
+              "REDUCE_RPM",
+              "ADD_DETERGENT",
               "INCREASE_MW",
               "CIRCULATE",
               "CHANGE_BHA",
@@ -6163,6 +6169,16 @@
             },
             "description": "Successful Response"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6172,16 +6188,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Correlation panel data",
@@ -6263,6 +6269,16 @@
             },
             "description": "Successful Response"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -6272,16 +6288,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Per-formation offset statistics",
@@ -6955,16 +6961,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Search drilling events",
@@ -6996,6 +6992,16 @@
             },
             "description": "Successful Response"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7005,16 +7011,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Record an event manually",
@@ -7068,16 +7064,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Event detail with mitigations, evidence and lesson card",
@@ -7141,16 +7127,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Verify, un-verify or reject an event",
@@ -7540,16 +7516,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Low-confidence extractions awaiting review",
@@ -7615,6 +7581,16 @@
             },
             "description": "Not found"
           },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflicts with the current state"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7624,16 +7600,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Accept, correct or reject",
@@ -7824,6 +7790,16 @@
             },
             "description": "Successful Response"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7833,16 +7809,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Hybrid document search",
@@ -8083,16 +8049,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Chronological event list for one well",
@@ -8203,6 +8159,16 @@
             },
             "description": "Successful Response"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not found"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -8212,16 +8178,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Offset wells within a radius",
@@ -8340,7 +8296,7 @@
         ]
       },
       "post": {
-        "description": "Replaces the primary wellbore's stations, recomputes them by minimum curvature,\nrebuilds ``path_geom`` and formation entry points, and clears ``trajectory_assumed``.",
+        "description": "Replaces the primary wellbore's stations, recomputes them by minimum curvature,\nrebuilds ``path_geom`` and formation entry points, and clears ``trajectory_assumed``.\nDepth references derived from the trajectory (event, casing, cement and mud TVD/TVDSS)\nare recomputed too.",
         "operationId": "upload_survey_api_v1_wells__well_id__trajectory_post",
         "parameters": [
           {
@@ -8393,16 +8349,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Upload survey stations and recompute the trajectory",
@@ -8467,16 +8413,6 @@
               }
             },
             "description": "Validation Error"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            },
-            "description": "Planned, not implemented in this phase"
           }
         },
         "summary": "Interpolated position at a measured depth",

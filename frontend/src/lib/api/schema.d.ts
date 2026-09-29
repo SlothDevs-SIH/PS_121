@@ -580,6 +580,8 @@ export interface paths {
          * Upload survey stations and recompute the trajectory
          * @description Replaces the primary wellbore's stations, recomputes them by minimum curvature,
          *     rebuilds ``path_geom`` and formation entry points, and clears ``trajectory_assumed``.
+         *     Depth references derived from the trajectory (event, casing, cement and mud TVD/TVDSS)
+         *     are recomputed too.
          */
         post: operations["upload_survey_api_v1_wells__well_id__trajectory_post"];
         delete?: never;
@@ -1661,7 +1663,7 @@ export interface components {
              * Action Code
              * @enum {string}
              */
-            action_code: "LCM_PILL_FINE" | "LCM_PILL_COARSE" | "LCM_BACKGROUND" | "REDUCE_MW" | "REDUCE_FLOW_RATE" | "CEMENT_PLUG" | "SQUEEZE" | "SET_CASING_EARLY" | "DRILL_BLIND" | "JAR_UP" | "JAR_DOWN" | "SPOT_PIPE_RELEASE_PILL" | "WORK_PIPE" | "INCREASE_FLOW" | "BACKOFF_AND_FISH" | "SIDETRACK" | "DRILLERS_METHOD" | "WAIT_AND_WEIGHT" | "BULLHEAD" | "REMEDIAL_SQUEEZE" | "TOP_JOB" | "LIGHTWEIGHT_SLURRY" | "REAM" | "WIPER_TRIP" | "INCREASE_MW" | "CIRCULATE" | "CHANGE_BHA" | "FISHING" | "REPAIR_EQUIPMENT" | "WAIT" | "OTHER";
+            action_code: "LCM_PILL_FINE" | "LCM_PILL_COARSE" | "LCM_BACKGROUND" | "REDUCE_MW" | "REDUCE_FLOW_RATE" | "CEMENT_PLUG" | "SQUEEZE" | "SET_CASING_EARLY" | "DRILL_BLIND" | "JAR_UP" | "JAR_DOWN" | "SPOT_PIPE_RELEASE_PILL" | "WORK_PIPE" | "INCREASE_FLOW" | "BACKOFF_AND_FISH" | "SIDETRACK" | "DRILLERS_METHOD" | "WAIT_AND_WEIGHT" | "BULLHEAD" | "REMEDIAL_SQUEEZE" | "TOP_JOB" | "LIGHTWEIGHT_SLURRY" | "REAM" | "WIPER_TRIP" | "ADD_LUBRICANT" | "REDUCE_RPM" | "ADD_DETERGENT" | "INCREASE_MW" | "CIRCULATE" | "CHANGE_BHA" | "FISHING" | "REPAIR_EQUIPMENT" | "WAIT" | "OTHER";
             /** Action Text */
             action_text?: string | null;
             /** Evidence */
@@ -1687,7 +1689,7 @@ export interface components {
              * Action Code
              * @enum {string}
              */
-            action_code: "LCM_PILL_FINE" | "LCM_PILL_COARSE" | "LCM_BACKGROUND" | "REDUCE_MW" | "REDUCE_FLOW_RATE" | "CEMENT_PLUG" | "SQUEEZE" | "SET_CASING_EARLY" | "DRILL_BLIND" | "JAR_UP" | "JAR_DOWN" | "SPOT_PIPE_RELEASE_PILL" | "WORK_PIPE" | "INCREASE_FLOW" | "BACKOFF_AND_FISH" | "SIDETRACK" | "DRILLERS_METHOD" | "WAIT_AND_WEIGHT" | "BULLHEAD" | "REMEDIAL_SQUEEZE" | "TOP_JOB" | "LIGHTWEIGHT_SLURRY" | "REAM" | "WIPER_TRIP" | "INCREASE_MW" | "CIRCULATE" | "CHANGE_BHA" | "FISHING" | "REPAIR_EQUIPMENT" | "WAIT" | "OTHER";
+            action_code: "LCM_PILL_FINE" | "LCM_PILL_COARSE" | "LCM_BACKGROUND" | "REDUCE_MW" | "REDUCE_FLOW_RATE" | "CEMENT_PLUG" | "SQUEEZE" | "SET_CASING_EARLY" | "DRILL_BLIND" | "JAR_UP" | "JAR_DOWN" | "SPOT_PIPE_RELEASE_PILL" | "WORK_PIPE" | "INCREASE_FLOW" | "BACKOFF_AND_FISH" | "SIDETRACK" | "DRILLERS_METHOD" | "WAIT_AND_WEIGHT" | "BULLHEAD" | "REMEDIAL_SQUEEZE" | "TOP_JOB" | "LIGHTWEIGHT_SLURRY" | "REAM" | "WIPER_TRIP" | "ADD_LUBRICANT" | "REDUCE_RPM" | "ADD_DETERGENT" | "INCREASE_MW" | "CIRCULATE" | "CHANGE_BHA" | "FISHING" | "REPAIR_EQUIPMENT" | "WAIT" | "OTHER";
             /** Action Text */
             action_text: string | null;
             /** Confidence */
@@ -2595,6 +2597,15 @@ export interface operations {
                     "application/json": components["schemas"]["CorrelationPanel"];
                 };
             };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -2602,15 +2613,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2638,6 +2640,15 @@ export interface operations {
                     "application/json": components["schemas"]["FormationStats"];
                 };
             };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -2645,15 +2656,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2930,15 +2932,6 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
         };
     };
     create_event_api_v1_events_post: {
@@ -2963,6 +2956,15 @@ export interface operations {
                     "application/json": components["schemas"]["EventDetail"];
                 };
             };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -2970,15 +2972,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -3019,15 +3012,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -3072,15 +3056,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -3303,15 +3278,6 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
         };
     };
     review_item_api_v1_review_queue__item_id__post: {
@@ -3347,6 +3313,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+            /** @description Conflicts with the current state */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -3354,15 +3329,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -3397,6 +3363,15 @@ export interface operations {
                     "application/json": components["schemas"]["SearchResponse"];
                 };
             };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -3404,15 +3379,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -3524,15 +3490,6 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
         };
     };
     get_offsets_api_v1_wells__well_id__offsets_get: {
@@ -3564,6 +3521,15 @@ export interface operations {
                     "application/json": components["schemas"]["OffsetsOut"];
                 };
             };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -3571,15 +3537,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -3699,15 +3656,6 @@ export interface operations {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
         };
     };
     get_trajectory_at_depth_api_v1_wells__well_id__trajectory_at_depth_get: {
@@ -3748,15 +3696,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-            /** @description Planned, not implemented in this phase */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
