@@ -28,7 +28,8 @@ test('dashboard: live KPIs, a WebGL map under the strict CSP, extracted events',
   expect(await kpiValue(page, 'kpi-events')).toBeGreaterThan(0)
   await expect(page.getByTestId('kpi-documents')).toContainText('/')
   await expect(page.getByTestId('recent-events').getByRole('listitem').first()).toBeVisible()
-  await expect(page.getByText(/Nothing here is simulated/)).toBeVisible()
+  // Part 5: the live-alerts card lists open alerts from the stream engine (or says none).
+  await expect(page.getByTestId('dashboard-alerts')).toBeVisible()
   // MapLibre rendered wells: its worker came from our own origin (no blob: under the CSP).
   await expect(
     page.getByTestId('dashboard-map').locator('.well-marker, .cluster-marker').first(),
