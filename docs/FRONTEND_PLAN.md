@@ -5,15 +5,52 @@
 **Document date:** 2026-09-28 (v1.0) · **updated 2026-09-29 (v1.1, Part 2):** the design-system revamp of `docs/SPEC_RECONCILIATION.md` §5 (themes, motion, shell, ⌘K palette, MapLibre, Documents Library, Dashboard) is built; see §0.2 (numbered §0.1 then), §5, §8, §13, Appendix B3.
 **Updated 2026-09-29 (v1.2, Part 3):** F2 Knowledge screens built (Correlation Panel, Well 360 with a 3D trajectory, Knowledge Search, review queue, map proximity modes) with axe checks in e2e; see §0.1 (numbered §0.0 then), the log (V-F14–V-F17), §5, §6, §9, §10, §13, Appendix B4.
 **Updated 2026-09-29 (v1.3, Part 4):** F3 built (Mitigation Ledger screen, `IntervalBar`, `RiskCurve` on Well 360 / the map panel / the correlation hazard strip, the 5-step risk scale) with axe checks in all three themes; B4's real-time API is live for F4. See §0.0, the log (V-F18–V-F19), §5, §6, §8, §13, §16, Appendix B5.
-**Frontend phase:** F0 ✅ · F1 ✅ (Part 1) · P2 ✅ (Part 2) · F2 ✅ (Part 3) · **F3 — Risk & ledger: ✅ COMPLETE (2026-09-29, Part 4)**. Next: **F4 — Live Well Monitor and Alerts** (Part 5), on the B4 WebSockets that are already live.
+**Updated 2026-09-29 (v1.4, Part 5):** F4 built (Live Well Monitor, Alerts Center with the Déjà Vu overlay, live toasts, the Dashboard's live-alerts card) on a WebSocket client with backoff and stale handling; replay → UI latency measured; axe in all three themes. See §0.0, the log (V-F20–V-F21), §4.7–4.8, §5, §6, §13 (ADR-F19), §16, Appendix B6.
+**Frontend phase:** F0–F3 ✅ (Parts 1–4) · **F4 — Real-time: ✅ COMPLETE (2026-09-29, Part 5)**, not yet profiled on a tablet (V-F20). Next: **F5 — Copilot panel, Analytics, brief download, PWA**.
 
-> ⚠️ **Same honesty rule as the master and backend plans:** a "✅" must point to a file and a test that passed. Every number in §0 and Appendix B was measured in this repository on the date given. Everything from F4 onward is a **plan**.
+> ⚠️ **Same honesty rule as the master and backend plans:** a "✅" must point to a file and a test that passed. Every number in §0 and Appendix B was measured in this repository on the date given. Everything from F5 onward is a **plan**.
 
 ---
 
 ## 0. Where the frontend actually stands right now (2026-09-29)
 
-### 0.0 F3 — Mitigation Ledger and risk curves (built in Part 4, 2026-09-29)
+### 0.0 F4 — Live Well Monitor and Alerts Center (built in Part 5, 2026-09-29)
+
+**Everything live here is driven by a replay of the SYNTHETIC drilling well** (BACKEND V-B25/V-B26); nothing on these screens is simulated in the browser.
+
+**Built and verified** (evidence: Appendix B6):
+- **Live plumbing** (`src/lib/live.ts`, `src/hooks/useLive.ts`): one `LiveSocket` class reconnects with exponential backoff (1, 2, 4 … 30 s), treats the backend's 4401 / 4403 / 4404 closes as final, and calls itself **stale after 10 s** without a message; the stream's own `status` message (no frame for 30 s) also counts. Frames go into a **360-frame ring buffer**. `useLiveWell` and `useAlertsFeed` wrap it; tokens go in `?token=` for `jwt` mode.
+- **Live Well Monitor** (`src/pages/LiveMonitorPage.tsx`, screen 4, `/live?well=`):
+  - First paint from `GET /wells/{id}/realtime` (60 min), then pushed frames appended on the **same time axis** (`mergeSeries`, duplicates dropped).
+  - Tiles: bit depth MD and TVDSS, ROP, flow out − in, pit change over 15 min, data time (UTC).
+  - **Look-ahead bar:** formation now → next, TVD to its top (prognosed tops say "prognosed ± spread"), and the next interval's biggest offset hazard from the risk profile.
+  - **Channel strips** (8) and a **rig-state ribbon** as SVG (ADR-F19), with open alerts drawn as dashed markers; gaps break the line, never drawn as zero; each strip has its latest value, unit and range as text.
+  - **Risk gauges:** each classifier probability against its alert threshold with a trend arrow, as ARIA meters; captioned "trained on SYNTHETIC data, advisory only". The closest Déjà Vu match is shown as a similarity, "not a probability".
+  - A connection pill (live · updated N s ago / stale / reconnecting / refused with the reason), a **stale banner** ("values below are the last received, not current"), a **"REPLAY ×N · row k of n" banner**, and **replay controls (start at ×60/300/1500, pause, resume, stop) only for roles with `control_replay`**.
+- **Alerts Center** (`src/pages/AlertsPage.tsx`, screen 5, `/alerts?status=&id=`):
+  - List: open / new / dismissed / all; **well-control alerts pinned first** (the budget-exempt ones); counts by status; the budget stated (6 non-critical per well per 12 h).
+  - Detail: severity, type and fused sources, the score in words ("41% model probability", "0.81 similarity (not a probability)", "offset prior probability", "physics indicator"), well (→ its live view), depth, formation, data time.
+  - Evidence tabs: the **stream window ending at the alert** (`?end=t_data`) with the alert marked; offset and matched past events with their **report pages** (`EvidenceLink`); **model drivers** (occlusion contributions, not SHAP, with value vs typical); the **Déjà Vu overlay** (per matcher channel: this well's 30 min solid over the past run-up dashed, the past well, formation and minutes before its event, similarity "not a probability"); **what worked** from the ledger with `IntervalBar`s and the observational caveat, linking to the ledger.
+  - An alert with no evidence shows a **defect banner** ("do not act on it alone").
+  - Acknowledge / dismiss (a reason is required) / useful · not useful · false alarm (optional comment), **optimistic in every cached list and rolled back when the backend refuses** (e.g. 409). Roles without `act_alerts` see why they can't act.
+  - **"Why did this fire?"** asks the copilot (`?stream=false`) with the alert and well in context and shows its cited answer.
+- **Everywhere:** a **toast** for each alert pushed over `/ws/alerts` (critical ones stay until closed and are announced with `role="alert"`), and the **unseen count in the tab title**, cleared on the Alerts screen. The Dashboard's placeholder is now a **live-alerts card** (open alerts, pinned first).
+- **Latency, replay → UI:** in `e2e/part5.spec.ts` a real replay at ×1500 runs, and the first *newly created* alert's toast is timed against the alert's stored `created_at`: **2.96 s and 1.38 s** in two runs here (target ≤ 5 s). This includes the `/ws/alerts` reader's 1 s poll; it is two measurements on one machine, not a p95.
+- **Accessibility:** axe (WCAG 2.2 AA) passes on the Live Monitor and on the Alerts detail with the Déjà Vu tab open, **in all three themes at both viewports**, on the first run.
+- **Bundle:** Live Monitor chunk 5.2 kB gzip, Alerts 6.0 kB (no chart library added).
+- **Tests:** 127 unit tests (+27: live socket backoff/final codes/stale 3 + helpers 3, live-view helpers 7, alert helpers 2, Live Monitor 5, Alerts Center 6, toasts 1) with a fake WebSocket in `src/test/`; `e2e/part5.spec.ts` (replay → UI with latency, alerts round trip, dashboard, axe × 3 themes; × 2 viewports, the stateful ones in one project).
+
+**Exit criterion "replay → alerts in the UI ≤ 5 s":** met in both measured runs (2.96 s, 1.38 s). **"Tablet smoothness" was not measured** on a real tablet (V-F20).
+
+**Found while building F4:**
+1. **The Déjà Vu match vanished on fused alerts** (the backend dropped a fused source's detail), so the overlay had nothing to draw; fixed in the backend, and the overlay is rebuilt from stored samples and checked to reproduce the recorded similarity.
+2. **Resetting state when the well changes** first used `setState` inside the effect (a lint error for cascading renders); live state is now tagged with its well.
+3. **"30 m TVD(prognosed…)"** — a missing space caught by a unit test reading the text as a user would.
+4. **The planned-screen smoke test used `/alerts`** as its example; it now uses Analytics, whose B5 endpoints answer.
+
+**Not built in F4 (stated, not hidden):** no browser notifications (in-app toasts and the title count only); no physics chart tab beyond the stream window (the physics indicator is in the score and message); no per-channel data-quality display (BACKEND V-B31); no tablet profiling (V-F20).
+
+### 0.1 F3 — Mitigation Ledger and risk curves (built in Part 4, 2026-09-29)
 
 **Built and verified** (evidence: Appendix B5):
 - **Mitigation Ledger** (`src/pages/LedgerPage.tsx`, screen 7, `/ledger`):
@@ -29,7 +66,7 @@
 - **Accessibility:** axe (WCAG 2.2 AA) passes on the ledger (with a case list open) and the risk tab in **all three themes**, Command Blue included for the first time; one contrast fix was forced (case rows moved from `surface-2` to the card surface).
 - **Tests:** 100 unit tests (+10: risk helpers 4, ledger 4, risk tab 1, hazard strip 1) and `e2e/part4.spec.ts` (5 scenarios × 2 viewports): the ledger's rows equal the API's ranking, which the test first checks is sorted by posterior mean; cases link to wells and pages; the drilling well's curve shows prognosed intervals and a TD marker and links into the ledger; the map panel and the hazard strip render; axe in three themes.
 
-**Exit criterion "the ledger shows the planted ranking":** the screen shows exactly the API's order (e2e); that order's agreement with the planted rates is the backend's measurement (ρ = 0.837, BACKEND_PLAN §0.1, V-B19). The screen adds nothing to or takes nothing from it.
+**Exit criterion "the ledger shows the planted ranking":** the screen shows exactly the API's order (e2e); that order's agreement with the planted rates is the backend's measurement (ρ = 0.837, BACKEND_PLAN §0.2, V-B19). The screen adds nothing to or takes nothing from it.
 
 **Found while building F3:**
 1. **The TD marker first sat on the prognosed top**, because the last real interval's base is the next (prognosed) top. The risk profile now reports TD itself (`td_md_m`, `td_tvdss_m`).
@@ -38,7 +75,7 @@
 
 **Not built in F3 (stated, not hidden):** risk intervals are formations, not 25 m bins (BACKEND V-B20), so the curve is a step per formation; no visual-regression baselines yet (V-F16).
 
-### 0.1 F2 — Knowledge screens (built in Part 3, 2026-09-29)
+### 0.2 F2 — Knowledge screens (built in Part 3, 2026-09-29)
 
 **Built and verified** (evidence: Appendix B4):
 - **Correlation Panel** (`src/pages/CorrelationPage.tsx`, `components/correlation/*`, `lib/correlation.ts`), the screen judges will remember:
@@ -65,9 +102,9 @@
 
 **Not built in F2 (stated, not hidden):**
 - **No visual-regression screenshots** (V-F16): pixel baselines differ between this sandbox and CI runners. The correlation scale maths is unit-tested and the panel is checked functionally in e2e instead.
-- The hazard strip on the correlation panel and risk curves belong to F3: built in Part 4 (§0.0).
+- The hazard strip on the correlation panel and risk curves belong to F3: built in Part 4 (§0.1).
 
-### 0.2 Part 2 — Design system, shell, MapLibre, Documents Library, Dashboard (2026-09-29)
+### 0.3 Part 2 — Design system, shell, MapLibre, Documents Library, Dashboard (2026-09-29)
 
 **Built and verified** (evidence: Appendix B3):
 - **Design system** (`src/styles/index.css`, `src/lib/motion.ts`, `src/lib/wellTypes.ts`):
@@ -114,7 +151,7 @@
 4. **At map-page zoom, offset wells vanished into clusters**, so "click an offset well" was impossible. Active and offset wells now come from a separate, unclustered source.
 5. **The shell bundle crossed the 180 kB budget** (181.4 kB gzip) once cmdk was added. The palette now loads on first use: shell 164 kB.
 
-### 0.3 F1 — Map & ingestion (built in Part 1, 2026-09-28)
+### 0.4 F1 — Map & ingestion (built in Part 1, 2026-09-28)
 
 **Built and verified** (evidence: Appendix B2):
 - **Well Map** (`/map`, master plan screen 1):
@@ -155,7 +192,7 @@
 1. **The map overflowed the phone layout by 18 px.** Grid items default to `min-width: auto`, and Leaflet's internal panes are huge. The phone-width e2e test caught it; fixed with `min-w-0`.
 2. **Offset-table well names and depths wrapped mid-token** ("SYN-/ASM-/09"), found in the screenshot review. Those cells are now non-wrapping inside the table's horizontal scroll.
 
-### 0.4 F0 — Skeleton (built earlier on 2026-09-28)
+### 0.5 F0 — Skeleton (built earlier on 2026-09-28)
 
 **Built and verified in F0** (evidence in Appendix B):
 
@@ -222,6 +259,8 @@
 | V-F17 | Map pins of wells on one pad overlap, so axe flags target size | WCAG 2.5.8 "equivalent" exception: every well can also be picked from the offset table and the well picker | e2e excludes `.maplibregl-marker` from axe with that reason in a comment; pins now have 24 px hit areas | ✅ Decided |
 | V-F18 | Part 3's axe runs covered Deep Rig and Daylight only | Command Blue failed contrast on the ledger's case rows | Part 4 runs axe in all three themes; re-run the Part 3 screens in Command Blue in F4 | ⏳ Open |
 | V-F19 | Hazard strip on the first correlation column only | The prior is per subject well; drawing it on offsets would show *their* prior, not their history | By design; offsets show their events. Revisit if users ask for per-column priors | ✅ Decided |
+| V-F20 | Live strips not profiled on a rig tablet | §4.7's target (main-thread budget on a mid-range tablet) needs the device | SVG paths at 1 Hz with a 360-frame buffer; profile on the demo tablet before the finale, and move strips to canvas only if it stutters | ⏳ Open |
+| V-F21 | Live strips are SVG, not ECharts (§4.7 planned ECharts) | Eight strips of ≤ 720 points redrawn once a second are a few path strings; ECharts would add a large chunk | ADR-F19 | ✅ Decided |
 
 ---
 
@@ -428,7 +467,7 @@ Each screen uses the same layout: **Purpose · Layout · Data (endpoints) · Key
 - **Components:** `IntervalBar` (point + CI whisker, accessible text alternative), `CaseList`.
 - **Done when:** the planted-ranking synthetic dataset displays in the planted order (it mirrors the backend ρ test).
 
-### 4.7 Live Well Monitor — screen 4 (F4, needs B4)
+### 4.7 Live Well Monitor — screen 4 (F4, needs B4) — ✅ built: see §0.0
 
 - **Purpose:** the field and RTMAC real-time view (O-vi, O-vii).
 - **Layout (field-first, works at 800×1280 tablet portrait and 1920×1080 wall screens):**
@@ -439,11 +478,11 @@ Each screen uses the same layout: **Purpose · Layout · Data (endpoints) · Key
   - The alert feed.
   - A "REPLAY ×30" banner when the source is replay.
 - **Data:** `WS /ws/wells/{id}/live` (1 Hz channel frames + scores), `GET /api/v1/wells/{id}/risk-profile`.
-- **Rendering:** **ECharts** (canvas) for the strips. It keeps a ring buffer of 360 points per channel at 10 s resolution and updates via `setOption` with `notMerge: false` at 1 Hz. It must stay smooth on a mid-range tablet (target: main-thread work < 16 ms per update).
+- **Rendering:** ~~ECharts (canvas)~~ **SVG paths (built, ADR-F19)** for the strips. It keeps a ring buffer of 360 points per channel at 10 s resolution and updates via `setOption` with `notMerge: false` at 1 Hz. It must stay smooth on a mid-range tablet (target: main-thread work < 16 ms per update).
 - **Connection handling:** a WebSocket client with backoff reconnect (1, 2, 4… max 30 s). A "Stale data — last update 42 s ago" banner after 10 s without frames. **Never show stale values as live.**
 - **Tests:** a WS mock server feeding a scripted stream (reconnect, stale banner, gauge updates); an e2e run against B4 replay.
 
-### 4.8 Alerts & Alert Detail — screen 5 (F4, needs B4)
+### 4.8 Alerts & Alert Detail — screen 5 (F4, needs B4) — ✅ built: see §0.0 (drivers are occlusion contributions, not SHAP)
 
 - **Purpose:** proactive alerts with evidence and recommendations (O-vi, G-iv).
 - **Layout:**
@@ -508,7 +547,7 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 12 | Documents Library (upload, grid/list, pipeline timeline, deep links) | F1 → P2 | ✅ | `src/pages/IngestPage.tsx`, `src/components/documents/Pipeline.tsx`, `src/lib/documents.ts` · `IngestPage.test.tsx` (5), e2e upload + library scenarios |
 | 12a | Design system: 3 themes, well-type colours, z-index scale, fonts, motion, theme reveal | P2 | ✅ | `src/styles/index.css`, `src/lib/motion.ts`, `src/components/shell/ThemeSwitcher.tsx` · `AppShell.test.tsx` theme cycle, `ui.test.ts` (3), e2e theme persistence |
 | 12b | Shell: collapsible sidebar, top bar, well-type switcher, ⌘K palette, route transitions | P2 | ✅ | `src/components/shell/*`, `src/app/AppShell.tsx`, `src/stores/ui.ts` · `AppShell.test.tsx` (11), `CommandPalette.test.tsx` (2), e2e palette / switcher / collapse |
-| 12c | Dashboard shell (KPIs, mini map, recent events, alerts placeholder) | P2 | ✅ | `src/pages/DashboardPage.tsx`, `src/components/ui/KpiCard.tsx` · `DashboardPage.test.tsx` (2), e2e dashboard |
+| 12c | Dashboard shell (KPIs, mini map, recent events; live-alerts card since F4) | P2 → F4 | ✅ | `src/pages/DashboardPage.tsx`, `src/components/ui/KpiCard.tsx` · `DashboardPage.test.tsx` (2), e2e dashboard |
 | 13 | `EvidenceLink`, `PageViewer`, `ConfidenceValue`, `DataTable`, units formatter, units toggle, runtime config | F1 | ✅ | `src/components/**`, `src/lib/format/units.ts`, `src/lib/config.ts` · `PageViewer.test.tsx` (2), `DataTable.test.tsx` (2), `units.test.ts` (5) |
 | 14 | Correlation Panel | F2 | ✅ | `src/pages/CorrelationPage.tsx`, `components/correlation/*`, `lib/correlation.ts` · `correlation.test.ts` (10), `CorrelationPage.test.tsx` (4), e2e "correlation panel" |
 | 14a | Well 360 incl. 3D trajectory | F2 | ✅ | `src/pages/Well360Page.tsx`, `components/well360/*`, `lib/trajectory3d.ts` · `trajectory3d.test.ts` (7), `Well360Page.test.tsx` (5), e2e "well 360" |
@@ -516,7 +555,7 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 14c | Review queue | F2 | ✅ | `components/review/ReviewQueue.tsx`, `lib/review.ts`, `components/evidence/PageImage.tsx` · `review.test.ts` (3), `ReviewQueue.test.tsx` (3), e2e "review queue" (uploads its own low-confidence DDR) |
 | 14d | Automated accessibility checks | F2 | ✅ | `e2e/part3.spec.ts` axe scenarios (2 themes × 2 viewports) |
 | 15 | Mitigation Ledger, risk curves on Map/Well 360, correlation hazard strip | F3 | ✅ | `src/pages/LedgerPage.tsx`, `components/risk/*`, `components/well360/RiskTab.tsx`, `lib/risk.ts` · `risk.test.ts` (4), `LedgerPage.test.tsx` (4), `Well360Page.test.tsx`, `CorrelationPage.test.tsx`, e2e `part4.spec.ts` |
-| 16 | Live Well Monitor, Alerts, Déjà Vu overlay | F4 | 📋 | §4.7–4.8 |
+| 16 | Live Well Monitor, Alerts Center, Déjà Vu overlay, toasts, WebSocket client | F4 | ⚠️ not profiled on a tablet (V-F20) | `src/pages/LiveMonitorPage.tsx`, `src/pages/AlertsPage.tsx`, `components/live/*`, `components/shell/AlertToaster.tsx`, `lib/live.ts`, `lib/liveView.ts`, `lib/alerts.ts`, `hooks/useLive.ts` · `live.test.ts` (6), `liveView.test.ts` (7), `alerts.test.ts` (2), `LiveMonitorPage.test.tsx` (5), `AlertsPage.test.tsx` (7), e2e `part5.spec.ts` |
 | 17 | Copilot panel, Analytics, Offset Risk Brief button, PWA offline well pack | F5 | 📋 | §4.5, §4.9, §12 |
 | 18 | OIDC login (PKCE), role-aware UI, Admin, hidden source maps, perf budget enforcement | F6 | 📋 | §4.10, §11 |
 
@@ -530,10 +569,10 @@ Frontend phases follow the backend phases they depend on, typically starting a f
 |---|---|---|---|---|
 | **F0 Skeleton** | B0 | P0 | Shell, theming, field mode, API layer, System Status, planned screens, nginx image, CI | ✅ **Met 2026-09-28**, including a green GitHub CI run — Appendix B |
 | **F1 Map & ingestion** | B1 | P1 | Well Map (surface mode), upload + job status, `EvidenceLink`/`PageViewer`, `ConfidenceValue`, `DataTable`, units formatter, route-level code splitting, tile decision | ✅ **Met 2026-09-28** on synthetic wells (no Volve data, see BACKEND_PLAN V-B13): radius search end to end in the browser; uploads tracked to `processed` and viewable with evidence; e2e covers both |
-| **P2 Revamp** (Part 2) | B2 | — | `SPEC_RECONCILIATION.md` §5: themes, motion, collapsible sidebar, top bar with well-type switcher, ⌘K palette, MapLibre map, Documents Library revamp, Dashboard shell | ✅ **Met 2026-09-29** — §0.2, Appendix B3 |
-| **F2 Knowledge** (Part 3) | B2 ✅ | P2 | Review queue, Well 360, **Correlation Panel**, Knowledge Search, at-formation/closest-approach modes on the map, axe checks in e2e | ✅ **Met 2026-09-29 (Part 3):** 6 wells re-aligned in 183 ms (first render 699 ms incl. page load) with evidence links; review round trip in e2e; search with citations and "no record"; axe clean. No visual-regression baseline (V-F16). §0.1, Appendix B4 |
-| **F3 Risk & ledger** (Part 4) | B3 ✅ | P3a | Mitigation Ledger, `RiskCurve` on Map/Well 360/Correlation hazard strip | ✅ **Met 2026-09-29 (Part 4):** the ledger shows the API's ranking (whose agreement with the planted rates is the backend's ρ = 0.837); risk curves show n, n_eff in labels and the 90% CI; axe clean in three themes. §0.0, Appendix B5 |
-| **F4 Real-time** (Part 5) | B4 ✅ | P3b | Live Well Monitor, Alerts list/detail, Déjà Vu overlay, WebSocket client with reconnect/stale handling | Replay → alerts appear in the UI ≤ 5 s after the backend emits them (measured); tablet smoothness target met |
+| **P2 Revamp** (Part 2) | B2 | — | `SPEC_RECONCILIATION.md` §5: themes, motion, collapsible sidebar, top bar with well-type switcher, ⌘K palette, MapLibre map, Documents Library revamp, Dashboard shell | ✅ **Met 2026-09-29** — §0.3, Appendix B3 |
+| **F2 Knowledge** (Part 3) | B2 ✅ | P2 | Review queue, Well 360, **Correlation Panel**, Knowledge Search, at-formation/closest-approach modes on the map, axe checks in e2e | ✅ **Met 2026-09-29 (Part 3):** 6 wells re-aligned in 183 ms (first render 699 ms incl. page load) with evidence links; review round trip in e2e; search with citations and "no record"; axe clean. No visual-regression baseline (V-F16). §0.2, Appendix B4 |
+| **F3 Risk & ledger** (Part 4) | B3 ✅ | P3a | Mitigation Ledger, `RiskCurve` on Map/Well 360/Correlation hazard strip | ✅ **Met 2026-09-29 (Part 4):** the ledger shows the API's ranking (whose agreement with the planted rates is the backend's ρ = 0.837); risk curves show n, n_eff in labels and the 90% CI; axe clean in three themes. §0.1, Appendix B5 |
+| **F4 Real-time** (Part 5) | B4 ✅ | P3b | Live Well Monitor, Alerts list/detail, Déjà Vu overlay, WebSocket client with reconnect/stale handling | ✅ **Met 2026-09-29 (Part 5) except tablet profiling:** replay → alert toast 2.96 s and 1.38 s after the alert is stored (≤ 5 s, e2e); axe clean in 3 themes. Tablet smoothness not measured (V-F20). §0.0, Appendix B6. *Original criterion:* replay → alerts appear in the UI ≤ 5 s after the backend emits them (measured); tablet smoothness target met |
 | **F5 Copilot & polish** | B5 | P4 | Copilot panel (SSE), Analytics, Offset Risk Brief download, PWA with an offline well pack | Copilot answers with clickable citations; field view usable offline for a cached well (knowledge views only) |
 | **F6 Hardening** | B6 | P5 | OIDC PKCE login, role-aware UI, Admin, hidden source maps, bundle budget in CI, usability test (master plan §13.6) | SUS ≥ 70 measured; performance budgets (§10) met and recorded |
 
@@ -666,6 +705,7 @@ Per-viewer preferences in localStorage (guarded; not reliable state): `smriti.th
 | ADR-F16 | Depth tracks as React SVG with our own scale maths | D3 (ADR-F7's plan) | Linear scales, ticks and the alignment inverse are small and unit-tested; React owns the DOM, no second rendering model; memoised columns keep the crosshair cheap |
 | ADR-F17 | 3D trajectory as an orthographic SVG camera | three.js / react-three-fiber | A few polylines and markers need no WebGL; no new dependency or 150 kB chunk; works in jsdom tests, in screenshots and under the strict CSP |
 | ADR-F18 | `RiskCurve` and `IntervalBar` as React SVG | ECharts (planned for the live strips) | Step curves with CI bands per formation are a few rects and lines; no chart library in the ledger/Well 360 chunks; the same components serve the map panel and, in F4, alert recommendations |
+| ADR-F19 | Live channel strips and the Déjà Vu overlay as React SVG | ECharts (ADR-F7's plan for live strips) | ≤ 8 strips × ≤ 720 points at 1 Hz are path strings; `vector-effect: non-scaling-stroke` keeps lines crisp at any width; no chart chunk (Live Monitor 5.2 kB gzip); testable in jsdom. Canvas stays the fallback if a tablet stutters (V-F20) |
 
 ---
 
@@ -707,12 +747,12 @@ One codebase serves office laptops, RTMAC wall screens and rig tablets, with no 
 
 ## 16. Immediate Next Actions (frontend)
 
-*(Updated 2026-09-29 after Part 4.)*
+*(Updated 2026-09-29 after Part 5.)*
 
-1. **Part 5 (F4):** Live Well Monitor on `WS /ws/wells/{id}/live` + `GET /wells/{id}/realtime` (big numbers, look-ahead bar from the prognosed intervals, channel strips with the rig-state ribbon, risk gauges, stale banner, "REPLAY ×60" banner, replay controls) and Alerts on `GET /alerts` + `WS /ws/alerts` (feed, detail with evidence tabs, Déjà Vu overlay from `detail.matches`, ranked mitigations with `IntervalBar`, ack/dismiss/feedback). Measure "backend emits → UI shows" (≤ 5 s).
-2. **axe on the Part 3 screens in Command Blue** (V-F18).
-3. **Visual-regression baselines** generated in CI (V-F16).
-4. **Self-hosted tile pack** for the demo area, so the map has a basemap offline (V-F10 follow-up) — UI eng. + infra.
+1. **F5:** copilot panel on Knowledge Search (SSE, clickable citations), Analytics screen on the B5 endpoints, Offset Risk Brief download on Well 360, PWA with an offline well pack.
+2. **F6:** login screen (then `jwt`/`oidc` becomes the backend default), role-aware navigation, Admin (users, audit log, replay control).
+3. **Profile the live strips on the demo tablet** (V-F20).
+4. **axe on the Part 3 screens in Command Blue** (V-F18); **visual-regression baselines** in CI (V-F16).
 5. **`docker save`** the node/nginx base images for the finale machine (V-F8).
 
 ---

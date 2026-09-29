@@ -6,15 +6,51 @@
 **Updated 2026-09-29 (v1.2, Part 2):** B2 knowledge layer built on the contract drafted in `f621a3e` (data model, migrations 0005–0006, typed API); §0.2 (numbered §0.1 then), §5, §6, §13, §16 and Appendix B3 record it.
 **Updated 2026-09-29 (v1.3, Part 3):** B3 batch intelligence built (offset prior risk, physics indicators, Mitigation Effectiveness Ledger) and evaluated; §0.1 (numbered §0.0 then), the log (V-B19–V-B24), §5, §6, §16 and Appendix B4 record it.
 **Updated 2026-09-29 (v1.4, Part 4):** B4 real-time built (stream + replay + WITS0, rig state, classifiers, Déjà Vu, alert engine, WebSockets) and evaluated on SYNTHETIC data; §0.0, the log (V-B25–V-B31), §4.10–4.12, §5, §6, §10, §13 (ADR-B18–B20), §16 and Appendix B5 record it.
-**Backend phase:** B0 ✅ · B1 ✅ (Part 1) · B2 ✅ (Part 2) · B3 ✅ (Part 3) · **B4 — Real-time: ✅ COMPLETE (2026-09-29, Part 4)** on synthetic data only: no Volve well was replayed (V-B13, V-B25). Next: **B5 — Copilot & reports** (Part 5).
+**Updated 2026-09-29 (v1.5, Part 5):** B5 built: copilot (rules planner, seven read-only tools, SSE), Offset Risk Brief PDF, analytics, and local JWT auth with RBAC and an append-only audit log (pulled forward from B6); §0.0, the log (V-B30 resolved, V-B32–V-B34), §4.13–4.15, §5, §6, §13 (ADR-B21–B23), §16 and Appendix B6 record it.
+**Backend phase:** B0–B4 ✅ (Parts 1–4) · **B5 — Copilot & reports: ✅ COMPLETE (2026-09-29, Part 5)** with the copilot's held-out refusal rate below target (V-B34) and no MLflow profile (V-B29). Next: **B6 — Hardening** (Part 6).
 
-> ⚠️ **Same honesty rule as the master plan and DHRUVA:** a "✅" must point to a file and a test that passed. Every number in §0 was measured in this repository on the date given. Everything from B5 onward is a **plan**.
+> ⚠️ **Same honesty rule as the master plan and DHRUVA:** a "✅" must point to a file and a test that passed. Every number in §0 was measured in this repository on the date given. Everything from B6 onward is a **plan**.
 
 ---
 
 ## 0. Where the backend actually stands right now (2026-09-29)
 
-### 0.0 B4 — Real-time (built in Part 4, 2026-09-29)
+### 0.0 B5 — Copilot, reports, analytics, local auth (built in Part 5, 2026-09-29)
+
+**Everything is measured on the SYNTHETIC field.** The copilot's questions are generated from the synthetic truth, so its scores say it answers *our* records faithfully, not that it understands Oil India's.
+
+**Built and verified** (evidence: Appendix B6):
+- **Local auth, RBAC and audit** (`app/core/auth.py`, `users.py`, `audit.py`, migration `0010_auth_audit`):
+  - `SMRITI_AUTH_MODE=dev` (default until the F6 login screen), `jwt` (built here) or `oidc` (B6, refused until then).
+  - `jwt`: users in `app_user`, passwords hashed with scrypt from the standard library (`scrypt$N$r$p$salt$key`), HS256 tokens (PyJWT, issuer `smriti`, 8 h). The user is re-read from the database on every request, so a disabled account or changed role takes effect at once. A missing user still costs one scrypt check (no timing oracle). `python -m app.cli user-add` creates users.
+  - Six roles map to nine permissions (viewer · field_engineer · rtmac_engineer · drilling_engineer · data_steward · admin). Every router needs `read_knowledge`; write and live routes add their own (`ingest`, `review`, `read_risk`, `read_live`, `act_alerts`, `control_replay`, `copilot`, `admin`). WebSockets take `?token=` and close 4401 / 4403.
+  - `audit_log` is **append-only** (a trigger rejects UPDATE and DELETE). Logins (and failures), document views and downloads, uploads, review decisions, event creation and verification, alert actions, replay control, copilot queries and brief downloads are recorded with the request id. `GET /api/v1/admin/audit` pages it; `/admin/users` manages users.
+- **S10 copilot** (`app/copilot/*`, `POST /api/v1/copilot/chat`, SSE or `?stream=false`):
+  - Seven **read-only** tools over the built services (search, events, offset wells, risk profile, ledger, well summary, explain alert). Each tool checks the caller's permission and returns *facts*, each carrying its citations (a report page with its lines, or a database record).
+  - The default engine is a **rules planner** (ADR-B21): it extracts wells, formations, event types, hole size, radius and alert ids, then picks tools by intent (handover, ledger, risk, offsets, events, well summary, search). Answers are templates filled from the facts with `[n]` markers, so every sentence traces to a citation.
+  - It refuses plainly: an unknown well, an off-topic question, empty tool results, or a search whose best passage covers under half the question's content words ("No record found").
+  - `SMRITI_COPILOT_ENGINE=llm` lets an OpenAI-compatible model choose the tools (tool outputs passed as delimited data). Its answer is checked: every `[n]` must exist and every number in a sentence must appear in the facts it cites; otherwise the rules answer is returned. Not evaluated (no model in this sandbox).
+  - SSE events: `plan`, `tool` (one per call), `token`, `citations`, `done` (answer, refused, engine, intent, took_ms).
+- **Offset Risk Brief** (`app/reports/brief.py`, `GET /api/v1/reports/offset-brief/{well_id}`, fpdf2, ADR-B22): 3 pages in about 0.2 s. It covers the well, its offsets within the radius (table plus a plan view with nearby pads clustered so labels don't collide), the offset prior risk per formation (with a chart and prognosed tops marked), what worked nearby from the ledger (with the observational caveat) and the report pages behind the numbers. "SYNTHETIC DATA - NOT OIL INDIA DATA" is watermarked on every page. **No HTTP route answers 501 any more.**
+- **Analytics** (`app/analytics/service.py`): `GET /analytics/npt` (by event type, formation, year, well or field; events without recorded NPT are counted separately, never as zero), `GET /analytics/recurring` (same problem in the same formation across ≥ N wells, and repeats within a well, with event ids for click-through), `GET /analytics/alerts` (precision from the latest verdict per alert, with the ledger's Beta posterior and 90% interval; acknowledgement rate; median time to ack; alerts per 12 h of replayed data).
+- **For F4:** `GET /alerts/{id}/dejavu` rebuilds the live 30 minutes behind a Déjà Vu match and the matched segment of the past run-up, as the matcher saw them. The integration test re-runs the matcher on the returned curves and gets the recorded similarity back. Fused alerts now keep each fused candidate's detail, so the match survives fusion. `GET /wells/{id}/realtime?end=` ends the window at an alert's data time.
+- **Copilot evaluation** (`scripts/eval_copilot.py` → `eval/results/copilot_synthetic_2026-09-29.json`; 60 questions: 20 lookup, 15 aggregation, 5 ledger, 10 unanswerable, plus a held-out 5 answerable + 5 unanswerable written after the rules were fixed):
+  - Lookup correct **1.0**; aggregation exact **1.0**; the ledger answer's top action matches the ledger **1.0** and is the planted best **1.0**.
+  - Retrieval Recall@5 **0.45** on raw question text; **0.90** once the planner's well/formation/type filters are applied, which is what the copilot does (§13.3 target 0.85).
+  - Citation faithfulness **1.0** over 216 citations (target 0.95); median latency about 19 ms, max 79 ms.
+  - Correct refusal **1.0** on the 10 tuned questions but **0.6 on the 5 held-out**, so **13/15 = 0.87 combined, below the 0.90 target** (V-B34). The two misses: "rig cost per day on SYN-ASM-20" (a DDR passage mentions the well and the rig) and a cement-job question routed to cementing events by the word "cement". The held-out set was not used for tuning.
+- **Tests:** unit 351 (auth 17, copilot 22, and the updated contract/phase tests); integration `test_b5_auth.py` (4), `test_b5_copilot.py` (5), `test_b5_reports.py` (5) and the Déjà Vu overlay test in `test_b4.py` (now 8).
+
+**Found while building B5:**
+1. **The search refused nothing.** Hybrid search always returns *something*, so questions about facts not in the records got confident, irrelevant quotes. The coverage rule (the best passage must cover ≥ 50% of the question's content words) fixed the tuned set; the held-out set shows it is not enough (V-B34).
+2. **Planner routing order matters.** "Problems in the 12¼″ section of offset wells" first went to the offsets tool; asking about events now wins over listing offsets, and an unknown well name is checked before anything else (otherwise "SYN-ASM-99" got the generic off-topic refusal).
+3. **fpdf2's core fonts are Latin-1.** Σ, ≥ and ¼ printed as "?"; text now passes through a substitution map.
+4. **"Alerts per 12 h" from stored samples overstated the rate (18),** because a re-replay replaces a well's samples but keeps earlier alerts; data hours now come from every replay run's published rows (4.5).
+5. **Fusion dropped the Déjà Vu match** from fused alerts' detail, so the overlay had nothing to draw; fused sources now keep their detail.
+
+**Not built in B5 (stated, not hidden):** OIDC/Keycloak (B6; `jwt` covers local users); the MLflow profile (V-B29 stays open); an evaluated LLM engine (V-B33); a login screen (F6; `dev` stays the default so the app works without one).
+
+### 0.1 B4 — Real-time (built in Part 4, 2026-09-29)
 
 **Everything real-time here runs on SYNTHETIC data.** The 10-s drilling channels come from our own simulator (`app/synthetic/realtime.py`), which plants each problem type's precursor before the event. So every score below says the pipeline **recovers planted patterns**; none says how it will do on Assam wells (V-B26).
 
@@ -50,7 +86,7 @@
 
 **Not built in B4 (stated, not hidden):** no Volve or other real real-time data (V-B25); no WITSML/ETP adapters (V-B27); no TIGHT/INSTAB classifier (Déjà Vu and the physics rules cover them, weakly; V-B28); no MLflow registry (the bundle is a versioned object in S3; V-B29); WebSockets are unauthenticated until B6 (V-B30); data-quality flags cover missing and unreadable values, not stale/flat-lined/unit-jump detection (V-B31).
 
-### 0.1 B3 — Batch intelligence (built in Part 3, 2026-09-29)
+### 0.2 B3 — Batch intelligence (built in Part 3, 2026-09-29)
 
 **Built and verified** (evidence: Appendix B4):
 - **S8 Mitigation Effectiveness Ledger** (`app/ledger/core.py`, `service.py`, `GET /api/v1/ledger`):
@@ -80,7 +116,7 @@
 - No `risk.recompute_prior` / `ledger.recompute` batch tasks: both are computed per request (26–51 ms on the synthetic field), so there is nothing to precompute yet (V-B22).
 - The ledger stratifies by severity but does not adjust for it; confounding by severity is stated in every response, not corrected.
 
-### 0.2 B2 — Knowledge layer (built in Part 2, 2026-09-29)
+### 0.3 B2 — Knowledge layer (built in Part 2, 2026-09-29)
 
 **Built and verified** (evidence: Appendix B3):
 - **S2 extraction** (`app/extract/`), rules first, no LLM needed:
@@ -132,7 +168,7 @@
 - **No hand-annotated gold set and no search Recall@5.** Only synthetic ground truth exists; both need real reports (V-B15).
 - **Kick subtype** (gas / water / oil) is never written in the synthetic reports, so it stays null. That is the 8% subtype "miss".
 
-### 0.3 B1 — Data foundation (built in Part 1, 2026-09-28)
+### 0.4 B1 — Data foundation (built in Part 1, 2026-09-28)
 
 **Built and verified** (evidence: Appendix B2):
 - **Synthetic Upper-Assam-style field** (`app/synthetic/`), seeded and deterministic:
@@ -186,7 +222,7 @@
 - **No LLM classification fallback.** Rules classify every synthetic report correctly; the LLM hook moves to B2 with extraction.
 - **No at-formation or closest-approach offset modes** (B2, as planned).
 
-### 0.4 B0 — Skeleton (built earlier on 2026-09-28)
+### 0.5 B0 — Skeleton (built earlier on 2026-09-28)
 
 **Built and verified in B0**, with the evidence recorded in Appendix B:
 
@@ -243,7 +279,7 @@
 | V-B13 | Synthetic data only | No Volve access in the sandbox | Master plan §12.5 is unchanged; OIL/Volve data goes through the same `import_field` + upload path | ⏳ Open |
 | V-B14 | Dense relevance floor for the `hash` embedder | Short queries against ~1,000-character chunks score low even when relevant. Measured on the synthetic corpus: 13 queries; relevant top-1 ≥ 0.31 for 7 of 8 (0.09 for "high torque", found lexically); irrelevant top-1 ≤ 0.154 | Floor 0.22 for `hash`, 0.45 for `ollama` (`app/search/hybrid.py`). Re-calibrate on real reports and when switching embedder | ✅ Calibrated (synthetic) |
 | V-B15 | Extraction F1 measured on synthetic reports, not the master plan §13.1 gold set | The generator's phrasing is a fixed vocabulary, so 1.0 is an upper bound | Quote it only as "on synthetic reports". Build the gold set from review-queue corrections (the `(proposed, correction)` pairs are stored for this) plus annotated real DDRs | ⏳ Open |
-| V-B16 | Wellbore recreation on re-seed cascaded away extracted data | Found while building B2 | Fixed: update in place (§0.2 bug 1) | ✅ Resolved |
+| V-B16 | Wellbore recreation on re-seed cascaded away extracted data | Found while building B2 | Fixed: update in place (§0.3 bug 1) | ✅ Resolved |
 | V-B17 | LLM extraction pass not built | Rules suffice on synthetic reports | Build it when real reports show the rules' misses; the review queue measures them | ⏳ Open |
 | V-B18 | CLOSEST_APPROACH takes ~0.6 s at 5 km (20 candidate wells, numpy sampling) | Acceptable for an interactive request | If slow on real fields: sample only inside the window's bounding box, or pre-filter with `ST_3DDistance` per pair in SQL | ⏳ Watch |
 | V-B19 | Ledger ρ ≥ 0.8 is sample-size-limited | Seeded field ρ = 0.837, but 10 same-size fields give median 0.65 (2 of 10 ≥ 0.8); 410 wells give 0.956 | Quote the seeded number **with** the scale check. Real value depends on how many recorded outcomes OIL's archive yields; the credible intervals already show the uncertainty to users | ⏳ Stated |
@@ -257,8 +293,11 @@
 | V-B27 | WITSML 1.4.1.x and ETP adapters not built | WITS0 and CSV cover the demo and many rigs; WITSML needs a store to test against | Add when OIL confirms its eRTMAC feed (the publisher takes any record source) | ⏳ Open |
 | V-B28 | Weak on TIGHT/TORQUE/INSTAB/STUCK pattern matching | Déjà Vu alert recall 0–0.18 for these; TORQUE classifier PR-AUC 0.55 | Mechanical precursors are spiky and shape-poor at 30-s resolution; the STUCK classifier (0.91) carries stuck pipe. Revisit with real torque/hookload data (a torque-oscillation channel was tried and reverted: it fitted our own simulator) | ⚠️ Stated |
 | V-B29 | Model bundle in S3, not an MLflow registry | One versioned artefact (`models/realtime/rt-hgb-v1.joblib` + metrics JSON) is enough for one model family | MLflow profile in B5 as planned | ⏳ B5 |
-| V-B30 | WebSockets unauthenticated | Dev auth everywhere until B6 | Token in the first message (B6) | ⏳ B6 |
+| V-B30 | WebSockets unauthenticated | Dev auth everywhere until B6 | B5: in `jwt` mode the token goes in `?token=` (browsers can't set WebSocket headers), `read_live` required, closes 4401/4403 (`routes/ws.py`, integration `test_b5_auth.py`) | ✅ Resolved 2026-09-29 (jwt mode) |
 | V-B31 | Stream data-quality flags limited to missing / unreadable / unmapped | Stale, flat-lined and unit-jump detection not built | The live view already flags a stale stream; add per-channel checks with the Live Monitor (F4) | ⏳ Open |
+| V-B32 | Local JWT auth, not OIDC | No Keycloak in this sandbox; the roles, permissions, audit log and WebSocket rules are the same either way | `oidc` mode (validate the IdP's tokens, map realm roles) in B6; `dev` stays the default until the F6 login screen | ⏳ B6 |
+| V-B33 | LLM copilot engine not evaluated | No model server here; the rules engine is the default and is what the numbers measure | Extend `scripts/eval_copilot.py` (rules-only today) to the LLM engine and run it against OIL's approved model; its answers are already checked for citations and numbers, with a rules fallback | ⏳ Open |
+| V-B34 | Copilot correct-refusal below target on held-out questions | 1.0 on the 10 tuned, 0.6 on the 5 held-out (13/15 = 0.87 vs 0.90) | Not tuned on the held-out set. Needs a question classifier or an entailment check between question and passage; re-measure on real questions from engineers | ⚠️ Stated |
 
 ---
 
@@ -570,17 +609,17 @@ Each module uses the same layout: **Responsibilities · Files · Tables · Endpo
   - Hysteresis/cooldown state transitions.
   - End-to-end: replay a synthetic well → the expected alert sequence arrives over the WebSocket.
 
-### 4.13 `copilot` — S10 (B5)
+### 4.13 `copilot` — S10 (B5) — ✅ built: see §0.0 (a rules planner by default, ADR-B21)
 
 - **Responsibilities:** an LLM agent with the fixed read-only tools of master plan §Stage 10, each tool calling a service function (never SQL). SSE token streaming. Answers must cite; the prompt-injection defence treats tool outputs as delimited data.
 - **Endpoint:** `POST /api/v1/copilot/chat` (SSE).
 - **Tests:** the tool-call contract per tool; "no record found" for empty tool results; a document containing an injected instruction is not followed (a red-team fixture).
 
-### 4.14 Reports (B5)
+### 4.14 Reports (B5) — ✅ built with fpdf2, not WeasyPrint (ADR-B22): see §0.0
 
 `GET /api/v1/reports/offset-brief/{well_id}` renders HTML with a Jinja2 template and converts it to PDF with WeasyPrint. The brief contains the map snapshot, the offsets table, the risk-by-depth chart (server-side SVG) and citations.
 
-### 4.15 Auth, RBAC, audit (B6)
+### 4.15 Auth, RBAC, audit (B6) — RBAC, audit and local JWT built early in B5 (ADR-B23, §0.0); OIDC remains B6
 
 - `SMRITI_AUTH_MODE=oidc`: validate Keycloak JWTs (JWKS cached, `aud`/`iss` checked) and map realm roles to master plan §16 roles.
 - A `require_roles(...)` dependency per route.
@@ -604,7 +643,7 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 5 | `/healthz`, `/readyz` (DB+extensions, Redis, S3 buckets) | B0 | ✅ | `app/main.py`, `app/core/health.py` · `test_health.py` (5) + integration `test_api_is_ready` |
 | 6 | Full §8 API contract mounted (501 + phase) | B0 | ✅ | `app/api/v1/routes/*` · `test_openapi_contains_every_planned_endpoint`, 501 tests for the B5 routes (the B0 WebSocket 501 tests were replaced by B4's live tests) |
 | 7 | `/api/v1/meta`, `/api/v1/me`, component registry | B0 | ✅ | `routes/system.py`, `core/phases.py` · `test_meta_auth.py` (5) |
-| 8 | Dev auth with prod refusal | B0 | ⚠️ dev-only by design | `app/core/auth.py` · `test_auth_refuses_unconfigured_modes` |
+| 8 | Dev auth with prod refusal | B0 | ✅ (local JWT added in B5, row 27b) | `app/core/auth.py` · `test_auth_refuses_unconfigured_modes` |
 | 9 | Unit conversions (Appendix D) | B0 | ✅ | `app/core/units.py` · `test_units.py` (3, incl. hypothesis) |
 | 10 | SQLAlchemy engine/session + Base naming convention | B0 | ✅ | `app/db/session.py`, `app/db/base.py` |
 | 11 | Alembic + migration `0001` (extensions) | B0 | ✅ | `app/db/migrations/versions/0001_extensions.py` · integration `test_required_extensions_installed_and_migration_at_head` |
@@ -633,8 +672,11 @@ Status keys: 📋 Planned · 🔨 In progress · ✅ Built & tested · ⚠️ Bu
 | 26c | S9 alert engine + lifecycle + feedback | B4 | ✅ | `app/alerts/*`, migration 0009 · `test_alert_engine.py` (6 incl. property), integration `test_planted_losses_are_alerted_with_evidence`, `test_budget_and_dedupe_hold`, `test_alert_lifecycle`; `eval/results/replay_alerts_synthetic_2026-09-29.json` |
 | 26d | WebSockets `/ws/wells/{id}/live`, `/ws/alerts` | B4 | ⚠️ unauthenticated until B6 (V-B30) | `app/api/v1/routes/ws.py` · integration `test_websockets_pushed_frames_and_alerts`, e2e `smoke.spec.ts` (through nginx) |
 | 26e | Look-ahead: prognosed tops below a drilling well's TD | B4 | ✅ | `app/risk/prior.py` · `test_stream_mapping.py::test_prognosed_top_weights_near_offsets`, `test_scorer.py` |
-| 27 | S10 copilot, reports | B5 | 📋 | §4.13–4.14 |
-| 28 | OIDC/RBAC/audit, digests pinned, perf & security hardening | B6 | 📋 | §4.15, §12 |
+| 27 | S10 copilot (rules planner, 7 read-only tools, SSE, optional LLM engine) | B5 | ⚠️ refusal 0.87 < 0.90 (V-B34); LLM engine not evaluated (V-B33) | `app/copilot/*` · `test_copilot.py` (22), integration `test_b5_copilot.py` (5); `eval/results/copilot_synthetic_2026-09-29.json` |
+| 27a | Offset Risk Brief PDF + analytics (NPT, recurring, alert quality) | B5 | ✅ | `app/reports/brief.py`, `app/analytics/service.py` · integration `test_b5_reports.py` (5), `test_stack.py::test_built_endpoint_through_real_server` |
+| 27b | Local JWT auth, RBAC (6 roles, 9 permissions), append-only audit log, WS token | B5 | ⚠️ OIDC in B6 (V-B32) | `app/core/auth.py`, `users.py`, `audit.py`, migration 0010 · `test_auth.py` (17), integration `test_b5_auth.py` (4) |
+| 27c | Alert Déjà Vu overlay + window by end time (for F4) | B5 | ✅ | `app/alerts/overlay.py` · integration `test_b4.py::test_alert_evidence_windows_and_dejavu_overlay` |
+| 28 | OIDC, digests pinned, perf & security hardening | B6 | 📋 | §4.15, §12 |
 | 29 | Synthetic field generator + `seed` CLI (ground truth for later phases) | B1 | ✅ | `app/synthetic/*`, `app/cli.py seed` · determinism check (byte-identical re-render), re-seed = 0 new documents |
 
 ---
@@ -646,11 +688,11 @@ Backend phases map onto master plan §18 (P0–P5). Durations assume ~7 weeks to
 | Phase | Master plan | When | Scope | Exit criteria (all must be true) |
 |---|---|---|---|---|
 | **B0 Skeleton** | P0 | Days 1–3 | Platform, Compose, migrations, CI, API contract | ✅ **Met 2026-09-28**, including a green GitHub CI run — see Appendix B |
-| **B1 Data foundation** | P1 | W1–W2 | S1 ingestion; S3 master data & datums; S4 min-curvature + surface offsets; migrations 0002–0004; OCR worker image | ✅ **Met 2026-09-28** with one substitution: 151 synthetic DDRs + 40 WCRs (58 DDRs and 7 WCRs scanned) instead of Volve DDRs (V-B13). Endpoints return real data; min-curvature closed-form tests pass; offsets p95 14.6 ms on 10k wells. See §0.3 and Appendix B2 |
-| **B2 Knowledge layer** | P2 | W2–W3 | S2 extraction + review queue + DDR parser; S5 search; S6 correlation; S4 other proximity modes; LLM service; migrations 0005–0006 | ✅ **Met 2026-09-29 (Part 2) with two gaps stated:** event F1 measured and saved, but on synthetic ground truth, not a gold set (V-B15); search Recall@5 **not measured** (needs labelled queries on real reports); correlation JSON for all 3 modes ✅; review round trip ✅. LLM pass deferred (V-B17). See §0.2 and Appendix B3 |
-| **B3 Batch intelligence** | P3 (first half) | W3–W4 | S7a prior, S7c physics, S8 ledger | ✅ **Met 2026-09-29 (Part 3):** risk-profile endpoint live and beating every baseline on leave-one-well-out Brier; physics formula tests pass; ledger ρ = 0.837 on the seeded field (≥ 0.8), **with the caveat that same-size fields give a median of 0.65** (V-B19). See §0.1 and Appendix B4 |
-| **B4 Real-time** | P3 (second half) | W4–W5 | S12 stream + replay; rig state; S7b scoring; S7d Déjà Vu; S9 alerts; WebSockets; migrations 0007–0009 | ✅ **Met 2026-09-29 (Part 4) for the synthetic well only:** the replay raises the planted alerts over the WebSocket (integration + 60× eval); alert latency max 185 ms at 60× on a quiet machine (16.4 s once under full CPU load: the p95 ≤ 5 s target holds only with CPU headroom and below ~900×); every alert has evidence (hypothesis property test + DB constraint). **Not met: no Volve well replayed** (V-B25). See §0.0 and Appendix B5 |
-| **B5 Copilot & reports** | P4 | W5–W6 | S10 copilot (SSE); Offset Risk Brief PDF; MLflow profile | Copilot answers the 50-question set with citations measured; unanswerable refusal rate measured; PDF renders |
+| **B1 Data foundation** | P1 | W1–W2 | S1 ingestion; S3 master data & datums; S4 min-curvature + surface offsets; migrations 0002–0004; OCR worker image | ✅ **Met 2026-09-28** with one substitution: 151 synthetic DDRs + 40 WCRs (58 DDRs and 7 WCRs scanned) instead of Volve DDRs (V-B13). Endpoints return real data; min-curvature closed-form tests pass; offsets p95 14.6 ms on 10k wells. See §0.4 and Appendix B2 |
+| **B2 Knowledge layer** | P2 | W2–W3 | S2 extraction + review queue + DDR parser; S5 search; S6 correlation; S4 other proximity modes; LLM service; migrations 0005–0006 | ✅ **Met 2026-09-29 (Part 2) with two gaps stated:** event F1 measured and saved, but on synthetic ground truth, not a gold set (V-B15); search Recall@5 **not measured** (needs labelled queries on real reports); correlation JSON for all 3 modes ✅; review round trip ✅. LLM pass deferred (V-B17). See §0.3 and Appendix B3 |
+| **B3 Batch intelligence** | P3 (first half) | W3–W4 | S7a prior, S7c physics, S8 ledger | ✅ **Met 2026-09-29 (Part 3):** risk-profile endpoint live and beating every baseline on leave-one-well-out Brier; physics formula tests pass; ledger ρ = 0.837 on the seeded field (≥ 0.8), **with the caveat that same-size fields give a median of 0.65** (V-B19). See §0.2 and Appendix B4 |
+| **B4 Real-time** | P3 (second half) | W4–W5 | S12 stream + replay; rig state; S7b scoring; S7d Déjà Vu; S9 alerts; WebSockets; migrations 0007–0009 | ✅ **Met 2026-09-29 (Part 4) for the synthetic well only:** the replay raises the planted alerts over the WebSocket (integration + 60× eval); alert latency max 185 ms at 60× on a quiet machine (16.4 s once under full CPU load: the p95 ≤ 5 s target holds only with CPU headroom and below ~900×); every alert has evidence (hypothesis property test + DB constraint). **Not met: no Volve well replayed** (V-B25). See §0.1 and Appendix B5 |
+| **B5 Copilot & reports** | P4 | W5–W6 | S10 copilot (SSE); Offset Risk Brief PDF; MLflow profile | ✅ **Met 2026-09-29 (Part 5) with gaps stated:** a 60-question set answered with citations measured (faithfulness 1.0 on 216 citations); refusal rate measured (0.87 combined, **below the 0.90 target**, V-B34); the PDF renders (3 pages, integration-tested). Local JWT auth, RBAC and the audit log were pulled forward from B6. **Not met: MLflow profile** (V-B29). See §0.0 and Appendix B6 |
 | **B6 Hardening** | P5 | W6–W7 | OIDC/RBAC/audit; image digests pinned; Prometheus metrics + Grafana; load test; security review; backups script | All master plan §9 targets measured and recorded in `eval/results/`; `SMRITI_AUTH_MODE=oidc` works end-to-end; no critical findings open |
 
 ### 6.1 B1 task breakdown — ✅ all done 2026-09-28 (items 3 and 5 changed: see V-B9, V-B12)
@@ -863,8 +905,11 @@ Redis Stream  rt:{wellbore_id}  (MAXLEN ~200k)
 | ADR-B16 | Merge one event across reports (same well + type, ±15 m, ±3 days) | One event per report | Counting a DDR and its WCR summary twice would double every statistic and the ledger (Part 3). The merged event cites every report |
 | ADR-B17 | Template lesson cards | LLM-written cards | Every sentence traces to extracted fields. A card describes one event and points to the ledger for rates. An LLM rewrite can come later as `generated_by` |
 | ADR-B18 | scikit-learn `HistGradientBoostingClassifier` for S7b | LightGBM (the master plan's choice) | Same histogram-GBDT algorithm; LightGBM's wheel needs the system `libgomp`, absent from the slim image and not installable in the build sandbox. sklearn bundles its OpenMP. Revisit if model size or speed needs LightGBM's extras |
-| ADR-B19 | MASS and banded DTW in NumPy | `stumpy` + `tslearn` | ~60 lines, no numba/JIT warm-up in the stream service, exact control of the z-normalisation floors and the deviation representation that fixed quiet-window matches (§0.0 finding 3). p95 query 138 ms on 99 signatures |
+| ADR-B19 | MASS and banded DTW in NumPy | `stumpy` + `tslearn` | ~60 lines, no numba/JIT warm-up in the stream service, exact control of the z-normalisation floors and the deviation representation that fixed quiet-window matches (§0.1 finding 3). p95 query 138 ms on 99 signatures |
 | ADR-B20 | Wide `rt_sample` (one row per wellbore and timestamp, a column per channel) | Narrow (one row per channel), as §10 first drew it | 12× fewer rows; the live view and the scorer read whole timestamps; TimescaleDB compresses the columns. New channels need a migration, acceptable for a fixed canonical set |
+| ADR-B21 | Rules planner + templated answers as the default copilot engine | An LLM agent as the only engine | Deterministic, testable, and every sentence traces to a cited fact; no model is needed to demo or evaluate it. The LLM engine sits behind the same tools with a citation and number check and falls back to the rules |
+| ADR-B22 | fpdf2 for the Offset Risk Brief | Jinja2 + WeasyPrint (§4.14) | Pure Python, no Pango/Cairo system libraries in the slim image, ~0.2 s per brief. Core fonts are Latin-1, handled by a substitution map |
+| ADR-B23 | Local users (scrypt) + HS256 JWT before OIDC | Waiting for Keycloak in B6 | RBAC, the audit log and WebSocket auth could be built and tested now; the permission checks don't change when OIDC replaces the token issuer |
 
 ---
 
@@ -907,12 +952,12 @@ MinIO's Docker Hub image wasn't available when we built. Our code speaks plain S
 
 ## 16. Immediate Next Actions (backend)
 
-*(Updated 2026-09-29 after Part 4. B0–B4 are done.)*
+*(Updated 2026-09-29 after Part 5. B0–B5 are done.)*
 
-1. **B5 (Part 5):** copilot (S10) with read-only tools over the built services, the Offset Risk Brief PDF, MLflow profile (V-B29). F4 (Live Monitor and Alerts screens) consumes the B4 WebSockets.
-2. **Real real-time data (V-B25, V-B26):** replay a Volve well through the CSV path; retrain S7b and rebuild the Déjà Vu library on real channels; re-measure every number in §0.0.
-3. **Gold set (V-B15):** export the review queue's `(proposed, correction)` pairs, then add annotated real DDRs when data arrives.
-4. **Real data:** try to obtain Volve drilling folders (or OIL samples, V6) and run them through the same `import_field` + upload path (V-B13).
+1. **B6 (Part 6):** OIDC mode (V-B32), image digests (V-B3), Prometheus metrics, load test, security review, backups; the F6 login screen lets `jwt`/`oidc` become the default.
+2. **Copilot refusals (V-B34):** a question-vs-passage entailment check; re-measure on real engineers' questions. Evaluate the LLM engine on OIL's approved model (V-B33).
+3. **Real real-time data (V-B25, V-B26):** replay a Volve well through the CSV path; retrain S7b and rebuild the Déjà Vu library on real channels; re-measure every number in §0.1.
+4. **Gold set (V-B15):** export the review queue's `(proposed, correction)` pairs, then add annotated real DDRs when data arrives.
 5. **Save the pinned images** (`docker save`) for the finale machine (RB5) — Infra.
 
 ---
