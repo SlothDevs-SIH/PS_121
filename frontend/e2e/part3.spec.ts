@@ -215,7 +215,7 @@ const SCREENS: [string, string][] = [
   ['/documents?view=review', 'review-queue'],
 ]
 
-for (const theme of ['deep-rig', 'daylight']) {
+for (const theme of ['deep-rig', 'daylight', 'command-blue']) {
   test(`accessibility: no WCAG 2.2 AA violations on the Part 3 screens (${theme})`, async ({
     page,
     request,
