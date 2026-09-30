@@ -846,6 +846,7 @@ export const RISK_PROFILE = {
         prognosed: false,
         prognosis_spread_m: null,
         offsets: [],
+        bins: [],
         risks: [eventRisk('TIGHT', 0.46, 0.3, 0.63, 4), eventRisk('LOSS', 0.04, 0, 0.13, 0)],
       },
       {
@@ -858,6 +859,7 @@ export const RISK_PROFILE = {
         prognosed: true,
         prognosis_spread_m: 4.6,
         offsets: [],
+        bins: [],
         risks: [eventRisk('LOSS', 0.36, 0.21, 0.53, 3), eventRisk('TIGHT', 0.02, 0, 0.1, 0)],
       },
     ],

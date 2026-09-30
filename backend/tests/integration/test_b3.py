@@ -8,6 +8,7 @@ expecting fixed values. Recovery of the planted ranking and the Brier-score comp
 the full field: scripts/eval_ledger.py and scripts/eval_risk_prior.py.
 """
 
+import itertools
 import math
 import os
 from collections import Counter, defaultdict
@@ -241,3 +242,32 @@ def test_meta_reports_b3_built() -> None:
     assert int(meta["backend_phase"].removeprefix("B")) >= 3  # B3 or a later phase
     status = {c["key"]: c["status"] for c in meta["components"]}
     assert status["risk_prior"] == status["physics"] == status["ledger"] == "built"
+
+
+def test_depth_slices_tile_each_formation_and_never_exceed_it() -> None:
+    """Part 7 (V-B20): bin_m splits each formation into formation-relative slices. They
+    tile the formation, and no slice can have more offsets with an event than the
+    formation as a whole (an offset's event lands in exactly one slice)."""
+    wells = _get("/api/v1/wells", limit=500)["items"]
+    wid = next(w["id"] for w in wells if w["status"] == "completed")
+    plain = _get(f"/api/v1/wells/{wid}/risk-profile")
+    sliced = _get(f"/api/v1/wells/{wid}/risk-profile", bin_m=100)
+    assert all(iv["bins"] == [] for iv in plain["intervals"])
+    assert [iv["risks"] for iv in sliced["intervals"]] == [iv["risks"] for iv in plain["intervals"]]
+    checked = 0
+    for iv in sliced["intervals"]:
+        bins = iv["bins"]
+        if not bins:
+            continue
+        checked += 1
+        assert bins[0]["top_tvdss_m"] == pytest.approx(iv["top_tvdss_m"], abs=0.2)
+        assert bins[-1]["base_tvdss_m"] == pytest.approx(iv["base_tvdss_m"], abs=0.2)
+        for a, b in itertools.pairwise(bins):
+            assert a["base_tvdss_m"] == pytest.approx(b["top_tvdss_m"], abs=0.2)
+        assert all(b["base_tvdss_m"] - b["top_tvdss_m"] <= 100.5 for b in bins)
+        whole = {r["event_type"]: r["offsets_with_event"] for r in iv["risks"]}
+        for b in bins:
+            for r in b["risks"]:
+                assert r["offsets_with_event"] <= whole[r["event_type"]]
+    assert checked > 0
+    _get(f"/api/v1/wells/{wid}/risk-profile", status=422, bin_m=5)

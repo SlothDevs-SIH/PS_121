@@ -104,6 +104,28 @@ class EventRisk(ResponseModel):
     label: str
 
 
+class BinRisk(ResponseModel):
+    event_type: str
+    probability: float
+    ci90_low: float
+    ci90_high: float
+    offsets_with_event: int
+
+
+class RiskBin(ResponseModel):
+    """A depth slice of a formation (Part 7, V-B20). Offsets' events are placed by their
+    relative position inside their own formation, so a thicker or thinner formation at an
+    offset still maps onto the same slice."""
+
+    top_md_m: float
+    base_md_m: float
+    top_tvdss_m: float
+    base_tvdss_m: float
+    rel_from: float = Field(description="0 = formation top, 1 = its base")
+    rel_to: float
+    risks: list[BinRisk] = Field(description="Highest probability first")
+
+
 class RiskInterval(ResponseModel):
     formation: str
     strat_order: int
@@ -121,6 +143,10 @@ class RiskInterval(ResponseModel):
     )
     offsets: list[RiskOffset]
     risks: list[EventRisk] = Field(description="Highest probability first")
+    bins: list[RiskBin] = Field(
+        default_factory=list,
+        description="Depth slices when bin_m is requested (only for intervals with a base)",
+    )
 
 
 class RiskProfile(ResponseModel):

@@ -235,6 +235,10 @@ def get_risk_profile(
     event_type: Annotated[
         list[EventType] | None, Query(description="Repeat for several; default: all seen")
     ] = None,
+    bin_m: Annotated[
+        float | None,
+        Query(ge=10, le=500, description="Also split each formation into slices of about this TVD"),
+    ] = None,
 ) -> RiskProfile:
     """For each formation of the well: P(event | formation) from offsets within
     ``radius_km`` (weighted Beta-Binomial with a basin prior), its 90% credible interval,
@@ -246,6 +250,7 @@ def get_risk_profile(
         sigma_km=sigma_km,
         mode=mode.value,
         event_types=list(event_type) if event_type else None,
+        bin_m=bin_m,
     )
 
 

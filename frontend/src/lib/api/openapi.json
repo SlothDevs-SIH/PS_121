@@ -876,6 +876,39 @@
         "title": "AuthConfig",
         "type": "object"
       },
+      "BinRisk": {
+        "properties": {
+          "ci90_high": {
+            "title": "Ci90 High",
+            "type": "number"
+          },
+          "ci90_low": {
+            "title": "Ci90 Low",
+            "type": "number"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "offsets_with_event": {
+            "title": "Offsets With Event",
+            "type": "integer"
+          },
+          "probability": {
+            "title": "Probability",
+            "type": "number"
+          }
+        },
+        "required": [
+          "event_type",
+          "probability",
+          "ci90_low",
+          "ci90_high",
+          "offsets_with_event"
+        ],
+        "title": "BinRisk",
+        "type": "object"
+      },
       "Body_upload_documents_api_v1_documents_post": {
         "properties": {
           "files": {
@@ -7564,6 +7597,55 @@
         "title": "ReviewReject",
         "type": "object"
       },
+      "RiskBin": {
+        "description": "A depth slice of a formation (Part 7, V-B20). Offsets' events are placed by their\nrelative position inside their own formation, so a thicker or thinner formation at an\noffset still maps onto the same slice.",
+        "properties": {
+          "base_md_m": {
+            "title": "Base Md M",
+            "type": "number"
+          },
+          "base_tvdss_m": {
+            "title": "Base Tvdss M",
+            "type": "number"
+          },
+          "rel_from": {
+            "description": "0 = formation top, 1 = its base",
+            "title": "Rel From",
+            "type": "number"
+          },
+          "rel_to": {
+            "title": "Rel To",
+            "type": "number"
+          },
+          "risks": {
+            "description": "Highest probability first",
+            "items": {
+              "$ref": "#/components/schemas/BinRisk"
+            },
+            "title": "Risks",
+            "type": "array"
+          },
+          "top_md_m": {
+            "title": "Top Md M",
+            "type": "number"
+          },
+          "top_tvdss_m": {
+            "title": "Top Tvdss M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "top_md_m",
+          "base_md_m",
+          "top_tvdss_m",
+          "base_tvdss_m",
+          "rel_from",
+          "rel_to",
+          "risks"
+        ],
+        "title": "RiskBin",
+        "type": "object"
+      },
       "RiskInterval": {
         "properties": {
           "base_md_m": {
@@ -7587,6 +7669,14 @@
               }
             ],
             "title": "Base Tvdss M"
+          },
+          "bins": {
+            "description": "Depth slices when bin_m is requested (only for intervals with a base)",
+            "items": {
+              "$ref": "#/components/schemas/RiskBin"
+            },
+            "title": "Bins",
+            "type": "array"
           },
           "formation": {
             "title": "Formation",
@@ -7648,7 +7738,8 @@
           "prognosed",
           "prognosis_spread_m",
           "offsets",
-          "risks"
+          "risks",
+          "bins"
         ],
         "title": "RiskInterval",
         "type": "object"
@@ -12502,6 +12593,26 @@
               ],
               "description": "Repeat for several; default: all seen",
               "title": "Event Type"
+            }
+          },
+          {
+            "description": "Also split each formation into slices of about this TVD",
+            "in": "query",
+            "name": "bin_m",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 500,
+                  "minimum": 10,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Also split each formation into slices of about this TVD",
+              "title": "Bin M"
             }
           }
         ],

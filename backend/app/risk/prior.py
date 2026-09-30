@@ -17,8 +17,10 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.api.v1.schemas.knowledge import (
+    BinRisk,
     CementingCheck,
     EventRisk,
+    RiskBin,
     RiskInterval,
     RiskOffset,
     RiskProfile,
@@ -157,6 +159,19 @@ def _events(session: Session, well_ids: list[int]) -> dict[tuple[int, int, str],
     return out
 
 
+def _event_tvdss(session: Session, well_ids: list[int]) -> dict[int, float]:
+    rows = session.execute(
+        select(Event.id, Event.tvdss_m).where(
+            Event.well_id.in_(well_ids or [-1]), Event.tvdss_m.is_not(None)
+        )
+    ).all()
+    return {int(i): float(z) for i, z in rows}
+
+
+def _bin_of(rel: float, n: int) -> int:
+    return min(n - 1, max(0, int(rel * n)))
+
+
 def base_rates(session: Session, exclude_well_id: int) -> dict[str, float]:
     """Share of (drilled well, penetrated formation) pairs with each event type."""
     wells = [
@@ -208,6 +223,7 @@ def risk_profile(
     sigma_km: float | None = None,
     mode: str = "AT_FORMATION",
     event_types: list[str] | None = None,
+    bin_m: float | None = None,
 ) -> RiskProfile:
     well = get_well_or_404(session, well_id)
     sigma_km = sigma_km or radius_km / 2
@@ -224,6 +240,7 @@ def risk_profile(
     tops = _tops(session, all_wbs)
     muds = _mud_programme(session, all_wbs)
     events = _events(session, cand_ids)
+    ev_z = _event_tvdss(session, cand_ids) if bin_m else {}
     entry_d = (
         _entry_distances(session, subject_wb, offset_wbs)
         if subject_wb and mode == "AT_FORMATION"
@@ -273,6 +290,7 @@ def risk_profile(
         nxt = subject_tops[k + 1] if k + 1 < len(subject_tops) else None
         subj_ctx = _context(muds.get(subject_wb or -1, []), top.top_md + 1, well.well_type)
         offsets: list[RiskOffset] = []
+        extent: dict[int, tuple[float, float | None]] = {}  # offset → its top, base TVDSS
         for w in cand_ids:
             wb = offset_wbs.get(w)
             their = next(
@@ -280,6 +298,11 @@ def risk_profile(
             )
             if their is None:
                 continue  # never reached this formation
+            deeper = [t for t in tops.get(wb or -1, []) if t.strat_order > their.strat_order]
+            extent[w] = (
+                their.top_tvdss,
+                min((t.top_tvdss for t in deeper), default=None),
+            )
             if (w, top.formation_id) in entry_d:
                 d, kind = entry_d[(w, top.formation_id)], "at_formation"
             else:
@@ -325,6 +348,16 @@ def risk_profile(
                 )
             )
         risks.sort(key=lambda r: -r.probability)
+        base_md, base_z = (
+            (nxt.top_md, nxt.top_tvdss)
+            if nxt
+            else ((float(td[0]), float(td[1])) if td and not prognosis else (None, None))
+        )
+        bins = (
+            _bins(top, base_md, base_z, bin_m, offsets, extent, ev_z, types, rates)
+            if bin_m and base_md is not None and base_z is not None
+            else []
+        )
         intervals.append(
             RiskInterval(
                 formation=top.name,
@@ -347,6 +380,7 @@ def risk_profile(
                 ),
                 offsets=offsets,
                 risks=risks,
+                bins=bins,
             )
         )
     return RiskProfile(
@@ -363,6 +397,65 @@ def risk_profile(
         method=METHOD,
         intervals=intervals,
     )
+
+
+def _bins(
+    top: _Top,
+    base_md: float,
+    base_z: float,
+    bin_m: float,
+    offsets: list[RiskOffset],
+    extent: dict[int, tuple[float, float | None]],
+    ev_z: dict[int, float],
+    types: list[str],
+    rates: dict[str, float],
+) -> list[RiskBin]:
+    """Slices of about ``bin_m`` TVD. An offset's event is placed by its relative depth in
+    that offset's own formation (0 = top, 1 = base); events without a depth, or in an
+    offset whose formation base is unknown, count for the formation but no slice."""
+    thick = base_z - top.top_tvdss
+    n = max(1, math.ceil(thick / bin_m))
+    if n == 1:
+        return []
+    placed: dict[tuple[int, str], set[int]] = defaultdict(set)  # (offset, type) → bins
+    for o in offsets:
+        o_top, o_base = extent.get(o.well_id, (0.0, None))
+        if o_base is None or o_base <= o_top:
+            continue
+        for t, ids in o.events.items():
+            for i in ids:
+                if i in ev_z:
+                    placed[(o.well_id, t)].add(_bin_of((ev_z[i] - o_top) / (o_base - o_top), n))
+    out = []
+    for b in range(n):
+        risks = []
+        for t in types:
+            alpha, beta_ = core.prior_params(rates.get(t, 0.0))
+            hit = [b in placed.get((o.well_id, t), set()) for o in offsets]
+            post = core.weighted_beta_binomial([o.weight for o in offsets], hit, alpha, beta_)
+            risks.append(
+                BinRisk(
+                    event_type=t,
+                    probability=round(post.probability, 4),
+                    ci90_low=round(post.ci90_low, 4),
+                    ci90_high=round(post.ci90_high, 4),
+                    offsets_with_event=sum(hit),
+                )
+            )
+        risks.sort(key=lambda r: -r.probability)
+        f0, f1 = b / n, (b + 1) / n
+        out.append(
+            RiskBin(
+                top_md_m=round(top.top_md + f0 * (base_md - top.top_md), 1),
+                base_md_m=round(top.top_md + f1 * (base_md - top.top_md), 1),
+                top_tvdss_m=round(top.top_tvdss + f0 * thick, 1),
+                base_tvdss_m=round(top.top_tvdss + f1 * thick, 1),
+                rel_from=round(f0, 4),
+                rel_to=round(f1, 4),
+                risks=risks,
+            )
+        )
+    return out
 
 
 def cementing_check(

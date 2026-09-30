@@ -1266,6 +1266,19 @@ export interface components {
             /** Session Max Hours */
             session_max_hours: number;
         };
+        /** BinRisk */
+        BinRisk: {
+            /** Ci90 High */
+            ci90_high: number;
+            /** Ci90 Low */
+            ci90_low: number;
+            /** Event Type */
+            event_type: string;
+            /** Offsets With Event */
+            offsets_with_event: number;
+            /** Probability */
+            probability: number;
+        };
         /** Body_upload_documents_api_v1_documents_post */
         Body_upload_documents_api_v1_documents_post: {
             /** Files */
@@ -3345,12 +3358,45 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /**
+         * RiskBin
+         * @description A depth slice of a formation (Part 7, V-B20). Offsets' events are placed by their
+         *     relative position inside their own formation, so a thicker or thinner formation at an
+         *     offset still maps onto the same slice.
+         */
+        RiskBin: {
+            /** Base Md M */
+            base_md_m: number;
+            /** Base Tvdss M */
+            base_tvdss_m: number;
+            /**
+             * Rel From
+             * @description 0 = formation top, 1 = its base
+             */
+            rel_from: number;
+            /** Rel To */
+            rel_to: number;
+            /**
+             * Risks
+             * @description Highest probability first
+             */
+            risks: components["schemas"]["BinRisk"][];
+            /** Top Md M */
+            top_md_m: number;
+            /** Top Tvdss M */
+            top_tvdss_m: number;
+        };
         /** RiskInterval */
         RiskInterval: {
             /** Base Md M */
             base_md_m: number | null;
             /** Base Tvdss M */
             base_tvdss_m: number | null;
+            /**
+             * Bins
+             * @description Depth slices when bin_m is requested (only for intervals with a base)
+             */
+            bins: components["schemas"]["RiskBin"][];
             /** Formation */
             formation: string;
             /** Offsets */
@@ -5663,6 +5709,8 @@ export interface operations {
                 mode?: components["schemas"]["RiskMode"];
                 /** @description Repeat for several; default: all seen */
                 event_type?: ("LOSS" | "KICK" | "STUCK" | "TIGHT" | "TORQUE" | "INSTAB" | "BALLING" | "OVERP" | "GAS" | "CEMENT" | "CASING" | "FISH" | "EQUIP" | "WAIT" | "OTHER_NPT")[] | null;
+                /** @description Also split each formation into slices of about this TVD */
+                bin_m?: number | null;
             };
             header?: never;
             path: {
