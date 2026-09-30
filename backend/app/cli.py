@@ -364,5 +364,27 @@ def user_add(
     typer.echo(f"[user-add] created {out.username} ({', '.join(out.roles)})")
 
 
+@cli.command(name="gold-export")
+def gold_export(
+    out: Annotated[
+        Path, typer.Option(help="JSON-lines file, one decided review item per line")
+    ] = Path("../eval/gold/review_gold.jsonl"),
+) -> None:
+    """Export decided review-queue items as a gold set (V-B15) and print how often the
+    queued extractions were right. The file holds report text: keep real OIL data out of git."""
+    import json
+
+    from app.db.session import session_scope
+    from app.extract.gold import export, score
+
+    configure_logging(json_output=False)
+    with session_scope() as session:
+        rows = export(session)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows))
+    typer.echo(f"[gold-export] {len(rows)} decided items -> {out}")
+    typer.echo(json.dumps(score(rows), indent=2))
+
+
 if __name__ == "__main__":
     cli()

@@ -14,3 +14,6 @@ dist/
 data/raw/
 data/volve/
 *.segy
+
+# Gold sets exported from the review queue hold report text (real OIL data must not enter git)
+eval/gold/
