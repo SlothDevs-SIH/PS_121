@@ -20,6 +20,7 @@ from app.risk import dejavu as dv
 from app.risk import features as feats
 from app.risk.realtime_model import ModelBundle
 from app.risk.rigstate import RigStateMachine
+from app.stream.quality import UNFIT, QualityMonitor
 from app.synthetic.realtime import CHANNELS, DT_S
 
 BUFFER = 900  # 2.5 h of 10-s samples: features need 1 h, Déjà Vu 30 min
@@ -116,6 +117,7 @@ class Frame:
     indicators: dict[str, float | None]
     scores: dict[str, float] | None = None  # set on the minutes the classifiers ran
     dejavu: dict[str, Any] | None = None  # set when Déjà Vu ran
+    quality: dict[str, str] = field(default_factory=dict)  # channel → data-quality flag
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -128,6 +130,7 @@ class Frame:
             "indicators": self.indicators,
             "scores": self.scores,
             "dejavu": self.dejavu,
+            "quality": self.quality,
         }
 
 
@@ -159,6 +162,12 @@ class WellScorer:
     _pit_loss_det: ThresholdDetector = field(
         default_factory=lambda: ThresholdDetector(PIT_M3, PIT_M3 / 2, 3)
     )
+
+    quality_monitor: QualityMonitor = field(default_factory=QualityMonitor)
+    _flags: dict[str, str] = field(default_factory=dict)
+
+    def _unfit(self) -> set[str]:
+        return {ch for ch, f in self._flags.items() if f in UNFIT}
 
     def __post_init__(self) -> None:
         self.buf = {c: deque(maxlen=BUFFER) for c in CHANNELS}
@@ -205,10 +214,12 @@ class WellScorer:
         bit_tvdss = self.ctx.tvdss_at(b["bit_depth_m"])
         iv = self.ctx.interval_at(tvdss)
         cands: list[Candidate] = []
+        self._flags = self.quality_monitor.update(values, state)
         indicators = self._physics(ts, state, tvdss, iv, cands)
         frame = Frame(
             ts, dict(values), state, md, bit_tvdss, iv.formation if iv else None, indicators
         )
+        frame.quality = dict(self._flags)
         if self.n % ML_EVERY == 0:
             self._lookahead(ts, b["hole_depth_m"], tvdss, cands)
             if self.bundle is not None and len(self.times) > feats.MIN_HISTORY:
@@ -236,16 +247,20 @@ class WellScorer:
         iv: Interval | None,
         cands: list[Candidate],
     ) -> dict[str, float | None]:
+        # A flow or pit channel flagged unfit (unit jump, out of range, flat-lined) must not
+        # raise a kick or loss: bad data is shown as bad data, not as a well-control event.
+        flow_ok = not ({"flow_in_lpm", "flow_out_lpm"} & self._unfit())
+        pit_ok = "pit_volume_m3" not in self._unfit()
         fi = np.asarray(list(self.buf["flow_in_lpm"])[-12:])
         fo = np.asarray(list(self.buf["flow_out_lpm"])[-12:])
         pumping = fi > 200
         imb = (
             float(np.mean((fo[pumping] - fi[pumping]) / fi[pumping]) * 100)
-            if pumping.sum() >= 6
+            if pumping.sum() >= 6 and flow_ok
             else None
         )
         pit = list(self.buf["pit_volume_m3"])
-        pit_d = pit[-1] - pit[-PIT_WINDOW] if len(pit) >= PIT_WINDOW else None
+        pit_d = pit[-1] - pit[-PIT_WINDOW] if len(pit) >= PIT_WINDOW and pit_ok else None
         out = {"flow_imbalance_pct": imb, "pit_change_15min_m3": pit_d}
         checks = [
             ("LOSS", self._loss_det, -imb if imb is not None else None, "return flow",

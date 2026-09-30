@@ -184,6 +184,8 @@ export interface LiveFrame {
     }[]
   } | null
   session_id?: number
+  /** Data-quality flag per channel (Part 7): flatline, unit_jump, out_of_range. */
+  quality?: Record<string, string>
 }
 
 export interface ReplayInfo {

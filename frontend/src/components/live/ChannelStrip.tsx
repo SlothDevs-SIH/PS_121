@@ -1,4 +1,4 @@
-import { channelMeta, extent, formatValue, linePath } from '../../lib/liveView'
+import { channelMeta, extent, formatValue, linePath, QUALITY_LABELS } from '../../lib/liveView'
 
 const W = 1000
 
@@ -12,6 +12,8 @@ interface Props {
   /** Vertical markers (e.g. alert times), ms. */
   markers?: { t: number; label: string }[]
   height?: number
+  /** Data-quality flag for the latest sample, if any. */
+  flag?: string | null
 }
 
 /**
@@ -19,7 +21,15 @@ interface Props {
  * path string). The latest value, its unit and the strip's range are text beside it;
  * gaps break the line rather than being drawn as zero.
  */
-export function ChannelStrip({ channel, times, values, domain, markers = [], height = 56 }: Props) {
+export function ChannelStrip({
+  channel,
+  times,
+  values,
+  domain,
+  markers = [],
+  height = 56,
+  flag = null,
+}: Props) {
   const m = channelMeta(channel)
   const [lo, hi] = extent(values)
   const [t0, t1] = domain
@@ -31,6 +41,15 @@ export function ChannelStrip({ channel, times, values, domain, markers = [], hei
     <div className="grid grid-cols-[8.5rem_1fr] items-center gap-2" data-testid="channel-strip">
       <div className="min-w-0 text-right">
         <div className="truncate text-xs text-muted">{m.label}</div>
+        {flag && (
+          <div
+            className="truncate text-[11px] font-medium text-warn"
+            data-testid={`quality-${channel}`}
+            title="Data quality: check the sensor or its unit before trusting this channel"
+          >
+            ⚠ {QUALITY_LABELS[flag] ?? flag}
+          </div>
+        )}
         <div className="num text-sm font-semibold text-text" data-testid={`latest-${channel}`}>
           {formatValue(last, m.digits)}{' '}
           <span className="text-xs font-normal text-muted">{m.unit}</span>

@@ -220,3 +220,13 @@ export function mergeSeries(
   }
   return { times, values, rig }
 }
+
+/** Plain words for a stream data-quality flag (Part 7, backend `stream.quality`). */
+export const QUALITY_LABELS: Record<string, string> = {
+  flatline: 'Frozen? No change for 10 min',
+  unit_jump: 'Unit changed at source?',
+  out_of_range: 'Impossible value',
+  missing: 'Missing',
+  unreadable: 'Unreadable',
+  unmapped: 'Not mapped',
+}

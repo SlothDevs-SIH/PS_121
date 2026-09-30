@@ -312,6 +312,7 @@ export function LiveMonitorPage() {
                   values={series.values[c] ?? []}
                   domain={domain}
                   markers={markers}
+                  flag={latest?.quality?.[c] ?? null}
                 />
               ))}
             </>

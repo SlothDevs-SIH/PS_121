@@ -72,6 +72,17 @@ describe('Live Well Monitor', () => {
     )
   })
 
+  it('badges a channel the stream flags as bad data', async () => {
+    live()
+    renderApp('/live?well=4')
+    const ws = await socket()
+    act(() =>
+      ws.receive({ type: 'frame', frame: liveFrame({ quality: { spp_kpa: 'unit_jump' } }) }),
+    )
+    expect(screen.getByTestId('quality-spp_kpa')).toHaveTextContent('Unit changed at source?')
+    expect(screen.queryByTestId('quality-torque_knm')).not.toBeInTheDocument()
+  })
+
   it('shows the replay banner and a stale warning from the stream status', async () => {
     live()
     renderApp('/live?well=4')
