@@ -29,6 +29,7 @@ PASSWORD = "correct-horse-battery-staple"
 def jwt_client(monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
     monkeypatch.setenv("SMRITI_AUTH_MODE", "jwt")
     monkeypatch.setenv("SMRITI_JWT_SECRET", "integration-test-secret-" + "x" * 20)
+    monkeypatch.setenv("SMRITI_LOGIN_RATE_PER_MINUTE", "1000")
     get_settings.cache_clear()
     with TestClient(create_app()) as c:
         yield c
@@ -93,7 +94,8 @@ def test_deactivation_applies_at_once_and_admin_sees_the_audit(jwt_client: TestC
     assert jwt_client.get("/api/v1/wells", headers=hv).status_code == 401  # same token, now dead
     page = jwt_client.get("/api/v1/audit", headers=ha, params={"user_id": admin}).json()
     assert [e["action"] for e in page["items"]][:1] == ["user_update"]
-    assert page["items"][0]["detail"] == {"active": False}
+    # Deactivation also ends every session (B6).
+    assert page["items"][0]["detail"] == {"active": False, "sessions_revoked": True}
     dup = jwt_client.post(
         "/api/v1/users",
         headers=ha,

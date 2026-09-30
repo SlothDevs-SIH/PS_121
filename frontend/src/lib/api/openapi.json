@@ -846,6 +846,36 @@
         "title": "AuditPage",
         "type": "object"
       },
+      "AuthConfig": {
+        "description": "What the login screen needs before anyone is logged in (public).",
+        "properties": {
+          "auth_mode": {
+            "title": "Auth Mode",
+            "type": "string"
+          },
+          "oidc": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OidcConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "session_max_hours": {
+            "title": "Session Max Hours",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "auth_mode",
+          "oidc",
+          "session_max_hours"
+        ],
+        "title": "AuthConfig",
+        "type": "object"
+      },
       "Body_upload_documents_api_v1_documents_post": {
         "properties": {
           "files": {
@@ -6299,6 +6329,74 @@
         "title": "OffsetsOut",
         "type": "object"
       },
+      "OidcCallbackIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "code_verifier": {
+            "maxLength": 128,
+            "minLength": 43,
+            "title": "Code Verifier",
+            "type": "string"
+          },
+          "redirect_uri": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Redirect Uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "code_verifier",
+          "redirect_uri"
+        ],
+        "title": "OidcCallbackIn",
+        "type": "object"
+      },
+      "OidcConfig": {
+        "properties": {
+          "authorize_url": {
+            "description": "Where the browser starts the PKCE login",
+            "title": "Authorize Url",
+            "type": "string"
+          },
+          "client_id": {
+            "title": "Client Id",
+            "type": "string"
+          },
+          "end_session_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The provider's logout page, if any",
+            "title": "End Session Url"
+          },
+          "issuer": {
+            "description": "Issuer URL as the browser reaches it",
+            "title": "Issuer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "issuer",
+          "client_id",
+          "authorize_url",
+          "end_session_url"
+        ],
+        "title": "OidcConfig",
+        "type": "object"
+      },
       "PageOut": {
         "properties": {
           "document_id": {
@@ -7756,6 +7854,25 @@
         "title": "SearchResponse",
         "type": "object"
       },
+      "SessionOut": {
+        "description": "A browser session was set in HttpOnly cookies; no token in the body.",
+        "properties": {
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/Me"
+          }
+        },
+        "required": [
+          "user",
+          "expires_at"
+        ],
+        "title": "SessionOut",
+        "type": "object"
+      },
       "SeverityStratum": {
         "properties": {
           "n": {
@@ -8243,6 +8360,18 @@
             ],
             "title": "Last Login At"
           },
+          "locked_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locked Until"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -8274,7 +8403,8 @@
           "roles",
           "active",
           "created_at",
-          "last_login_at"
+          "last_login_at",
+          "locked_until"
         ],
         "title": "UserOut",
         "type": "object"
@@ -8319,6 +8449,12 @@
             ],
             "title": "Password"
           },
+          "revoke_sessions": {
+            "default": false,
+            "description": "End every session of this user now",
+            "title": "Revoke Sessions",
+            "type": "boolean"
+          },
           "roles": {
             "anyOf": [
               {
@@ -8341,6 +8477,12 @@
               }
             ],
             "title": "Roles"
+          },
+          "unlock": {
+            "default": false,
+            "description": "Clear a lockout after failed logins",
+            "title": "Unlock",
+            "type": "boolean"
           }
         },
         "title": "UserUpdate",
@@ -9495,6 +9637,27 @@
         ]
       }
     },
+    "/api/v1/auth/config": {
+      "get": {
+        "operationId": "auth_config_api_v1_auth_config_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthConfig"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Auth mode and (OIDC) provider details for the login screen; public",
+        "tags": [
+          "system"
+        ]
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "operationId": "login_api_v1_auth_login_post",
@@ -9520,7 +9683,69 @@
             "description": "Successful Response"
           },
           "401": {
-            "description": "Wrong username or password"
+            "description": "Wrong username or password (or a locked account)"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Too many login attempts from this address"
+          }
+        },
+        "summary": "Log in (jwt mode): sets the HttpOnly session cookie and returns the token",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "logout_api_v1_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "End this browser's session (clears the cookie)",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/api/v1/auth/oidc/callback": {
+      "post": {
+        "description": "The browser never holds the tokens: this server trades the code at the provider's\ntoken endpoint and keeps the access token (and the refresh token, on the auth path\nonly) in HttpOnly, SameSite=Strict cookies.",
+        "operationId": "oidc_callback_api_v1_auth_oidc_callback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OidcCallbackIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "The provider refused the code, or the token is invalid"
           },
           "422": {
             "content": {
@@ -9533,7 +9758,36 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Log in (jwt auth mode): a bearer token for one shift",
+        "summary": "Finish an OIDC login: exchange the code (PKCE) and set the session cookies",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "operationId": "refresh_api_v1_auth_refresh_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/TokenOut"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SessionOut"
+                    }
+                  ],
+                  "title": "Response Refresh Api V1 Auth Refresh Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Renew the session (jwt: up to session_max_hours after login; oidc: at the IdP)",
         "tags": [
           "system"
         ]
@@ -9541,7 +9795,7 @@
     },
     "/api/v1/copilot/chat": {
       "post": {
-        "description": "Answers only from the read-only tools (search, events, offsets, risk profile, ledger,\nwell summary, alert explanation) the user's role allows. Every line cites a report page\nor a database record as ``[n]``; when nothing is found the answer says so. Audited.",
+        "description": "Answers only from the read-only tools (search, events, offsets, risk profile, ledger,\nwell summary, alert explanation) the user's role allows. Every line cites a report page\nor a database record as ``[n]``; when nothing is found the answer says so. Audited, and\nlimited to ``copilot_rate_per_minute`` questions per user (429 with Retry-After).",
         "operationId": "copilot_chat_api_v1_copilot_chat_post",
         "parameters": [
           {
@@ -9588,6 +9842,9 @@
               }
             },
             "description": "Validation Error"
+          },
+          "429": {
+            "description": "Too many questions this minute"
           }
         },
         "summary": "Ask the copilot (SSE stream; ?stream=false for one JSON answer)",

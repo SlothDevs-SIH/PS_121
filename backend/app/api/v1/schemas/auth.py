@@ -39,6 +39,7 @@ class UserOut(ResponseModel):
     active: bool
     created_at: datetime
     last_login_at: datetime | None
+    locked_until: datetime | None
 
 
 class UserCreate(BaseModel):
@@ -57,6 +58,8 @@ class UserUpdate(BaseModel):
     password: str | None = Field(None, min_length=12, max_length=200)
     roles: list[Role] | None = Field(None, min_length=1)
     active: bool | None = None
+    unlock: bool = Field(False, description="Clear a lockout after failed logins")
+    revoke_sessions: bool = Field(False, description="End every session of this user now")
 
 
 class AuditEntry(ResponseModel):
@@ -73,3 +76,33 @@ class AuditEntry(ResponseModel):
 class AuditPage(ResponseModel):
     items: list[AuditEntry]
     next_before_id: int | None = Field(description="Pass as before_id for the next (older) page")
+
+
+class OidcConfig(ResponseModel):
+    issuer: str = Field(description="Issuer URL as the browser reaches it")
+    client_id: str
+    authorize_url: str = Field(description="Where the browser starts the PKCE login")
+    end_session_url: str | None = Field(description="The provider's logout page, if any")
+
+
+class OidcCallbackIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: str = Field(min_length=1, max_length=4096)
+    code_verifier: str = Field(min_length=43, max_length=128)  # RFC 7636
+    redirect_uri: str = Field(min_length=1, max_length=2048)
+
+
+class SessionOut(ResponseModel):
+    """A browser session was set in HttpOnly cookies; no token in the body."""
+
+    user: Me
+    expires_at: datetime
+
+
+class AuthConfig(ResponseModel):
+    """What the login screen needs before anyone is logged in (public)."""
+
+    auth_mode: str
+    oidc: OidcConfig | None
+    session_max_hours: int

@@ -30,10 +30,21 @@ class AppError(Exception):
     status_code = 500
     code = "internal_error"
 
+    headers: dict[str, str] | None = None
+
     def __init__(self, message: str, details: dict[str, Any] | None = None) -> None:
         super().__init__(message)
         self.message = message
         self.details = details or {}
+
+
+class RateLimitedError(AppError):
+    status_code = 429
+    code = "rate_limited"
+
+    def __init__(self, message: str, retry_after_s: int) -> None:
+        super().__init__(message, {"retry_after_s": retry_after_s})
+        self.headers = {"Retry-After": str(retry_after_s)}
 
 
 class NotFoundError(AppError):
@@ -54,13 +65,19 @@ class NotImplementedYetError(AppError):
         )
 
 
-def _envelope(status: int, code: str, message: str, details: dict[str, Any]) -> JSONResponse:
+def _envelope(
+    status: int,
+    code: str,
+    message: str,
+    details: dict[str, Any],
+    headers: dict[str, str] | None = None,
+) -> JSONResponse:
     body = ErrorResponse(
         error=ErrorBody(
             code=code, message=message, details=details, request_id=request_id_var.get()
         )
     )
-    return JSONResponse(status_code=status, content=body.model_dump())
+    return JSONResponse(status_code=status, content=body.model_dump(), headers=headers)
 
 
 # Shared OpenAPI declaration for skeleton routes.
@@ -72,7 +89,7 @@ NOT_IMPLEMENTED: dict[int | str, dict[str, Any]] = {
 def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def _app_error(_: Request, exc: AppError) -> JSONResponse:
-        return _envelope(exc.status_code, exc.code, exc.message, exc.details)
+        return _envelope(exc.status_code, exc.code, exc.message, exc.details, exc.headers)
 
     @app.exception_handler(StarletteHTTPException)
     async def _http_error(_: Request, exc: StarletteHTTPException) -> JSONResponse:

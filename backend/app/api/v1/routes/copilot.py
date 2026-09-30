@@ -9,8 +9,10 @@ from fastapi.responses import StreamingResponse
 
 from app.api.v1.schemas.copilot import CopilotAnswer, CopilotAsk
 from app.copilot.engine import run
+from app.core import ratelimit
 from app.core.audit import audit
 from app.core.auth import CurrentUser, require
+from app.core.config import get_settings
 from app.db.session import session_scope
 
 router = APIRouter(tags=["copilot"])
@@ -47,7 +49,10 @@ def _sse(events: Iterator[dict[str, Any]]) -> Iterator[str]:
     "/copilot/chat",
     summary="Ask the copilot (SSE stream; ?stream=false for one JSON answer)",
     response_model=CopilotAnswer,
-    responses={200: {"content": {"text/event-stream": {}}}},
+    responses={
+        200: {"content": {"text/event-stream": {}}},
+        429: {"description": "Too many questions this minute"},
+    },
 )
 def copilot_chat(
     body: Annotated[CopilotAsk, Body()],
@@ -56,7 +61,9 @@ def copilot_chat(
 ) -> Any:
     """Answers only from the read-only tools (search, events, offsets, risk profile, ledger,
     well summary, alert explanation) the user's role allows. Every line cites a report page
-    or a database record as ``[n]``; when nothing is found the answer says so. Audited."""
+    or a database record as ``[n]``; when nothing is found the answer says so. Audited, and
+    limited to ``copilot_rate_per_minute`` questions per user (429 with Retry-After)."""
+    ratelimit.hit(f"copilot:{user.user_id}", get_settings().copilot_rate_per_minute)
     if stream:
         return StreamingResponse(
             _sse(_events(user, body)),

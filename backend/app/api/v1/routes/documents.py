@@ -110,7 +110,10 @@ def upload_documents(files: list[UploadFile], session: DbSession, user: User) ->
     results: list[UploadResult] = []
     new_ids: list[int] = []
     for f in files:
-        stored = store_upload(session, f.filename or "upload", f.file.read(), user.user_id)
+        # Read at most one byte past the limit: an oversized file is refused without being
+        # held in memory whole (store_upload rejects anything over max_upload_mb).
+        cap = get_settings().max_upload_mb * 1024 * 1024 + 1
+        stored = store_upload(session, f.filename or "upload", f.file.read(cap), user.user_id)
         doc = stored.document
         results.append(
             UploadResult(

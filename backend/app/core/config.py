@@ -59,12 +59,40 @@ class Settings(BaseSettings):
     embedding_base_url: str | None = None  # e.g. http://localhost:11434 (Ollama API root)
     reranker_url: str | None = None  # optional cross-encoder rerank endpoint; unset = RRF only
 
-    # Auth: "dev" returns a fixed local user; "oidc" (Keycloak) is planned for phase B6
-    # dev = a fixed local admin (refused in prod); jwt = local users + signed tokens (B5);
-    # oidc = Keycloak (B6, not built).
+    # Auth. dev = a fixed local admin (refused in prod); jwt = local users + signed tokens
+    # (B5); oidc = tokens from an OpenID Connect provider such as Keycloak (B6).
     auth_mode: Literal["dev", "jwt", "oidc"] = "dev"
     jwt_secret: SecretStr | None = None  # required (>= 32 chars) in jwt mode
     jwt_ttl_minutes: int = Field(default=480, gt=0, le=7 * 24 * 60)  # one shift + margin
+    # A refreshed session never outlives this many hours after the password was typed.
+    session_max_hours: int = Field(default=24, gt=0, le=24 * 30)
+    # Browser sessions ride in an HttpOnly, SameSite=Strict cookie (B6); Secure behind TLS.
+    session_cookie_name: str = "smriti_session"
+    cookie_secure: bool = False
+    # Brute-force protection (jwt mode): lock an account after N failures in a row, and cap
+    # login attempts per client address. Copilot questions are capped per user.
+    login_max_failures: int = Field(default=5, ge=1)
+    login_lockout_minutes: int = Field(default=15, ge=1)
+    login_rate_per_minute: int = Field(default=20, ge=1)
+    # Trust X-Real-IP for the client address: only behind our nginx, which overwrites it.
+    trust_proxy_headers: bool = False
+    copilot_rate_per_minute: int = Field(default=20, ge=1)
+    # OIDC (auth_mode=oidc): the provider's issuer URL as it appears in tokens' "iss"; the
+    # JWKS comes from oidc_jwks_url or the issuer's discovery document.
+    oidc_issuer: str | None = None
+    oidc_audience: str | None = None  # expected "aud" (e.g. the Keycloak client id)
+    oidc_jwks_url: str | None = None
+    oidc_client_id: str = "smriti-web"  # public client the web app uses (PKCE)
+    oidc_public_issuer: str | None = None  # issuer URL as the browser reaches it, if different
+    # Endpoints (default: Keycloak's paths under the issuer). The token endpoint is called by
+    # this server, so it may be an internal URL; the authorize endpoint is for the browser.
+    oidc_authorize_url: str | None = None
+    oidc_token_url: str | None = None
+    oidc_end_session_url: str | None = None
+    oidc_roles_claim: str = "realm_access.roles"  # dotted path to a list of role names
+    oidc_role_map: dict[str, str] = Field(default_factory=dict)  # IdP role -> SMRITI role
+    oidc_username_claim: str = "preferred_username"
+    oidc_algorithms: list[str] = Field(default_factory=lambda: ["RS256", "ES256"])
 
     # Per-dependency timeout used by /readyz checks
     readiness_timeout_s: float = 2.0

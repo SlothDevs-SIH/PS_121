@@ -1,18 +1,22 @@
 """Local users: login, and the admin operations behind /api/v1/users (B5, jwt mode)."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.v1.schemas.auth import Me, TokenOut, UserCreate, UserOut, UserUpdate
+from app.core import oidc
 from app.core.audit import audit
 from app.core.auth import (
     CurrentUser,
     NotAuthenticatedError,
+    decode_token,
     hash_password,
     issue_token,
+    load_user,
     verify_password,
 )
 from app.core.config import Settings
@@ -38,23 +42,101 @@ def me(user: CurrentUser, settings: Settings) -> Me:
     )
 
 
-def login(session: Session, settings: Settings, username: str, password: str) -> TokenOut:
+def _require_jwt(settings: Settings) -> None:
     if settings.auth_mode != "jwt":
         raise ConflictError(
             f"Login is used in jwt auth mode; this server runs in {settings.auth_mode} mode.",
             {"auth_mode": settings.auth_mode},
         )
-    u = session.scalar(select(AppUser).where(AppUser.username == username.strip().lower()))
-    ok = verify_password(password, u.password_hash if u else _DUMMY_HASH)
-    if u is None or not ok or not u.active:
-        audit(session, username[:80], "login_failed", "user", username[:80])
-        session.commit()
-        raise NotAuthenticatedError("Wrong username or password.")
-    u.last_login_at = datetime.now(tz=UTC)
-    token, exp = issue_token(settings, u.id)
-    audit(session, u.username, "login", "user", u.id)
+
+
+def _token_out(settings: Settings, u: AppUser, auth_time: datetime | None = None) -> TokenOut:
+    token, exp = issue_token(settings, u.id, epoch=u.session_epoch, auth_time=auth_time)
     cur = CurrentUser.model_validate({"user_id": u.username, "name": u.name, "roles": u.roles})
     return TokenOut(access_token=token, expires_at=exp, user=me(cur, settings))
+
+
+def login(
+    session: Session, settings: Settings, username: str, password: str, now: datetime | None = None
+) -> TokenOut:
+    """Check the password. ``login_max_failures`` wrong passwords in a row lock the account
+    for ``login_lockout_minutes``; a locked account answers like a wrong password (the audit
+    log says which), so the response does not reveal which accounts exist or are locked."""
+    _require_jwt(settings)
+    now = now or datetime.now(tz=UTC)
+    name = username.strip().lower()
+    u = session.scalar(select(AppUser).where(AppUser.username == name))
+    ok = verify_password(password, u.password_hash if u else _DUMMY_HASH)
+    locked = u is not None and u.locked_until is not None and u.locked_until > now
+    if u is None or not ok or not u.active or locked:
+        if u is not None and not locked and not ok:
+            u.failed_logins += 1
+            if u.failed_logins >= settings.login_max_failures:
+                u.locked_until = now + timedelta(minutes=settings.login_lockout_minutes)
+                u.failed_logins = 0
+                audit(session, u.username, "account_locked", "user", u.id)
+        audit(
+            session,
+            name[:80],
+            "login_failed",
+            "user",
+            name[:80],
+            reason="locked" if locked else "inactive" if u and ok else "credentials",
+        )
+        session.commit()
+        raise NotAuthenticatedError("Wrong username or password.")
+    u.failed_logins = 0
+    u.locked_until = None
+    u.last_login_at = now
+    audit(session, u.username, "login", "user", u.id)
+    return _token_out(settings, u)
+
+
+def refresh(session: Session, settings: Settings, token: str | None) -> TokenOut:
+    """A fresh token for a live session, never past ``session_max_hours`` after login."""
+    _require_jwt(settings)
+    if not token:
+        raise NotAuthenticatedError("Log in first.")
+    claims = decode_token(settings, token)
+    uid = int(claims["sub"])
+    load_user(session, uid, int(claims.get("ep", 0)))  # active and not revoked
+    auth_time = datetime.fromtimestamp(int(claims.get("auth_time", claims["iat"])), tz=UTC)
+    if datetime.now(tz=UTC) - auth_time >= timedelta(hours=settings.session_max_hours):
+        raise NotAuthenticatedError("The session has reached its maximum length; log in again.")
+    u = session.get(AppUser, uid)
+    assert u is not None
+    return _token_out(settings, u, auth_time)
+
+
+def _require_oidc(settings: Settings) -> None:
+    if settings.auth_mode != "oidc":
+        raise ConflictError(
+            f"This server runs in {settings.auth_mode} mode, not oidc.",
+            {"auth_mode": settings.auth_mode},
+        )
+
+
+def oidc_exchange(
+    settings: Settings, code: str, verifier: str, redirect_uri: str
+) -> dict[str, Any]:
+    _require_oidc(settings)
+    try:
+        tokens = oidc.exchange_code(settings, code, verifier, redirect_uri)
+    except oidc.OidcError as exc:
+        raise NotAuthenticatedError(str(exc)) from exc
+    if not tokens.get("access_token"):
+        raise NotAuthenticatedError("The identity provider returned no access token.")
+    return tokens
+
+
+def oidc_refresh(settings: Settings, refresh_token: str | None) -> dict[str, Any]:
+    _require_oidc(settings)
+    if not refresh_token:
+        raise NotAuthenticatedError("Log in first.")
+    try:
+        return oidc.refresh_tokens(settings, refresh_token)
+    except oidc.OidcError as exc:
+        raise NotAuthenticatedError(str(exc)) from exc
 
 
 def _out(u: AppUser) -> UserOut:
@@ -98,6 +180,18 @@ def update_user(session: Session, user_id: int, body: UserUpdate, by: CurrentUse
     if body.password is not None:
         u.password_hash = hash_password(body.password)
         changed["password"] = "changed"  # noqa: S105 (audit note, not a secret)
+    if body.unlock:
+        u.locked_until, u.failed_logins = None, 0
+        changed["unlocked"] = True
+    # A new password, deactivation, a role change or an explicit revoke ends every session.
+    if (
+        body.password is not None
+        or body.active is False
+        or body.roles is not None
+        or (body.revoke_sessions)
+    ):
+        u.session_epoch += 1
+        changed["sessions_revoked"] = True
     audit(session, by, "user_update", "user", u.id, **changed)
     session.flush()
     return _out(u)

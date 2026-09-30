@@ -60,7 +60,7 @@ All paths are under `/api/v1`. "✅" means built; the phase column says where th
 | `WS /ws/dashboard` | `WS /ws/alerts` (all alerts the user may see; this is the dashboard feed) | ✅ B4 |
 | — (SMRITI) | `POST /replay` (+ `GET /replay`, `GET /stream/status`); `GET /reports/offset-brief/{well_id}` | ✅ B4 / ✅ B5 |
 | `GET /analytics/*` | `GET /analytics/npt?group_by=`, `GET /analytics/recurring`, `GET /analytics/alerts` | ✅ B5 (screen F5) |
-| `GET /admin/users`, audit | `GET/POST /admin/users`, `PATCH /admin/users/{id}`, `GET /admin/audit` | ✅ B5 (screen F6) |
+| `GET /admin/users`, audit | `GET/POST /users`, `PATCH /users/{id}`, `GET /audit` (admin permission) | ✅ B5 (screen F6) |
 | — (SMRITI, for F4) | `GET /alerts/{id}/dejavu` (overlay curves); `GET /wells/{id}/realtime?end=` | ✅ B5 |
 
 ## 3. Data model differences (kept on purpose)

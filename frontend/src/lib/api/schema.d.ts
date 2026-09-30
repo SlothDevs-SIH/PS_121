@@ -181,6 +181,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Auth mode and (OIDC) provider details for the login screen; public */
+        get: operations["auth_config_api_v1_auth_config_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -190,8 +207,64 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Log in (jwt auth mode): a bearer token for one shift */
+        /** Log in (jwt mode): sets the HttpOnly session cookie and returns the token */
         post: operations["login_api_v1_auth_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End this browser's session (clears the cookie) */
+        post: operations["logout_api_v1_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/oidc/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Finish an OIDC login: exchange the code (PKCE) and set the session cookies
+         * @description The browser never holds the tokens: this server trades the code at the provider's
+         *     token endpoint and keeps the access token (and the refresh token, on the auth path
+         *     only) in HttpOnly, SameSite=Strict cookies.
+         */
+        post: operations["oidc_callback_api_v1_auth_oidc_callback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Renew the session (jwt: up to session_max_hours after login; oidc: at the IdP) */
+        post: operations["refresh_api_v1_auth_refresh_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -211,7 +284,8 @@ export interface paths {
          * Ask the copilot (SSE stream; ?stream=false for one JSON answer)
          * @description Answers only from the read-only tools (search, events, offsets, risk profile, ledger,
          *     well summary, alert explanation) the user's role allows. Every line cites a report page
-         *     or a database record as ``[n]``; when nothing is found the answer says so. Audited.
+         *     or a database record as ``[n]``; when nothing is found the answer says so. Audited, and
+         *     limited to ``copilot_rate_per_minute`` questions per user (429 with Retry-After).
          */
         post: operations["copilot_chat_api_v1_copilot_chat_post"];
         delete?: never;
@@ -1180,6 +1254,17 @@ export interface components {
              * @description Pass as before_id for the next (older) page
              */
             next_before_id: number | null;
+        };
+        /**
+         * AuthConfig
+         * @description What the login screen needs before anyone is logged in (public).
+         */
+        AuthConfig: {
+            /** Auth Mode */
+            auth_mode: string;
+            oidc: components["schemas"]["OidcConfig"] | null;
+            /** Session Max Hours */
+            session_max_hours: number;
         };
         /** Body_upload_documents_api_v1_documents_post */
         Body_upload_documents_api_v1_documents_post: {
@@ -2802,6 +2887,35 @@ export interface components {
             /** Well Id */
             well_id: number;
         };
+        /** OidcCallbackIn */
+        OidcCallbackIn: {
+            /** Code */
+            code: string;
+            /** Code Verifier */
+            code_verifier: string;
+            /** Redirect Uri */
+            redirect_uri: string;
+        };
+        /** OidcConfig */
+        OidcConfig: {
+            /**
+             * Authorize Url
+             * @description Where the browser starts the PKCE login
+             */
+            authorize_url: string;
+            /** Client Id */
+            client_id: string;
+            /**
+             * End Session Url
+             * @description The provider's logout page, if any
+             */
+            end_session_url: string | null;
+            /**
+             * Issuer
+             * @description Issuer URL as the browser reaches it
+             */
+            issuer: string;
+        };
         /** PageOut */
         PageOut: {
             /** Document Id */
@@ -3362,6 +3476,18 @@ export interface components {
             /** Took Ms */
             took_ms: number;
         };
+        /**
+         * SessionOut
+         * @description A browser session was set in HttpOnly cookies; no token in the body.
+         */
+        SessionOut: {
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            user: components["schemas"]["Me"];
+        };
         /** SeverityStratum */
         SeverityStratum: {
             /** N */
@@ -3552,6 +3678,8 @@ export interface components {
             id: number;
             /** Last Login At */
             last_login_at: string | null;
+            /** Locked Until */
+            locked_until: string | null;
             /** Name */
             name: string;
             /** Roles */
@@ -3567,8 +3695,20 @@ export interface components {
             name?: string | null;
             /** Password */
             password?: string | null;
+            /**
+             * Revoke Sessions
+             * @description End every session of this user now
+             * @default false
+             */
+            revoke_sessions: boolean;
             /** Roles */
             roles?: ("viewer" | "field_engineer" | "rtmac_engineer" | "drilling_engineer" | "data_steward" | "admin")[] | null;
+            /**
+             * Unlock
+             * @description Clear a lockout after failed logins
+             * @default false
+             */
+            unlock: boolean;
         };
         /** ValidationError */
         ValidationError: {
@@ -4104,6 +4244,26 @@ export interface operations {
             };
         };
     };
+    auth_config_api_v1_auth_config_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthConfig"];
+                };
+            };
+        };
+    };
     login_api_v1_auth_login_post: {
         parameters: {
             query?: never;
@@ -4126,7 +4286,7 @@ export interface operations {
                     "application/json": components["schemas"]["TokenOut"];
                 };
             };
-            /** @description Wrong username or password */
+            /** @description Wrong username or password (or a locked account) */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -4140,6 +4300,91 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Too many login attempts from this address */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    logout_api_v1_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    oidc_callback_api_v1_auth_oidc_callback_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OidcCallbackIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionOut"];
+                };
+            };
+            /** @description The provider refused the code, or the token is invalid */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refresh_api_v1_auth_refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenOut"] | components["schemas"]["SessionOut"];
                 };
             };
         };
@@ -4178,6 +4423,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+            /** @description Too many questions this minute */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

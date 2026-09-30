@@ -1,0 +1,152 @@
+{
+  "realm": "smriti",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": false,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 86400,
+  "roles": {
+    "realm": [
+      {
+        "name": "viewer",
+        "description": "SMRITI role viewer"
+      },
+      {
+        "name": "field_engineer",
+        "description": "SMRITI role field_engineer"
+      },
+      {
+        "name": "rtmac_engineer",
+        "description": "SMRITI role rtmac_engineer"
+      },
+      {
+        "name": "drilling_engineer",
+        "description": "SMRITI role drilling_engineer"
+      },
+      {
+        "name": "data_steward",
+        "description": "SMRITI role data_steward"
+      },
+      {
+        "name": "admin",
+        "description": "SMRITI role admin"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "smriti-web",
+      "name": "SMRITI web app",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "redirectUris": [
+        "http://localhost:8082/*",
+        "http://127.0.0.1:8082/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8082",
+        "http://127.0.0.1:8082"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:8082/*##http://127.0.0.1:8082/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience smriti-web",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "smriti-web",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "priya",
+      "enabled": true,
+      "firstName": "Priya",
+      "lastName": "Das",
+      "email": "priya@smriti.example",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "smriti-demo-password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "rtmac_engineer"
+      ]
+    },
+    {
+      "username": "arun",
+      "enabled": true,
+      "firstName": "Arun",
+      "lastName": "Bora",
+      "email": "arun@smriti.example",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "smriti-demo-password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "drilling_engineer"
+      ]
+    },
+    {
+      "username": "meera",
+      "enabled": true,
+      "firstName": "Meera",
+      "lastName": "Gogoi",
+      "email": "meera@smriti.example",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "smriti-demo-password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "viewer"
+      ]
+    },
+    {
+      "username": "kc-admin",
+      "enabled": true,
+      "firstName": "Kiran",
+      "lastName": "Saikia",
+      "email": "kc-admin@smriti.example",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "smriti-demo-password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "admin"
+      ]
+    }
+  ]
+}

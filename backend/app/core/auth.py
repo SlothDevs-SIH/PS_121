@@ -5,11 +5,18 @@ Modes (``SMRITI_AUTH_MODE``):
 - ``dev`` (default): a fixed local admin, so every endpoint can be exercised; refused when
   ``SMRITI_ENV=prod``.
 - ``jwt`` (B5): local users (``app_user``, scrypt password hashes) log in at
-  ``POST /api/v1/auth/login`` and send ``Authorization: Bearer <token>``. Tokens are HS256,
-  signed with ``SMRITI_JWT_SECRET``, and expire after ``SMRITI_JWT_TTL_MINUTES``. The user
-  is re-read on every request, so deactivating a user or changing their roles applies at
-  once, not when the token expires.
-- ``oidc``: Keycloak (B6, not built).
+  ``POST /api/v1/auth/login``. Tokens are HS256, signed with ``SMRITI_JWT_SECRET``, and
+  expire after ``SMRITI_JWT_TTL_MINUTES``; ``/auth/refresh`` renews one until
+  ``SMRITI_SESSION_MAX_HOURS`` after the password was typed. The user is re-read on every
+  request, so deactivating a user or changing their roles applies at once; a password
+  change, deactivation or "revoke sessions" bumps ``session_epoch`` and kills every token.
+- ``oidc`` (B6): tokens issued by an OpenID Connect provider, verified against its JWKS
+  (``app/core/oidc.py``); roles come from a claim.
+
+Where the token travels (B6): browsers get it in an **HttpOnly, SameSite=Strict cookie**
+(never readable by page scripts); API clients send ``Authorization: Bearer``. A write
+authenticated by the cookie must also carry ``X-Requested-With: smriti``, a header a
+cross-site form cannot send, as a second guard against cross-site request forgery.
 
 Roles grant permissions; every route names the permission it needs (``require``). The
 matrix follows §16: viewers read the knowledge base; field engineers add the live monitor
@@ -130,51 +137,113 @@ def _secret(settings: Settings) -> str:
 
 
 def issue_token(
-    settings: Settings, user_id: int, now: datetime | None = None
+    settings: Settings,
+    user_id: int,
+    now: datetime | None = None,
+    epoch: int = 0,
+    auth_time: datetime | None = None,
 ) -> tuple[str, datetime]:
+    """A signed token for ``user_id``; ``auth_time`` is when the password was typed (kept
+    across refreshes, so a session cannot be extended forever)."""
     now = now or datetime.now(tz=UTC)
-    exp = now + timedelta(minutes=settings.jwt_ttl_minutes)
-    claims: dict[str, Any] = {"sub": str(user_id), "iat": now, "exp": exp, "iss": "smriti"}
+    auth_time = auth_time or now
+    cap = auth_time + timedelta(hours=settings.session_max_hours)
+    exp = min(now + timedelta(minutes=settings.jwt_ttl_minutes), cap)
+    claims: dict[str, Any] = {
+        "sub": str(user_id),
+        "iat": now,
+        "exp": exp,
+        "iss": "smriti",
+        "ep": epoch,
+        "auth_time": int(auth_time.timestamp()),
+    }
     return jwt.encode(claims, _secret(settings), algorithm="HS256"), exp
 
 
-def user_id_from_token(settings: Settings, token: str) -> int:
+def decode_token(settings: Settings, token: str) -> dict[str, Any]:
     try:
-        claims = jwt.decode(
+        claims: dict[str, Any] = jwt.decode(
             token,
             _secret(settings),
             algorithms=["HS256"],
             issuer="smriti",
             options={"require": ["exp", "sub"]},
         )
-        return int(claims["sub"])
+        int(claims["sub"])
+        return claims
     except jwt.ExpiredSignatureError as exc:
         raise NotAuthenticatedError("The session has expired; log in again.") from exc
     except (jwt.InvalidTokenError, ValueError) as exc:
         raise NotAuthenticatedError("Invalid authentication token.") from exc
 
 
-def load_user(session: Session, user_id: int) -> CurrentUser:
+def user_id_from_token(settings: Settings, token: str) -> int:
+    return int(decode_token(settings, token)["sub"])
+
+
+def load_user(session: Session, user_id: int, epoch: int | None = None) -> CurrentUser:
     from app.db.models.auth import AppUser
 
     u = session.get(AppUser, user_id)
     if u is None or not u.active:
         raise NotAuthenticatedError("This user does not exist or is deactivated.")
+    if epoch is not None and epoch != u.session_epoch:
+        raise NotAuthenticatedError("This session was ended; log in again.")
     roles = [cast(Role, r) for r in u.roles if r in ROLES]
     return CurrentUser(user_id=u.username, name=u.name, roles=roles)
 
 
+def _oidc_user(settings: Settings, token: str) -> CurrentUser:
+    from app.core import oidc
+
+    try:
+        claims = oidc.verify(settings, token)
+    except oidc.OidcError as exc:
+        raise NotAuthenticatedError(str(exc)) from exc
+    username = oidc.claim(claims, settings.oidc_username_claim) or claims["sub"]
+    roles = oidc.map_roles(
+        oidc.claim(claims, settings.oidc_roles_claim), settings.oidc_role_map, ROLES
+    )
+    return CurrentUser(
+        user_id=str(username)[:80],
+        name=str(claims.get("name") or username)[:200],
+        roles=[cast(Role, r) for r in roles],
+    )
+
+
 def user_for_token(settings: Settings, session: Session, token: str | None) -> CurrentUser:
-    """The user a bearer token (or a WebSocket's ``?token=``) belongs to, in any mode."""
+    """The user a token (header, session cookie or a WebSocket's ``?token=``) belongs to."""
     if settings.auth_mode == "dev":
         if settings.env == "prod":
             raise AuthNotConfiguredError("Dev auth mode is refused when SMRITI_ENV=prod.")
         return DEV_USER
-    if settings.auth_mode == "oidc":
-        raise AuthNotConfiguredError("OIDC authentication is planned for backend phase B6.")
+    if settings.auth_mode == "oidc" and not settings.oidc_issuer:
+        raise AuthNotConfiguredError("OIDC mode needs SMRITI_OIDC_ISSUER.")
     if not token:
-        raise NotAuthenticatedError("Log in first (Authorization: Bearer <token>).")
-    return load_user(session, user_id_from_token(settings, token))
+        raise NotAuthenticatedError("Log in first.")
+    if settings.auth_mode == "oidc":
+        return _oidc_user(settings, token)
+    claims = decode_token(settings, token)
+    return load_user(session, int(claims["sub"]), int(claims.get("ep", 0)))
+
+
+SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+CSRF_HEADER = "x-requested-with"
+CSRF_VALUE = "smriti"
+
+
+class CsrfError(AppError):
+    status_code = 403
+    code = "csrf_check_failed"
+
+
+def token_from_request(request: Request, settings: Settings) -> tuple[str | None, bool]:
+    """(token, came_from_cookie). The Authorization header wins over the cookie."""
+    header = request.headers.get("authorization", "")
+    if header.lower().startswith("bearer "):
+        return header[7:].strip() or None, False
+    cookie = request.cookies.get(settings.session_cookie_name)
+    return (cookie or None), bool(cookie)
 
 
 def get_current_user(
@@ -182,8 +251,17 @@ def get_current_user(
     settings: Annotated[Settings, Depends(get_settings)],
     session: Annotated[Session, Depends(get_session)],
 ) -> CurrentUser:
-    header = request.headers.get("authorization", "")
-    token = header[7:].strip() if header.lower().startswith("bearer ") else None
+    token, from_cookie = token_from_request(request, settings)
+    if (
+        from_cookie
+        and settings.auth_mode != "dev"
+        and request.method not in SAFE_METHODS
+        and request.headers.get(CSRF_HEADER, "").lower() != CSRF_VALUE
+    ):
+        raise CsrfError(
+            "Cookie-authenticated writes need the X-Requested-With: smriti header.",
+            {"header": "X-Requested-With"},
+        )
     return user_for_token(settings, session, token)
 
 

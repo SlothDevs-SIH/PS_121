@@ -138,7 +138,9 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   try {
     response = await fetch(path, {
       ...init,
-      headers: { Accept: 'application/json', ...init?.headers },
+      // Same-origin cookie sessions (B6): writes must carry this header, which a cross-site
+      // form cannot send (backend CSRF rule).
+      headers: { Accept: 'application/json', 'X-Requested-With': 'smriti', ...init?.headers },
     })
   } catch (cause) {
     throw new ApiError(0, null, `Backend unreachable: ${String(cause)}`)

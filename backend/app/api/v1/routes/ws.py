@@ -5,14 +5,17 @@
   5 s saying whether the stream is stale (no frame for 30 s) and where the replay is.
 - ``/ws/alerts``: every alert created or fused, as the full alert (optionally one well's).
 
-Auth (B5): in jwt mode the token goes in ``?token=`` (browsers cannot set headers on a
-WebSocket); the user needs the ``read_live`` permission. Closes 4401 / 4403 otherwise.
+Auth: the browser's session cookie (B6) or ``?token=`` (API clients; browsers cannot set
+headers on a WebSocket); the user needs the ``read_live`` permission. Closes 4401 / 4403
+otherwise. A cookie-authenticated socket must come from our own origin (the ``Origin``
+header's host equals ``Host``), so another site cannot open it with the user's cookie.
 """
 
 import asyncio
 import json
 import time
 from typing import Any
+from urllib.parse import urlsplit
 
 import redis.asyncio as aioredis
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -37,8 +40,25 @@ WS_UNAUTHENTICATED = 4401
 WS_FORBIDDEN = 4403
 
 
+def _same_origin(ws: WebSocket) -> bool:
+    origin = ws.headers.get("origin")
+    if origin is None:
+        return True  # not a browser
+    return urlsplit(origin).netloc == ws.headers.get("host", "")
+
+
+def _ws_token(ws: WebSocket, token: str | None) -> tuple[str | None, int | None]:
+    """(token, refusal code): ``?token=`` first, else the session cookie from our origin."""
+    if token:
+        return token, None
+    cookie = ws.cookies.get(get_settings().session_cookie_name)
+    if cookie and not _same_origin(ws):
+        return None, WS_FORBIDDEN
+    return cookie, None
+
+
 def _authorise(token: str | None) -> int | None:
-    """None when the socket may proceed, else the close code (jwt mode: ``?token=``)."""
+    """None when the socket may proceed, else the close code."""
     try:
         with session_scope() as s:
             user = user_for_token(get_settings(), s, token)
@@ -96,7 +116,10 @@ def _wellbore_and_session(well_id: int) -> tuple[int | None, dict[str, Any] | No
 @router.websocket("/ws/wells/{well_id}/live")
 async def live_well(ws: WebSocket, well_id: int, token: str | None = None) -> None:
     await ws.accept()
-    if (code := await asyncio.to_thread(_authorise, token)) is not None:
+    token, code = _ws_token(ws, token)
+    if code is None:
+        code = await asyncio.to_thread(_authorise, token)
+    if code is not None:
         await _refuse(ws, code)
         return
     wb, info = await asyncio.to_thread(_wellbore_and_session, well_id)
@@ -138,7 +161,10 @@ async def live_well(ws: WebSocket, well_id: int, token: str | None = None) -> No
 @router.websocket("/ws/alerts")
 async def live_alerts(ws: WebSocket, well_id: int | None = None, token: str | None = None) -> None:
     await ws.accept()
-    if (code := await asyncio.to_thread(_authorise, token)) is not None:
+    token, code = _ws_token(ws, token)
+    if code is None:
+        code = await asyncio.to_thread(_authorise, token)
+    if code is not None:
         await _refuse(ws, code)
         return
     r = _redis()

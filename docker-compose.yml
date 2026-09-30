@@ -1,7 +1,9 @@
 # SMRITI local stack — backend phase B0, frontend phase F0.
 #   cp .env.example .env && docker compose up -d --build --wait
 # Web app: http://localhost:8080 (nginx serves the SPA and proxies /api, /ws, /healthz, /readyz).
-# Later phases add (as profiles): llm (Ollama/vLLM), keycloak, mlflow, grafana/prometheus.
+# Profiles (B6): `--profile jwt` adds the app with local-user login on :8081; `--profile oidc`
+# adds Keycloak on :8180 and the app with single sign-on on :8082 (demo realm in
+# infra/keycloak/). Both share the default stack's database and object store.
 
 name: smriti
 
@@ -10,6 +12,9 @@ x-backend-env: &backend-env
   SMRITI_LOG_LEVEL: ${SMRITI_LOG_LEVEL:-INFO}
   SMRITI_LOG_JSON: ${SMRITI_LOG_JSON:-true}
   SMRITI_AUTH_MODE: ${SMRITI_AUTH_MODE:-dev}
+  # The API is reached through the frontend's nginx, which sets X-Real-IP (the API port is
+  # published on 127.0.0.1 only).
+  SMRITI_TRUST_PROXY_HEADERS: "true"
   SMRITI_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-smriti}:${POSTGRES_PASSWORD:-smriti}@postgres:5432/${POSTGRES_DB:-smriti}
   SMRITI_REDIS_URL: redis://redis:6379/0
   SMRITI_S3_ENDPOINT_URL: http://s3:8333
@@ -133,6 +138,87 @@ services:
       - "127.0.0.1:${WEB_PORT:-8080}:80"
     depends_on:
       api: { condition: service_healthy }
+    restart: unless-stopped
+
+  # ─── B6: the same app with real authentication (profiles) ─────────────────────────
+  api-jwt:
+    profiles: ["jwt"]
+    image: smriti-backend:dev
+    environment:
+      <<: *backend-env
+      SMRITI_AUTH_MODE: jwt
+      # Local testing only; set a real secret (>= 32 chars) anywhere else.
+      SMRITI_JWT_SECRET: ${SMRITI_JWT_SECRET:-local-only-jwt-secret-change-me-0123456789}
+    ports:
+      - "127.0.0.1:${API_JWT_PORT:-8001}:8000"
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    restart: unless-stopped
+
+  frontend-jwt:
+    profiles: ["jwt"]
+    image: smriti-frontend:dev
+    environment:
+      API_UPSTREAM: http://api-jwt:8000
+      MAP_TILE_URL: ${MAP_TILE_URL:-}
+      MAP_TILE_ATTRIBUTION: ${MAP_TILE_ATTRIBUTION:-}
+      MAP_TILE_ORIGIN: ${MAP_TILE_ORIGIN:-}
+    ports:
+      - "127.0.0.1:${WEB_JWT_PORT:-8081}:80"
+    depends_on:
+      api-jwt: { condition: service_healthy }
+    restart: unless-stopped
+
+  keycloak:
+    profiles: ["oidc"]
+    image: keycloak/keycloak:26.4
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN:-kcadmin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:-kcadmin-local-only}
+      KC_HOSTNAME: http://localhost:${KEYCLOAK_PORT:-8180}  # tokens' "iss" is always this
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"  # the API reaches it as keycloak:8080
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ./infra/keycloak/smriti-realm.json:/opt/keycloak/data/import/smriti-realm.json:ro
+    ports:
+      - "127.0.0.1:${KEYCLOAK_PORT:-8180}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.0\r\n\r\n' >&3 && grep -q UP <&3"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+    restart: unless-stopped
+
+  api-oidc:
+    profiles: ["oidc"]
+    image: smriti-backend:dev
+    environment:
+      <<: *backend-env
+      SMRITI_AUTH_MODE: oidc
+      SMRITI_OIDC_ISSUER: http://localhost:${KEYCLOAK_PORT:-8180}/realms/smriti
+      SMRITI_OIDC_AUDIENCE: smriti-web
+      SMRITI_OIDC_JWKS_URL: http://keycloak:8080/realms/smriti/protocol/openid-connect/certs
+      SMRITI_OIDC_TOKEN_URL: http://keycloak:8080/realms/smriti/protocol/openid-connect/token
+    ports:
+      - "127.0.0.1:${API_OIDC_PORT:-8002}:8000"
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      keycloak: { condition: service_healthy }
+    restart: unless-stopped
+
+  frontend-oidc:
+    profiles: ["oidc"]
+    image: smriti-frontend:dev
+    environment:
+      API_UPSTREAM: http://api-oidc:8000
+      MAP_TILE_URL: ${MAP_TILE_URL:-}
+      MAP_TILE_ATTRIBUTION: ${MAP_TILE_ATTRIBUTION:-}
+      MAP_TILE_ORIGIN: ${MAP_TILE_ORIGIN:-}
+    ports:
+      - "127.0.0.1:${WEB_OIDC_PORT:-8082}:80"
+    depends_on:
+      api-oidc: { condition: service_healthy }
     restart: unless-stopped
 
 volumes:
