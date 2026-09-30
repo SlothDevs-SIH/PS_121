@@ -83,11 +83,13 @@ def test_no_record_and_off_topic(client: TestClient) -> None:
 
 def test_questions_about_facts_the_reports_never_hold_are_refused(client: TestClient) -> None:
     """Part 7 (V-B34): the scope check names the missing word and calls no tool, whatever
-    the intent (this question names a well, so it used to get that well's summary)."""
-    a = _ask(client, "What was the rig cost per day on SYN-ASM-20?")
+    the intent (a question naming a well used to get that well's summary). Uses a well
+    that exists in whatever field was seeded (CI seeds a smaller one)."""
+    name = client.get("/api/v1/wells", params={"limit": 1}).json()["items"][0]["name"]
+    a = _ask(client, f"What was the rig cost per day on {name}?")
     assert a["refused"] and "never mention" in str(a["answer"]) and "cost" in str(a["answer"])
     assert a["tools"] == []
-    b = _ask(client, "Which reports mention a pipe release pill?")
+    b = _ask(client, "Which reports mention losses?")
     assert not b["refused"] and b["citations"]
 
 
