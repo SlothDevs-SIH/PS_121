@@ -44,9 +44,9 @@ test('every screen in the navigation loads without errors', async ({ page }) => 
 })
 
 test('planned screens probe the real backend and show its phase', async ({ page }) => {
-  // The analytics screen is F5, but its backend (B5) already answers.
-  await page.goto('/analytics')
-  await expect(page.getByTestId('planned-phase')).toHaveText('Planned · frontend phase F5')
+  // The Admin screen is F6, but its user list (B5) already answers.
+  await page.goto('/admin')
+  await expect(page.getByTestId('planned-phase')).toHaveText('Planned · frontend phase F6')
   await expect(page.getByTestId('endpoint-probes')).toContainText('200 ok')
 })
 

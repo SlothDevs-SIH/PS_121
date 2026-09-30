@@ -11,6 +11,7 @@ from app.core.config import Settings, get_settings
 from app.core.errors import register_error_handlers
 from app.core.health import DEFAULT_CHECKS, Check, ReadinessReport, run_checks
 from app.core.logging import configure_logging
+from app.core.metrics import instrument_api
 from app.core.middleware import register_middleware
 
 
@@ -32,6 +33,8 @@ def create_app() -> FastAPI:
     )
     register_middleware(app)
     register_error_handlers(app)
+    if settings.metrics_enabled:
+        instrument_api(app)
 
     @app.get("/healthz", tags=["health"], summary="Liveness: the process is up")
     def healthz() -> dict[str, str]:

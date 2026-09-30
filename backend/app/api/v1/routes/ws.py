@@ -25,6 +25,7 @@ from app.alerts.service import get_alert
 from app.core.auth import user_for_token
 from app.core.config import get_settings
 from app.core.errors import AppError, NotFoundError
+from app.core.metrics import WS_ALERTS, WS_CLIENTS, WS_LIVE
 from app.db.models import Wellbore
 from app.db.models.realtime import ReplaySession
 from app.db.session import session_scope
@@ -134,6 +135,8 @@ async def live_well(ws: WebSocket, well_id: int, token: str | None = None) -> No
     last_sent = 0.0
     last_status = 0.0
     pending: dict[str, Any] | None = None
+    clients = WS_CLIENTS.labels(endpoint=WS_LIVE)
+    clients.inc()
     try:
         await ws.send_json({"type": "hello", "well_id": well_id, "wellbore_id": wb, "replay": info})
         while True:
@@ -155,6 +158,7 @@ async def live_well(ws: WebSocket, well_id: int, token: str | None = None) -> No
     except WebSocketDisconnect:
         pass
     finally:
+        clients.dec()
         await r.aclose()
 
 
@@ -169,6 +173,8 @@ async def live_alerts(ws: WebSocket, well_id: int | None = None, token: str | No
         return
     r = _redis()
     last_id = "$"
+    clients = WS_CLIENTS.labels(endpoint=WS_ALERTS)
+    clients.inc()
     try:
         await ws.send_json({"type": "hello", "well_id": well_id})
         while True:
@@ -188,6 +194,7 @@ async def live_alerts(ws: WebSocket, well_id: int | None = None, token: str | No
     except WebSocketDisconnect:
         pass
     finally:
+        clients.dec()
         await r.aclose()
 
 

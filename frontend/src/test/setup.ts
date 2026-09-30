@@ -34,5 +34,7 @@ afterEach(() => {
   resetUiStore()
 })
 
-// Pages are lazy chunks; under a parallel full run their first render can pass 1 s.
-configure({ asyncUtilTimeout: 3000 })
+// Pages are lazy chunks; under a parallel full run on a many-core machine (one jsdom
+// per worker) the cold import behind a file's first render has been seen to pass 10 s.
+// findBy* resolves as soon as the element appears, so this only bounds failures.
+configure({ asyncUtilTimeout: 20000 })

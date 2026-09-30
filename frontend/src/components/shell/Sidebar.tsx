@@ -7,6 +7,7 @@ import { screensFor, type ScreenSpec } from '../../app/screens'
 import { useWells } from '../../lib/api/hooks'
 import { cn } from '../../lib/cn'
 import { activePillTransition } from '../../lib/motion'
+import { NEEDS_NETWORK, useConnectivity } from '../../lib/offline/online'
 import { FLUID_ORDER, FLUIDS, type FluidType } from '../../lib/wellTypes'
 import { useUiStore } from '../../stores/ui'
 
@@ -35,6 +36,7 @@ export function Sidebar({ collapsed, drawer = false, canToggle = true }: Props) 
   const location = useLocation()
   const [params] = useSearchParams()
   const wells = useWells()
+  const offline = useConnectivity() !== 'online'
   const screens = useMemo(() => new Map(screensFor(mode).map((s) => [s.id, s])), [mode])
 
   const counts = useMemo(() => {
@@ -102,6 +104,7 @@ export function Sidebar({ collapsed, drawer = false, canToggle = true }: Props) 
                     pillId={pillId}
                     onNavigate={close}
                     forceInactive={s.id === 'map' && onMap && Boolean(typeParam)}
+                    unavailable={offline && NEEDS_NETWORK.has(s.id)}
                   />
                 </li>
               ))}
@@ -195,15 +198,38 @@ function NavItem({
   pillId,
   onNavigate,
   forceInactive,
+  unavailable,
 }: {
   screen: ScreenSpec
   collapsed: boolean
   pillId: string
   onNavigate: () => void
   forceInactive: boolean
+  /** Offline, screens that need the live server are shown but not offered (FRONTEND_PLAN §12). */
+  unavailable: boolean
 }) {
   const Icon = screen.icon
   const planned = screen.status !== 'built'
+  if (unavailable)
+    return (
+      <span
+        role="link"
+        aria-disabled="true"
+        title={`${screen.title} needs the connection to the server`}
+        data-screen={screen.id}
+        data-title={screen.title}
+        data-unavailable="offline"
+        className="relative flex h-9 cursor-not-allowed items-center gap-3 rounded-lg px-3 text-sm text-muted opacity-60"
+      >
+        <Icon size={18} aria-hidden className="shrink-0" />
+        <span className={cn('flex-1 truncate transition-opacity', collapsed && 'opacity-0')}>
+          {screen.title}
+        </span>
+        <span className={cn('text-[0.65rem] transition-opacity', collapsed && 'opacity-0')}>
+          offline
+        </span>
+      </span>
+    )
   return (
     <NavLink
       to={screen.navPath}

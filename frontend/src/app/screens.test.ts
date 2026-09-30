@@ -16,7 +16,7 @@ describe('screen registry', () => {
     expect(numbers).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
   })
 
-  it('uses valid phases; Part 5 (F4) built the Live Monitor and Alerts', () => {
+  it('uses valid phases; Part 6 (F5) built Analytics', () => {
     expect(SCREENS.every((s) => PHASES.has(s.phase))).toBe(true)
     expect(SCREENS.filter((s) => s.status === 'built').map((s) => s.id)).toEqual([
       'dashboard',
@@ -28,6 +28,7 @@ describe('screen registry', () => {
       'search',
       'ledger',
       'documents',
+      'analytics',
       'system',
     ])
     expect(SCREENS.filter((s) => s.status === 'in_progress')).toEqual([])

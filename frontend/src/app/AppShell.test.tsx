@@ -135,15 +135,10 @@ describe('App shell', () => {
   })
 
   it('renders planned screens with their phase and live endpoint probes', async () => {
-    mockBackend({
-      '/readyz': READY,
-      '/api/v1/analytics/npt': { status: 200, body: {} },
-      '/api/v1/analytics/recurring': notImplemented('B7'),
-      '/api/v1/analytics/alerts': { status: 200, body: {} },
-    })
-    renderApp('/analytics')
-    expect(await screen.findByRole('heading', { level: 1, name: 'Analytics' })).toBeInTheDocument()
-    expect(screen.getByTestId('planned-phase')).toHaveTextContent('frontend phase F5')
+    mockBackend({ '/readyz': READY, '/api/v1/users': notImplemented('B7') })
+    renderApp('/admin')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Admin' })).toBeInTheDocument()
+    expect(screen.getByTestId('planned-phase')).toHaveTextContent('frontend phase F6')
     expect(await screen.findAllByText('501 · backend phase B7')).toHaveLength(1)
   })
 })

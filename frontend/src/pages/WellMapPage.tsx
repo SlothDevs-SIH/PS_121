@@ -4,6 +4,8 @@ import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useState } from '
 import { Link, useSearchParams } from 'react-router'
 
 import { useTheme } from '../app/themeContext'
+import { WellPackButton } from '../components/offline/WellPackButton'
+import { RiskBriefButton } from '../components/reports/RiskBriefButton'
 import { RiskCurve } from '../components/risk/RiskCurve'
 import { SyntheticBadge } from '../components/SyntheticBadge'
 import { Badge } from '../components/ui/Badge'
@@ -513,6 +515,12 @@ export function WellMapPage() {
                   >
                     Open Well 360 <ArrowRight size={14} aria-hidden />
                   </Link>
+                  <RiskBriefButton
+                    wellId={well.data.id}
+                    wellName={well.data.name}
+                    radiusKm={radiusKm}
+                  />
+                  <WellPackButton wellId={well.data.id} />
                   <details className="rounded-lg border border-border px-3 py-2" open>
                     <summary className="cursor-pointer text-sm font-semibold text-text">
                       Offset prior risk by depth

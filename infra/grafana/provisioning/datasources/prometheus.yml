@@ -1,0 +1,13 @@
+# Grafana data source (B6). The fixed uid is what infra/grafana/dashboards/*.json refer to.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 15s  # the scrape interval: $__rate_interval never goes below 4x this

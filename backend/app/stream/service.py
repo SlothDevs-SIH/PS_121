@@ -27,6 +27,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.alerts.engine import SEVERITY_RANK, AlertEngine, Candidate, Decision
+from app.core import metrics
 from app.core.config import get_settings
 from app.db.models import Event, Well
 from app.db.models.realtime import CHANNELS, Alert, ReplaySession, RtSample, RtScore
@@ -245,6 +246,7 @@ def store_candidate(
 ) -> tuple[int, str] | None:
     """Apply an engine decision to the database; returns (alert id, created|fused)."""
     if d.action == "suppress":
+        metrics.ALERTS_SUPPRESSED.labels(reason=d.reason).inc()
         return None
     evidence = _enrich(session, c.evidence)
     latency_ms = round((time.time() - published_at) * 1000, 1)
@@ -276,6 +278,7 @@ def store_candidate(
         session.add(alert)
         session.flush()
         live.engine.created(alert.id, c)
+        metrics.ALERTS_RAISED.labels(c.alert_type, c.severity, "created").inc()
         return alert.id, "created"
     assert d.target is not None
     target = session.get(Alert, d.target.id)
@@ -303,6 +306,7 @@ def store_candidate(
         },
     ]
     alert.detail = {**alert.detail, "fused": fused}
+    metrics.ALERTS_RAISED.labels(c.alert_type, c.severity, "fused").inc()
     return alert.id, "fused"
 
 
@@ -436,6 +440,9 @@ class Consumer:
                 maxlen=SCORES_MAXLEN,
                 approximate=True,
             )
+        # How far behind the live view is: publish -> frame out, for the newest sample.
+        metrics.SCORING_LAG.set(max(0.0, time.time() - float(messages[-1][1]["pub"])))
+        metrics.SAMPLES_SCORED.inc(len(messages))
 
     def sync_alert_states(self) -> None:
         """Feed acks and dismissals made in the API back into the engines (cooldown)."""

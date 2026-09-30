@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 Status = Literal["planned", "in_progress", "built"]
 
-CURRENT_PHASE = "B5"
+CURRENT_PHASE = "B6"
 
 
 class Component(BaseModel):
@@ -130,5 +130,39 @@ COMPONENTS: list[Component] = [
         phase="B5",
         status="built",
     ),
-    Component(key="oidc", stage="-", name="Keycloak OIDC login", phase="B6", status="planned"),
+    Component(
+        key="oidc",
+        stage="-",
+        name="OIDC login (Keycloak), session cookies, refresh, lockout, rate limits",
+        phase="B6",
+        status="built",
+    ),
+    Component(
+        key="observability",
+        stage="-",
+        name="Prometheus metrics (API, worker, stream) and Grafana dashboard",
+        phase="B6",
+        status="built",
+    ),
+    Component(
+        key="backups",
+        stage="-",
+        name="Backup, verify and restore scripts (pg_dump + S3 buckets)",
+        phase="B6",
+        status="built",
+    ),
+    Component(
+        key="loadtest",
+        stage="-",
+        name="Load test of the read-only API against the §9 latency targets",
+        phase="B6",
+        status="in_progress",
+    ),
+    Component(
+        key="security_review",
+        stage="-",
+        name="Security review and dependency audit",
+        phase="B6",
+        status="in_progress",
+    ),
 ]

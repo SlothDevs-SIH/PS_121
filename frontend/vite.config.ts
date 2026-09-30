@@ -2,13 +2,33 @@
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // The dev server proxies API calls to the backend so the app always uses same-origin
 // relative URLs (/api, /ws, /healthz, /readyz) — exactly like the nginx image in production.
 const apiTarget = process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:8000'
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    // PWA (FRONTEND_PLAN §12): our own service worker (src/lib/offline/sw.ts) gets the
+    // precache list injected. The manifest is public/manifest.webmanifest and registration
+    // is src/lib/offline/register.ts (no inline script: CSP). Not active in dev.
+    VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src/lib/offline',
+      filename: 'sw.ts',
+      injectRegister: false,
+      manifest: false,
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2,webmanifest}'],
+        // MapLibre's chunk (~1 MB) is precached too: the map must open offline.
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+        rollupFormat: 'iife',
+      },
+    }),
+  ],
   server: {
     port: 5173,
     proxy: {
@@ -33,5 +53,7 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
     restoreMocks: true,
+    // Must exceed the Testing Library asyncUtilTimeout in src/test/setup.ts.
+    testTimeout: 60000,
   },
 })

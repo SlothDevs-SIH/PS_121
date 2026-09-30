@@ -18,6 +18,8 @@ import { useTheme } from '../app/themeContext'
 import { ConfidenceValue } from '../components/ConfidenceValue'
 import { EvidenceLink } from '../components/evidence/EvidenceLink'
 import { LessonCardView } from '../components/knowledge/LessonCardView'
+import { WellPackButton } from '../components/offline/WellPackButton'
+import { RiskBriefButton } from '../components/reports/RiskBriefButton'
 import { SyntheticBadge } from '../components/SyntheticBadge'
 import { Badge } from '../components/ui/Badge'
 import { Card, CardTitle } from '../components/ui/Card'
@@ -349,11 +351,17 @@ export function Well360Page() {
   if (!valid) return <p className="text-danger">“{wellId}” is not a well id.</p>
   if (well.isError) {
     const notFound = well.error instanceof ApiError && well.error.status === 404
+    // The service worker's answer for a well that is neither online nor in a well pack.
+    const unpacked = well.error instanceof ApiError && well.error.code === 'offline'
     return (
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold text-text">Well 360</h1>
         <p className="text-danger" role="alert">
-          {notFound ? `There is no well with id ${id}.` : 'The well could not be loaded.'}
+          {notFound
+            ? `There is no well with id ${id}.`
+            : unpacked
+              ? 'Offline, and this well is not in a downloaded well pack.'
+              : 'The well could not be loaded.'}
         </p>
         <Link to="/map" className="text-accent hover:underline">
           Pick a well on the map
@@ -426,6 +434,8 @@ export function Well360Page() {
             >
               <Search size={14} aria-hidden /> Search this well's reports
             </Link>
+            <RiskBriefButton wellId={w.id} wellName={w.name} />
+            <WellPackButton wellId={w.id} />
           </div>
         </div>
         <DataQuality well={w} />

@@ -1,7 +1,10 @@
+import { ExternalLink } from 'lucide-react'
+
 import { SCREENS, CURRENT_FRONTEND_PHASE } from '../app/screens'
 import { Badge, type Tone } from '../components/ui/Badge'
 import { Card, CardTitle } from '../components/ui/Card'
 import { useMe, useMeta, useReadiness } from '../lib/api/hooks'
+import { buildInfo, useRuntimeConfig } from '../lib/config'
 
 const statusTone: Record<string, Tone> = { built: 'ok', in_progress: 'info', planned: 'neutral' }
 
@@ -9,6 +12,9 @@ export function SystemStatus() {
   const readiness = useReadiness()
   const meta = useMeta()
   const me = useMe()
+  const config = useRuntimeConfig()
+  const build = buildInfo()
+  const grafana = config.data?.grafanaUrl ?? ''
 
   return (
     <div className="mx-auto max-w-5xl space-y-4">
@@ -75,8 +81,14 @@ export function SystemStatus() {
           <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
             <dt className="text-muted">Phase</dt>
             <dd>{CURRENT_FRONTEND_PHASE}</dd>
+            <dt className="text-muted">Version</dt>
+            <dd data-testid="frontend-version">{build.version ?? 'unversioned (dev build)'}</dd>
             <dt className="text-muted">Build</dt>
-            <dd className="font-mono">{import.meta.env.VITE_GIT_SHA ?? 'dev'}</dd>
+            <dd className="font-mono break-all" data-testid="frontend-commit">
+              {build.commit}
+            </dd>
+            <dt className="text-muted">Built</dt>
+            <dd data-testid="frontend-built-at">{build.builtAt ?? '—'}</dd>
             <dt className="text-muted">Screens built</dt>
             <dd>
               {SCREENS.filter((s) => s.status === 'built').length} of {SCREENS.length}
@@ -84,6 +96,32 @@ export function SystemStatus() {
           </dl>
         </Card>
       </div>
+
+      <Card data-testid="monitoring">
+        <CardTitle>Monitoring</CardTitle>
+        {config.isPending ? (
+          <p className="text-sm text-muted">Loading…</p>
+        ) : grafana ? (
+          <p className="text-sm">
+            <a
+              href={grafana}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-medium text-accent hover:underline"
+              data-testid="grafana-link"
+            >
+              Open Grafana dashboards <ExternalLink size={14} aria-hidden />
+              <span className="sr-only">(opens in a new tab)</span>
+            </a>{' '}
+            <span className="text-muted">for this deployment's metrics over time.</span>
+          </p>
+        ) : (
+          <p className="text-sm text-muted" data-testid="grafana-none">
+            No Grafana is configured for this deployment. Set <code>GRAFANA_URL</code> on the web
+            container to link its dashboards here.
+          </p>
+        )}
+      </Card>
 
       <Card>
         <CardTitle>Backend components</CardTitle>

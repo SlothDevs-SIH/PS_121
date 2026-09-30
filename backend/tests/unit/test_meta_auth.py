@@ -9,7 +9,7 @@ VALID_PHASES = {f"B{i}" for i in range(7)}
 
 def test_meta_reports_phase_and_components(client: TestClient) -> None:
     body = client.get("/api/v1/meta").json()
-    assert body["backend_phase"] == CURRENT_PHASE == "B5"
+    assert body["backend_phase"] == CURRENT_PHASE == "B6"
     assert len(body["components"]) == len(COMPONENTS)
 
 
@@ -20,7 +20,7 @@ def test_component_registry_is_consistent() -> None:
     # Built so far: B0 platform, B1 ingestion/normalisation/geo, B2 extraction, search and
     # correlation (Part 2), B3 prior risk, physics and the ledger (Part 3), B4 real-time
     # classifiers, Deja Vu, alerts and the stream (Part 4), B5 copilot, reports and local
-    # auth (Part 5). Nothing is half-built between parts.
+    # auth (Part 5); B6 so far: OIDC (B6a), metrics and backups (Part 6).
     assert [c.key for c in COMPONENTS if c.status == "built"] == [
         "platform",
         "ingest",
@@ -39,8 +39,16 @@ def test_component_registry_is_consistent() -> None:
         "reports",
         "stream",
         "auth",
+        "oidc",
+        "observability",
+        "backups",
     ]
-    assert [c.key for c in COMPONENTS if c.status == "in_progress"] == []
+    # Part 6 still running: the load test (measured, not yet recorded as passing) and the
+    # security review. Nothing else is planned.
+    in_progress = [c for c in COMPONENTS if c.status == "in_progress"]
+    assert [c.key for c in in_progress] == ["loadtest", "security_review"]
+    assert {c.phase for c in in_progress} == {CURRENT_PHASE}
+    assert [c.key for c in COMPONENTS if c.status == "planned"] == []
 
 
 def test_dev_auth_returns_local_admin(client: TestClient) -> None:

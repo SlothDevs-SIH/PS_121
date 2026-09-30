@@ -6,7 +6,9 @@ import { useNavigate } from 'react-router'
 
 import { screensFor } from '../../app/screens'
 import { useDocuments, useWells } from '../../lib/api/hooks'
+import { cn } from '../../lib/cn'
 import { easeOutExpo } from '../../lib/motion'
+import { NEEDS_NETWORK, useConnectivity } from '../../lib/offline/online'
 import { FLUIDS, fluidOf } from '../../lib/wellTypes'
 import { useUiStore } from '../../stores/ui'
 
@@ -24,6 +26,7 @@ export default function CommandPalette() {
   const navigate = useNavigate()
   const wells = useWells()
   const docs = useDocuments(undefined, open)
+  const offline = useConnectivity() !== 'online'
   const returnFocus = useRef<Element | null>(null)
 
   useEffect(() => {
@@ -92,22 +95,31 @@ export default function CommandPalette() {
                   Nothing matches.
                 </Command.Empty>
                 <Command.Group heading="Pages" className={groupClass}>
-                  {screensFor(mode).map((s) => (
-                    <Command.Item
-                      key={s.id}
-                      value={`page ${s.title}`}
-                      data-kind="page"
-                      keywords={[s.purpose]}
-                      onSelect={() => go(s.navPath)}
-                      className={itemClass}
-                    >
-                      <s.icon size={16} aria-hidden className="text-muted" />
-                      <span className="flex-1">{s.title}</span>
-                      {s.status !== 'built' && (
-                        <span className="text-[0.65rem] text-muted">{s.phase}</span>
-                      )}
-                    </Command.Item>
-                  ))}
+                  {screensFor(mode).map((s) => {
+                    // Offline, live-only screens are listed but not offered (FRONTEND_PLAN §12).
+                    const unavailable = offline && NEEDS_NETWORK.has(s.id)
+                    return (
+                      <Command.Item
+                        key={s.id}
+                        value={`page ${s.title}`}
+                        data-kind="page"
+                        keywords={[s.purpose]}
+                        disabled={unavailable}
+                        onSelect={() => go(s.navPath)}
+                        className={cn(itemClass, unavailable && 'cursor-not-allowed opacity-60')}
+                      >
+                        <s.icon size={16} aria-hidden className="text-muted" />
+                        <span className="flex-1">{s.title}</span>
+                        {unavailable ? (
+                          <span className="text-[0.65rem] text-muted">offline</span>
+                        ) : (
+                          s.status !== 'built' && (
+                            <span className="text-[0.65rem] text-muted">{s.phase}</span>
+                          )
+                        )}
+                      </Command.Item>
+                    )
+                  })}
                 </Command.Group>
                 <Command.Group heading="Wells" className={groupClass}>
                   {(wells.data?.items ?? []).map((w) => {

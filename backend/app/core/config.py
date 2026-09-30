@@ -97,6 +97,12 @@ class Settings(BaseSettings):
     # Per-dependency timeout used by /readyz checks
     readiness_timeout_s: float = 2.0
 
+    # Prometheus metrics (B6): the API serves GET /metrics; the worker and the stream
+    # service, separate processes, serve theirs on these ports (inside the compose network).
+    metrics_enabled: bool = True
+    worker_metrics_port: int = Field(default=9101, ge=1, le=65535)
+    stream_metrics_port: int = Field(default=9102, ge=1, le=65535)
+
     @property
     def s3_buckets(self) -> list[str]:
         return [self.s3_bucket_raw, self.s3_bucket_pages]

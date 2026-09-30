@@ -4,6 +4,8 @@
 # Profiles (B6): `--profile jwt` adds the app with local-user login on :8081; `--profile oidc`
 # adds Keycloak on :8180 and the app with single sign-on on :8082 (demo realm in
 # infra/keycloak/). Both share the default stack's database and object store.
+# `--profile observability` adds Prometheus on :9090 and Grafana on :3000 (dashboards in
+# infra/grafana/), scraping the api, worker and stream services.
 
 name: smriti
 
@@ -26,7 +28,7 @@ x-backend-env: &backend-env
 services:
   postgres:
     # PostgreSQL 16.15 with TimescaleDB 2.30.1, PostGIS 3.6.4, pgvector 0.8.6, pg_trgm (verified 2026-09-28)
-    image: timescale/timescaledb-ha:pg16.15-ts2.30.1
+    image: timescale/timescaledb-ha:pg16.15-ts2.30.1@sha256:4f288c0a521362cad799f265bc0ebd60c3f8f98596b850172cc2da72883420ff
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-smriti}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-smriti}
@@ -42,7 +44,7 @@ services:
       retries: 20
 
   redis:
-    image: redis:7.4-alpine
+    image: redis:7.4-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redisdata:/data
@@ -56,7 +58,7 @@ services:
 
   s3:
     # S3-compatible object store (Apache-2.0). MinIO's Docker Hub image was not pullable on 2026-09-28.
-    image: chrislusf/seaweedfs:4.47
+    image: chrislusf/seaweedfs:4.47@sha256:ce9e796f1fe6f06968f4c04bdaf8f678dad9c8acdfef3d244133d71bfa6bf882
     entrypoint: ["/bin/sh", "/entrypoint.sh"]
     environment:
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-smriti}
@@ -171,7 +173,7 @@ services:
 
   keycloak:
     profiles: ["oidc"]
-    image: keycloak/keycloak:26.4
+    image: keycloak/keycloak:26.4@sha256:9409c59bdfb65dbffa20b11e6f18b8abb9281d480c7ca402f51ed3d5977e6007
     command: ["start-dev", "--import-realm"]
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN:-kcadmin}
@@ -221,7 +223,57 @@ services:
       api-oidc: { condition: service_healthy }
     restart: unless-stopped
 
+  # ─── B6: metrics (profile) ────────────────────────────────────────────────────────
+  prometheus:
+    profiles: ["observability"]
+    image: prom/prometheus:v3.15.0@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e
+    command: ["--config.file=/etc/prometheus/prometheus.yml",
+              "--storage.tsdb.path=/prometheus", "--storage.tsdb.retention.time=7d"]
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - promdata:/prometheus
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9090/-/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  grafana:
+    profiles: ["observability"]
+    image: grafana/grafana:13.2.3@sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      # Local testing only; set GRAFANA_ADMIN_PASSWORD anywhere else.
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-grafana-local-only}
+      # Demo: dashboards are readable without logging in (Viewer role, no editing).
+      GF_AUTH_ANONYMOUS_ENABLED: ${GRAFANA_ANONYMOUS:-true}
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/smriti-overview.json
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafanadata:/var/lib/grafana
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      prometheus: { condition: service_healthy }
+    restart: unless-stopped
+
 volumes:
   pgdata:
   redisdata:
   s3data:
+  promdata:
+  grafanadata:

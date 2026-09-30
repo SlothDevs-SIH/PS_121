@@ -1,4 +1,4 @@
-import { Bell, Check, HelpCircle, MessageSquare, ShieldAlert, X } from 'lucide-react'
+import { Bell, Check, HelpCircle, MessageSquare, ShieldAlert, Sparkles, X } from 'lucide-react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router'
 
@@ -29,6 +29,7 @@ import {
   useMe,
   useRealtimeWindow,
 } from '../lib/api/hooks'
+import { askCopilotHref } from '../lib/copilot'
 import { eventMeta } from '../lib/eventTypes'
 import { scoreText, sortAlerts } from '../lib/alerts'
 import { formatValue } from '../lib/liveView'
@@ -183,9 +184,18 @@ function WhyFired({ alert }: { alert: AlertOut }) {
   }
   return (
     <div className="space-y-2">
-      <Button onClick={() => void ask()} disabled={busy} data-testid="why-fired">
-        <HelpCircle size={14} aria-hidden /> {busy ? 'Asking the copilot…' : 'Why did this fire?'}
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button onClick={() => void ask()} disabled={busy} data-testid="why-fired">
+          <HelpCircle size={14} aria-hidden /> {busy ? 'Asking the copilot…' : 'Why did this fire?'}
+        </Button>
+        <Link
+          to={askCopilotHref(alert)}
+          className="inline-flex min-h-9 items-center gap-2 rounded-md px-3 text-sm font-medium text-accent hover:bg-surface-2"
+          data-testid="ask-copilot"
+        >
+          <Sparkles size={14} aria-hidden /> Ask copilot
+        </Link>
+      </div>
       {error && <p className="text-sm text-danger">{error}</p>}
       {answer && (
         <div

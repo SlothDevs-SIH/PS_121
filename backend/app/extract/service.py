@@ -21,6 +21,7 @@ from sqlalchemy import delete, exists, func, select, text, update
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.core.metrics import EXTRACTION_CONFIDENCE
 from app.db.models import (
     CasingString,
     CementJob,
@@ -325,6 +326,7 @@ class _Writer:
     def event(self, d: EventDraft) -> Event:
         fm_id = self._formation(d)
         confidence = d.penalties.apply(ocr_confidence(d.primary))
+        EXTRACTION_CONFIDENCE.labels(kind="event").observe(confidence)
         tvd, tvdss = self.ctx.depth_refs(d.md_m)
         existing = self._match(d)
         if existing is not None:
@@ -451,6 +453,7 @@ class _Writer:
             have.add(md.action_code)
         self.s.flush()
         for mit, md in added:
+            EXTRACTION_CONFIDENCE.labels(kind="mitigation").observe(mit.confidence)
             if mit.confidence < self.threshold:
                 self._review(
                     "mitigation",
@@ -521,6 +524,7 @@ class _Writer:
         ):
             return  # already known from another report
         confidence = c.penalties.apply(ocr_confidence(c.lines))
+        EXTRACTION_CONFIDENCE.labels(kind="casing").observe(confidence)
         tvd, tvdss = self.ctx.depth_refs(c.shoe_md_m)
         _, toc_tvdss = self.ctx.depth_refs(c.toc_md_m)
         row = CasingString(
@@ -576,6 +580,7 @@ class _Writer:
         ):
             return
         confidence = m.penalties.apply(ocr_confidence(m.lines))
+        EXTRACTION_CONFIDENCE.labels(kind="mud").observe(confidence)
         row = MudInterval(
             wellbore_id=self.ctx.wellbore_id,
             md_from_m=_r(m.md_from_m) or 0.0,

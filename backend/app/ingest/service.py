@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
+from app.core import metrics
 from app.core.config import get_settings
 from app.core.errors import AppError
 from app.db.models import Chunk, Document, Page, TextSpan
@@ -165,6 +166,8 @@ def process_document(session: Session, document_id: int) -> Document:
     doc.error = "; ".join(reasons) or None
     doc.processed_at = datetime.now(tz=UTC)
     session.flush()
+    metrics.record_pages([p.ocr_used for p in pages])
+    metrics.DOCUMENTS_INGESTED.labels(status=doc.ingest_status).inc()
     log.info("processed document %s (%s pages, %s)", doc.id, doc.page_count, doc.ingest_status)
     return doc
 
@@ -174,3 +177,4 @@ def mark_failed(session: Session, document_id: int, message: str) -> None:
     if doc is not None:
         doc.ingest_status = "failed"
         doc.error = message[:1000]
+    metrics.DOCUMENTS_INGESTED.labels(status="failed").inc()

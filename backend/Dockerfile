@@ -1,7 +1,9 @@
 # SMRITI backend image — used by the api, worker and migrate services.
 # Override PYTHON_IMAGE to build from an internal registry mirror or a base image that
 # trusts a corporate TLS-inspection CA (e.g. inside a PSU network).
-ARG PYTHON_IMAGE=python:3.11-slim
+# Pinned by digest (the multi-arch index; tests/unit/test_image_pins.py checks it). To update:
+# docker buildx imagetools inspect python:3.11-slim
+ARG PYTHON_IMAGE=python:3.11-slim@sha256:e41613d42d4891e4930f79523f93f81bbc7632584ec65e36ab055f41a800b41e
 FROM ${PYTHON_IMAGE}
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

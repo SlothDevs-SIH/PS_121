@@ -1,0 +1,14 @@
+# Loads every dashboard JSON in infra/grafana/dashboards/ (mounted read-only) into the
+# "SMRITI" folder. Edits made in the UI are not saved back: change the JSON file instead.
+apiVersion: 1
+
+providers:
+  - name: smriti
+    folder: SMRITI
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

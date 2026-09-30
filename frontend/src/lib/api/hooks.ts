@@ -1,7 +1,14 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 
 import {
   api,
+  apiFetch,
   type AlertOut,
   type AlertPage,
   type AlertQuery,
@@ -15,6 +22,8 @@ import {
   type ReviewDecision,
   type SearchParams,
 } from './client'
+import type { AlertQuality, NptBreakdown, NptGroupBy, RecurringProblems } from '../analytics'
+import { fetchOffsetBrief, type BriefProgress } from '../reports'
 
 export const queryKeys = {
   readiness: ['readiness'] as const,
@@ -388,5 +397,92 @@ export function useAlertAction(user = 'you') {
     onSettled: () => {
       void client.invalidateQueries({ queryKey: ['alerts'] })
     },
+  })
+}
+
+// ─── Part 6 (F5): analytics and the Offset Risk Brief ────────────────────────────────────
+
+export interface NptQuery {
+  group_by: NptGroupBy
+  event_type?: string | null
+  formation?: string | null
+}
+
+function query(params: Record<string, string | number | null | undefined>): string {
+  const q = new URLSearchParams()
+  for (const [k, v] of Object.entries(params))
+    if (v !== undefined && v !== null && v !== '') q.set(k, String(v))
+  const s = q.toString()
+  return s ? `?${s}` : ''
+}
+
+export const analyticsKeys = {
+  npt: (q: NptQuery) => ['analytics', 'npt', q] as const,
+  recurring: (minWells: number) => ['analytics', 'recurring', minWells] as const,
+  alerts: (wellId: number | null) => ['analytics', 'alerts', wellId] as const,
+}
+
+const fetchNpt = (q: NptQuery) => apiFetch<NptBreakdown>(`/api/v1/analytics/npt${query({ ...q })}`)
+
+export function useNptBreakdown(q: NptQuery) {
+  return useQuery({
+    queryKey: analyticsKeys.npt(q),
+    queryFn: () => fetchNpt(q),
+    placeholderData: keepPreviousData,
+    staleTime: 60_000,
+    retry: false,
+  })
+}
+
+/** One by-year breakdown per formation: the rows of the formation × year heatmap. */
+export function useNptByYearFor(formations: string[], eventType: string | null) {
+  return useQueries({
+    queries: formations.map((formation) => {
+      const q: NptQuery = { group_by: 'year', event_type: eventType, formation }
+      return {
+        queryKey: analyticsKeys.npt(q),
+        queryFn: () => fetchNpt(q),
+        staleTime: 60_000,
+        retry: false,
+      }
+    }),
+  })
+}
+
+export function useRecurringProblems(minWells: number) {
+  return useQuery({
+    queryKey: analyticsKeys.recurring(minWells),
+    queryFn: () =>
+      apiFetch<RecurringProblems>(`/api/v1/analytics/recurring${query({ min_wells: minWells })}`),
+    placeholderData: keepPreviousData,
+    staleTime: 60_000,
+    retry: false,
+  })
+}
+
+export function useAlertQuality(wellId: number | null = null, enabled = true) {
+  return useQuery({
+    queryKey: analyticsKeys.alerts(wellId),
+    queryFn: () => apiFetch<AlertQuality>(`/api/v1/analytics/alerts${query({ well_id: wellId })}`),
+    enabled,
+    staleTime: 30_000,
+    retry: false,
+  })
+}
+
+/** Download the Offset Risk Brief PDF for a well; progress arrives through `onProgress`. */
+export function useOffsetBrief() {
+  return useMutation({
+    mutationFn: ({
+      wellId,
+      radiusKm,
+      wellName,
+      onProgress,
+    }: {
+      wellId: number
+      radiusKm: number
+      wellName: string
+      onProgress?: (p: BriefProgress) => void
+    }) => fetchOffsetBrief(wellId, radiusKm, wellName, onProgress),
   })
 }

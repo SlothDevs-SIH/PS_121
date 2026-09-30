@@ -1,0 +1,32 @@
+# SMRITI Prometheus (B6): `docker compose --profile observability up -d`, then
+# http://localhost:9090 (targets: Status > Targets). Scrapes the default stack's processes by
+# compose service name; their metrics ports are not published outside the compose network.
+#   api     GET /metrics on the API port (not proxied by the web app's nginx)
+#   worker  Celery main process, SMRITI_WORKER_METRICS_PORT (pool children aggregated)
+#   stream  replay/scoring service, SMRITI_STREAM_METRICS_PORT
+# The jwt/oidc profiles' APIs (api-jwt, api-oidc) can be added as further api targets.
+
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 15s
+  external_labels:
+    system: smriti
+
+scrape_configs:
+  - job_name: api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api:8000"]
+
+  - job_name: worker
+    static_configs:
+      - targets: ["worker:9101"]
+
+  - job_name: stream
+    static_configs:
+      - targets: ["stream:9102"]
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

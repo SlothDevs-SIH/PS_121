@@ -48,6 +48,10 @@ const LiveMonitorPage = lazy(() =>
 const AlertsPage = lazy(() =>
   import('../pages/AlertsPage').then((m) => ({ default: m.AlertsPage })),
 )
+// oxlint-disable-next-line react/only-export-components
+const AnalyticsPage = lazy(() =>
+  import('../pages/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })),
+)
 
 /** Built screens map to real components; everything else renders its PlannedScreen. */
 const builtScreens: Record<string, ComponentType> = {
@@ -61,6 +65,7 @@ const builtScreens: Record<string, ComponentType> = {
   ledger: LedgerPage,
   live: LiveMonitorPage,
   alerts: AlertsPage,
+  analytics: AnalyticsPage,
 }
 
 const loading = (

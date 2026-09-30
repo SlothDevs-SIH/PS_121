@@ -25,7 +25,7 @@ export function Topbar() {
   const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 
   return (
-    <header className="sticky top-0 z-(--z-sticky) flex h-14 items-center gap-2 border-b border-border bg-glass px-3 backdrop-blur-md md:px-4">
+    <header className="sticky top-0 z-(--z-sticky) flex h-[calc(3.5rem+env(safe-area-inset-top))] items-center pt-[env(safe-area-inset-top)] gap-2 border-b border-border bg-glass px-3 backdrop-blur-md md:px-4">
       <Button
         className="md:hidden"
         onClick={() => setMobileNavOpen(true)}

@@ -45,7 +45,7 @@ export interface ScreenSpec {
   icon: LucideIcon
 }
 
-export const CURRENT_FRONTEND_PHASE: FrontendPhase = 'F4'
+export const CURRENT_FRONTEND_PHASE: FrontendPhase = 'F5'
 
 export const SCREENS: ScreenSpec[] = [
   {
@@ -217,7 +217,7 @@ export const SCREENS: ScreenSpec[] = [
     audiences: ['office'],
     psRefs: ['O-vii'],
     phase: 'F5',
-    status: 'planned',
+    status: 'built',
     endpoints: [
       { method: 'GET', path: '/api/v1/analytics/npt?group_by=formation' },
       { method: 'GET', path: '/api/v1/analytics/recurring' },
@@ -236,7 +236,10 @@ export const SCREENS: ScreenSpec[] = [
     psRefs: [],
     phase: 'F6',
     status: 'planned',
-    endpoints: [{ method: 'POST', path: '/api/v1/replay' }],
+    endpoints: [
+      { method: 'GET', path: '/api/v1/users' },
+      { method: 'POST', path: '/api/v1/replay' },
+    ],
     icon: Settings2,
   },
   {
