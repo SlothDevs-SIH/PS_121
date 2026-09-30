@@ -81,6 +81,16 @@ def test_no_record_and_off_topic(client: TestClient) -> None:
     assert a["refused"] and str(a["answer"]).startswith("No record found")
 
 
+def test_questions_about_facts_the_reports_never_hold_are_refused(client: TestClient) -> None:
+    """Part 7 (V-B34): the scope check names the missing word and calls no tool, whatever
+    the intent (this question names a well, so it used to get that well's summary)."""
+    a = _ask(client, "What was the rig cost per day on SYN-ASM-20?")
+    assert a["refused"] and "never mention" in str(a["answer"]) and "cost" in str(a["answer"])
+    assert a["tools"] == []
+    b = _ask(client, "Which reports mention a pipe release pill?")
+    assert not b["refused"] and b["citations"]
+
+
 def test_tools_are_scoped_to_the_role_and_the_query_is_audited() -> None:
     app = create_app()
     viewer = CurrentUser(user_id="copilot-viewer-it", name="V", roles=["viewer"])

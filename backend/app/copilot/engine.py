@@ -17,7 +17,8 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from app.copilot import planner
+from app.copilot import planner, scope
+from app.copilot.engine_words import STOP, WORD, stem
 from app.copilot.tools import EVENT_LABELS, Citation, Fact, ToolResult, call
 from app.core.auth import CurrentUser
 from app.core.config import get_settings
@@ -62,30 +63,17 @@ def _intro(p: planner.Plan) -> str | None:
     }.get(p.intent)
 
 
-_STOP_WORDS = (
-    "a an and are as at be by can did do does for from had has have how i in is it its me my "
-    "of on or our so that the their them there these they this to was we were what when where "
-    "which who whom why will with would you your about any use used using get got tell show "
-    "give find list well wells"
-)
-STOP = set(_STOP_WORDS.split())
-WORD = re.compile(r"[a-z][a-z0-9]+")
-
-
-def _stem(w: str) -> str:
-    for suf in ("ings", "ing", "ies", "es", "ed", "s"):
-        if w.endswith(suf) and len(w) - len(suf) >= 3:
-            return w[: -len(suf)]
-    return w
-
-
 def uncovered(question: str, ent: planner.Entities, facts: list[Fact]) -> list[str]:
     """Content words of the question that no retrieved passage contains, when fewer than
     half are covered by the best passage: the search found text *near* the question but not
     an answer to it ("who was the company man" against DDR pages that never name one)."""
     names = {w for _, n in ent.wells for w in WORD.findall(n.lower())}
-    words = [w for w in WORD.findall(question.lower()) if w not in STOP and w not in names]
-    stems = list(dict.fromkeys(_stem(w) for w in words))
+    words = [
+        w
+        for w in WORD.findall(question.lower())
+        if w not in STOP and w not in names and stem(w) not in scope.GENERIC
+    ]
+    stems = list(dict.fromkeys(stem(w) for w in words))
     if not stems:
         return []
     best: set[str] = set()
@@ -97,6 +85,12 @@ def uncovered(question: str, ent: planner.Entities, facts: list[Fact]) -> list[s
     if len(best) * 2 >= len(stems):
         return []
     return [s for s in stems if s not in best]
+
+
+def _entity_words(e: planner.Entities) -> set[str]:
+    names = [n for _, n in e.wells] + [e.formation or ""]
+    names.append(EVENT_LABELS.get(e.event_type or "", ""))
+    return {w for n in names for w in WORD.findall(n.lower())}
 
 
 def compose(p: planner.Plan, results: list[ToolResult]) -> tuple[list[str], Numbering, bool]:
@@ -202,6 +196,15 @@ def run(
             yield from events
             return
     p = planner.plan(session, question, well_id=well_id, alert_id=alert_id)
+    if not p.refusal:
+        missing = scope.off_record(question, scope.corpus_terms(session), _entity_words(p.entities))
+        if missing:
+            p.refusal = (
+                "No record found: the reports never mention "
+                + ", ".join(f"“{w}”" for w in missing)
+                + ", so this is outside what SMRITI can answer from them."
+            )
+            p.calls = []
     yield {
         "type": "plan",
         "intent": p.intent,

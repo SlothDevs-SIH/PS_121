@@ -1,0 +1,1230 @@
+{
+  "what": "Copilot (S10, rules engine) on a question set generated from SYNTHETIC truth",
+  "measured_at": "2026-09-30T12:06:48+00:00",
+  "commit": "cac2c41",
+  "engine": "rules",
+  "questions": 76,
+  "scores": {
+    "lookup_correct": 1.0,
+    "retrieval_recall_at_5_doc_level": 0.45,
+    "retrieval_recall_at_5_with_planner_filters": 0.9,
+    "aggregation_exact": 1.0,
+    "aggregation_precision_mean": 1.0,
+    "aggregation_recall_mean": 1.0,
+    "ledger_top_action_matches_ledger": 1.0,
+    "ledger_top_is_planted_best_of_ranked": 1.0,
+    "unanswerable_correct_refusal": 1.0,
+    "heldout_unanswerable_correct_refusal": 1.0,
+    "heldout_answerable_answered_with_the_phrase": 1.0,
+    "heldout2_unanswerable_correct_refusal": 1.0,
+    "heldout2_answerable_answered_with_citation": 1.0,
+    "citation_faithfulness": 1.0,
+    "citations_checked": 246
+  },
+  "targets_master_plan_13_3": {
+    "recall_at_5": 0.85,
+    "citation_faithfulness": 0.95,
+    "correct_refusal": 0.9
+  },
+  "latency_ms": {
+    "median": 19.2,
+    "max": 226.5
+  },
+  "unfaithful_examples": [],
+  "failures": [],
+  "rows": [
+    {
+      "category": "lookup",
+      "q": "What high torque did SYN-ASM-02 have in the Barail?",
+      "gold_md": 3610.7,
+      "gold_docs": [
+        "SYN-ASM-02_DDR-R05_2023-11-16.pdf",
+        "SYN-ASM-02_WCR_2023-12-05.pdf"
+      ],
+      "gold_well": "SYN-ASM-02",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 100.2,
+      "correct": true,
+      "recall_at_5": true,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "lookup",
+      "q": "What tight hole did SYN-ASM-08 have in the Girujan Clay?",
+      "gold_md": 1693.8,
+      "gold_docs": [
+        "SYN-ASM-08_DDR-R02_2010-04-05.pdf",
+        "SYN-ASM-08_WCR_2010-05-05.pdf"
+      ],
+      "gold_well": "SYN-ASM-08",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 40.2,
+      "correct": true,
+      "recall_at_5": false,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "lookup",
+      "q": "What overpressure did SYN-ASM-25 have in the Kopili?",
+      "gold_md": 3947.1,
+      "gold_docs": [
+        "SYN-ASM-25_DDR-R05_2008-04-19.pdf",
+        "SYN-ASM-25_WCR_2008-05-05.pdf"
+      ],
+      "gold_well": "SYN-ASM-25",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 45.4,
+      "correct": true,
+      "recall_at_5": true,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "lookup",
+      "q": "What bit balling did SYN-ASM-40 have in the Girujan Clay?",
+      "gold_md": 2296.2,
+      "gold_docs": [
+        "SYN-ASM-40_DDR-R02_2009-04-14.pdf",
+        "SYN-ASM-40_WCR_2009-05-10_scan.pdf"
+      ],
+      "gold_well": "SYN-ASM-40",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 38.7,
+      "correct": true,
+      "recall_at_5": false,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "lookup",
+      "q": "What cementing problems did SYN-ASM-17 have in the Girujan Clay?",
+      "gold_md": 2363.0,
+      "gold_docs": [
+        "SYN-ASM-17_DDR-R03_2010-04-03.pdf",
+        "SYN-ASM-17_WCR_2010-04-27.pdf"
+      ],
+      "gold_well": "SYN-ASM-17",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 41.4,
+      "correct": true,
+      "recall_at_5": true,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "lookup",
+      "q": "What cementing problems did SYN-ASM-28 have in the Tipam Sandstone?",
+      "gold_md": 2350.0,
+      "gold_docs": [
+        "SYN-ASM-28_DDR-R03_2013-04-26.pdf",
+        "SYN-ASM-28_WCR_2013-05-18_scan.pdf"
+      ],
+      "gold_well": "SYN-ASM-28",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 50.6,
+      "correct": true,
+      "recall_at_5": true,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "lookup",
+      "q": "What losses did SYN-ASM-05 have in the Tipam Sandstone?",
+      "gold_md": 2535.6,
+      "gold_docs": [
+        "SYN-ASM-05_DDR-R03_2012-01-10.pdf",
+        "SYN-ASM-05_WCR_2012-02-09.pdf"
+      ],
+      "gold_well": "SYN-ASM-05",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 28.9,
+      "correct": true,
+      "recall_at_5": false,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "lookup",
+      "q": "What losses did SYN-ASM-27 have in the Tipam Sandstone?",
+      "gold_md": 2886.6,
+      "gold_docs": [
+        "SYN-ASM-27_DDR-R02_2012-02-16.pdf",
+        "SYN-ASM-27_WCR_2012-03-11.pdf"
+      ],
+      "gold_well": "SYN-ASM-27",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 32.9,
+      "correct": true,
+      "recall_at_5": false,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "lookup",
+      "q": "What stuck pipe did SYN-ASM-37 have in the Barail?",
+      "gold_md": 3573.7,
+      "gold_docs": [
+        "SYN-ASM-37_DDR-R03_2013-10-21_scan.pdf",
+        "SYN-ASM-37_WCR_2013-11-06.pdf"
+      ],
+      "gold_well": "SYN-ASM-37",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 30.0,
+      "correct": true,
+      "recall_at_5": true,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "lookup",
+      "q": "What losses did SYN-ASM-23 have in the Tipam Sandstone?",
+      "gold_md": 2502.5,
+      "gold_docs": [
+        "SYN-ASM-23_DDR-R03_2020-05-17.pdf",
+        "SYN-ASM-23_WCR_2020-06-04_scan.pdf"
+      ],
+      "gold_well": "SYN-ASM-23",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 30.1,
+      "correct": true,
+      "recall_at_5": false,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "lookup",
+      "q": "What tight hole did SYN-ASM-13 have in the Girujan Clay?",
+      "gold_md": 2433.6,
+      "gold_docs": [
+        "SYN-ASM-13_DDR-R03_2008-03-21.pdf",
+        "SYN-ASM-13_WCR_2008-04-14.pdf"
+      ],
+      "gold_well": "SYN-ASM-13",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 35.1,
+      "correct": true,
+      "recall_at_5": true,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "lookup",
+      "q": "What bit balling did SYN-ASM-11 have in the Girujan Clay?",
+      "gold_md": 2201.3,
+      "gold_docs": [
+        "SYN-ASM-11_DDR-R03_2018-11-11.pdf",
+        "SYN-ASM-11_WCR_2018-12-04.pdf"
+      ],
+      "gold_well": "SYN-ASM-11",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 27.3,
+      "correct": true,
+      "recall_at_5": false,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "lookup",
+      "q": "What losses did SYN-ASM-06 have in the Tipam Sandstone?",
+      "gold_md": 2980.6,
+      "gold_docs": [
+        "SYN-ASM-06_DDR-R02_2024-12-12.pdf",
+        "SYN-ASM-06_WCR_2025-01-01.pdf"
+      ],
+      "gold_well": "SYN-ASM-06",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 31.0,
+      "correct": true,
+      "recall_at_5": true,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "lookup",
+      "q": "What losses did SYN-ASM-39 have in the Tipam Sandstone?",
+      "gold_md": 2869.2,
+      "gold_docs": [
+        "SYN-ASM-39_DDR-R03_2021-07-22.pdf",
+        "SYN-ASM-39_WCR_2021-08-15.pdf"
+      ],
+      "gold_well": "SYN-ASM-39",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 26.4,
+      "correct": true,
+      "recall_at_5": false,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "lookup",
+      "q": "What stuck pipe did SYN-ASM-28 have in the Barail?",
+      "gold_md": 3313.0,
+      "gold_docs": [
+        "SYN-ASM-28_DDR-R04_2013-04-30.pdf",
+        "SYN-ASM-28_WCR_2013-05-18_scan.pdf"
+      ],
+      "gold_well": "SYN-ASM-28",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 35.5,
+      "correct": true,
+      "recall_at_5": true,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "lookup",
+      "q": "What tight hole did SYN-ASM-18 have in the Girujan Clay?",
+      "gold_md": 2011.2,
+      "gold_docs": [
+        "SYN-ASM-18_DDR-R02_2020-08-14.pdf",
+        "SYN-ASM-18_WCR_2020-09-13.pdf"
+      ],
+      "gold_well": "SYN-ASM-18",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 31.4,
+      "correct": true,
+      "recall_at_5": false,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "lookup",
+      "q": "What kick did SYN-ASM-01 have in the Kopili?",
+      "gold_md": 3745.3,
+      "gold_docs": [
+        "SYN-ASM-01_WCR_2009-02-15.pdf"
+      ],
+      "gold_well": "SYN-ASM-01",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 26.5,
+      "correct": true,
+      "recall_at_5": false,
+      "recall_at_5_filtered": false
+    },
+    {
+      "category": "lookup",
+      "q": "What stuck pipe did SYN-ASM-31 have in the Barail?",
+      "gold_md": 3226.2,
+      "gold_docs": [
+        "SYN-ASM-31_DDR-R04_2014-02-08.pdf",
+        "SYN-ASM-31_WCR_2014-03-03.pdf"
+      ],
+      "gold_well": "SYN-ASM-31",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 30.9,
+      "correct": true,
+      "recall_at_5": true,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "lookup",
+      "q": "What stuck pipe did SYN-ASM-33 have in the Barail?",
+      "gold_md": 3450.4,
+      "gold_docs": [
+        "SYN-ASM-33_DDR-R02_2012-12-27.pdf",
+        "SYN-ASM-33_WCR_2013-01-16_scan.pdf"
+      ],
+      "gold_well": "SYN-ASM-33",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 76.2,
+      "correct": true,
+      "recall_at_5": false,
+      "recall_at_5_filtered": false
+    },
+    {
+      "category": "lookup",
+      "q": "What bit balling did SYN-ASM-38 have in the Girujan Clay?",
+      "gold_md": 1901.1,
+      "gold_docs": [
+        "SYN-ASM-38_DDR-R02_2021-03-05.pdf",
+        "SYN-ASM-38_WCR_2021-03-30.pdf"
+      ],
+      "gold_well": "SYN-ASM-38",
+      "intent": "events",
+      "tools": [
+        "get_events",
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 29.4,
+      "correct": true,
+      "recall_at_5": false,
+      "recall_at_5_filtered": true
+    },
+    {
+      "category": "aggregation",
+      "q": "Which wells had bit balling in the Girujan Clay?",
+      "gold_wells": [
+        "SYN-ASM-01",
+        "SYN-ASM-02",
+        "SYN-ASM-07",
+        "SYN-ASM-09",
+        "SYN-ASM-11",
+        "SYN-ASM-14",
+        "SYN-ASM-15",
+        "SYN-ASM-16",
+        "SYN-ASM-20",
+        "SYN-ASM-23",
+        "SYN-ASM-26",
+        "SYN-ASM-30",
+        "SYN-ASM-32",
+        "SYN-ASM-36",
+        "SYN-ASM-38",
+        "SYN-ASM-40"
+      ],
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 226.5,
+      "precision": 1.0,
+      "recall": 1.0,
+      "correct": true
+    },
+    {
+      "category": "aggregation",
+      "q": "Which wells had cementing problems in the Girujan Clay?",
+      "gold_wells": [
+        "SYN-ASM-12",
+        "SYN-ASM-17",
+        "SYN-ASM-36",
+        "SYN-ASM-40"
+      ],
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 15.2,
+      "precision": 1.0,
+      "recall": 1.0,
+      "correct": true
+    },
+    {
+      "category": "aggregation",
+      "q": "Which wells had cementing problems in the Tipam Sandstone?",
+      "gold_wells": [
+        "SYN-ASM-01",
+        "SYN-ASM-03",
+        "SYN-ASM-13",
+        "SYN-ASM-18",
+        "SYN-ASM-19",
+        "SYN-ASM-20",
+        "SYN-ASM-23",
+        "SYN-ASM-24",
+        "SYN-ASM-25",
+        "SYN-ASM-28"
+      ],
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 19.3,
+      "precision": 1.0,
+      "recall": 1.0,
+      "correct": true
+    },
+    {
+      "category": "aggregation",
+      "q": "Which wells had hole instability in the Barail?",
+      "gold_wells": [
+        "SYN-ASM-01",
+        "SYN-ASM-11",
+        "SYN-ASM-14",
+        "SYN-ASM-22",
+        "SYN-ASM-39"
+      ],
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 11.6,
+      "precision": 1.0,
+      "recall": 1.0,
+      "correct": true
+    },
+    {
+      "category": "aggregation",
+      "q": "Which wells had hole instability in the Kopili?",
+      "gold_wells": [
+        "SYN-ASM-03",
+        "SYN-ASM-19",
+        "SYN-ASM-25",
+        "SYN-ASM-32"
+      ],
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 10.1,
+      "precision": 1.0,
+      "recall": 1.0,
+      "correct": true
+    },
+    {
+      "category": "aggregation",
+      "q": "Which wells had kick in the Kopili?",
+      "gold_wells": [
+        "SYN-ASM-01",
+        "SYN-ASM-02",
+        "SYN-ASM-08",
+        "SYN-ASM-17"
+      ],
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 16.9,
+      "precision": 1.0,
+      "recall": 1.0,
+      "correct": true
+    },
+    {
+      "category": "aggregation",
+      "q": "Which wells had kick in the Langpar?",
+      "gold_wells": [
+        "SYN-ASM-08"
+      ],
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 10.3,
+      "precision": 1.0,
+      "recall": 1.0,
+      "correct": true
+    },
+    {
+      "category": "aggregation",
+      "q": "Which wells had losses in the Namsang?",
+      "gold_wells": [
+        "SYN-ASM-13",
+        "SYN-ASM-36"
+      ],
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 12.9,
+      "precision": 1.0,
+      "recall": 1.0,
+      "correct": true
+    },
+    {
+      "category": "aggregation",
+      "q": "Which wells had losses in the Sylhet?",
+      "gold_wells": [
+        "SYN-ASM-31",
+        "SYN-ASM-36"
+      ],
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 13.4,
+      "precision": 1.0,
+      "recall": 1.0,
+      "correct": true
+    },
+    {
+      "category": "aggregation",
+      "q": "Which wells had losses in the Tipam Sandstone?",
+      "gold_wells": [
+        "SYN-ASM-01",
+        "SYN-ASM-02",
+        "SYN-ASM-03",
+        "SYN-ASM-04",
+        "SYN-ASM-05",
+        "SYN-ASM-06",
+        "SYN-ASM-08",
+        "SYN-ASM-19",
+        "SYN-ASM-22",
+        "SYN-ASM-23",
+        "SYN-ASM-27",
+        "SYN-ASM-30",
+        "SYN-ASM-31",
+        "SYN-ASM-35",
+        "SYN-ASM-37",
+        "SYN-ASM-38",
+        "SYN-ASM-39"
+      ],
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 17.7,
+      "precision": 1.0,
+      "recall": 1.0,
+      "correct": true
+    },
+    {
+      "category": "aggregation",
+      "q": "Which wells had overpressure in the Kopili?",
+      "gold_wells": [
+        "SYN-ASM-01",
+        "SYN-ASM-04",
+        "SYN-ASM-17",
+        "SYN-ASM-18",
+        "SYN-ASM-25",
+        "SYN-ASM-32",
+        "SYN-ASM-36"
+      ],
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 17.9,
+      "precision": 1.0,
+      "recall": 1.0,
+      "correct": true
+    },
+    {
+      "category": "aggregation",
+      "q": "Which wells had stuck pipe in the Barail?",
+      "gold_wells": [
+        "SYN-ASM-01",
+        "SYN-ASM-03",
+        "SYN-ASM-06",
+        "SYN-ASM-08",
+        "SYN-ASM-09",
+        "SYN-ASM-12",
+        "SYN-ASM-16",
+        "SYN-ASM-17",
+        "SYN-ASM-20",
+        "SYN-ASM-23",
+        "SYN-ASM-25",
+        "SYN-ASM-28",
+        "SYN-ASM-31",
+        "SYN-ASM-32",
+        "SYN-ASM-33",
+        "SYN-ASM-37",
+        "SYN-ASM-38",
+        "SYN-ASM-39"
+      ],
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 16.6,
+      "precision": 1.0,
+      "recall": 1.0,
+      "correct": true
+    },
+    {
+      "category": "aggregation",
+      "q": "Which wells had tight hole in the Girujan Clay?",
+      "gold_wells": [
+        "SYN-ASM-01",
+        "SYN-ASM-02",
+        "SYN-ASM-03",
+        "SYN-ASM-04",
+        "SYN-ASM-05",
+        "SYN-ASM-07",
+        "SYN-ASM-08",
+        "SYN-ASM-11",
+        "SYN-ASM-12",
+        "SYN-ASM-13",
+        "SYN-ASM-17",
+        "SYN-ASM-18",
+        "SYN-ASM-24",
+        "SYN-ASM-25",
+        "SYN-ASM-28",
+        "SYN-ASM-31",
+        "SYN-ASM-36",
+        "SYN-ASM-39"
+      ],
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 12.6,
+      "precision": 1.0,
+      "recall": 1.0,
+      "correct": true
+    },
+    {
+      "category": "aggregation",
+      "q": "Which wells had high torque in the Barail?",
+      "gold_wells": [
+        "SYN-ASM-02",
+        "SYN-ASM-09",
+        "SYN-ASM-26",
+        "SYN-ASM-36",
+        "SYN-ASM-38"
+      ],
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 10.9,
+      "precision": 1.0,
+      "recall": 1.0,
+      "correct": true
+    },
+    {
+      "category": "aggregation",
+      "q": "Which wells within 5 km of SYN-ASM-41 had stuck pipe?",
+      "gold_wells": [
+        "SYN-ASM-01",
+        "SYN-ASM-08",
+        "SYN-ASM-09",
+        "SYN-ASM-12",
+        "SYN-ASM-16",
+        "SYN-ASM-17",
+        "SYN-ASM-20",
+        "SYN-ASM-23",
+        "SYN-ASM-25",
+        "SYN-ASM-28",
+        "SYN-ASM-31",
+        "SYN-ASM-32",
+        "SYN-ASM-33",
+        "SYN-ASM-39"
+      ],
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 17.9,
+      "precision": 1.0,
+      "recall": 1.0,
+      "correct": true
+    },
+    {
+      "category": "ledger",
+      "q": "What worked for losses in the Tipam Sandstone?",
+      "event_type": "LOSS",
+      "formation": "Tipam Sandstone",
+      "intent": "ledger",
+      "tools": [
+        "get_ledger"
+      ],
+      "refused": false,
+      "took_ms": 29.5,
+      "correct": true,
+      "top_is_planted_best_of_ranked": true
+    },
+    {
+      "category": "ledger",
+      "q": "What worked for losses?",
+      "event_type": "LOSS",
+      "formation": null,
+      "intent": "ledger",
+      "tools": [
+        "get_ledger"
+      ],
+      "refused": false,
+      "took_ms": 28.7,
+      "correct": true,
+      "top_is_planted_best_of_ranked": true
+    },
+    {
+      "category": "ledger",
+      "q": "What worked for stuck pipe in the Barail?",
+      "event_type": "STUCK",
+      "formation": "Barail",
+      "intent": "ledger",
+      "tools": [
+        "get_ledger"
+      ],
+      "refused": false,
+      "took_ms": 30.7,
+      "correct": true,
+      "top_is_planted_best_of_ranked": true
+    },
+    {
+      "category": "ledger",
+      "q": "What worked for stuck pipe?",
+      "event_type": "STUCK",
+      "formation": null,
+      "intent": "ledger",
+      "tools": [
+        "get_ledger"
+      ],
+      "refused": false,
+      "took_ms": 25.9,
+      "correct": true,
+      "top_is_planted_best_of_ranked": true
+    },
+    {
+      "category": "ledger",
+      "q": "What worked for bit balling?",
+      "event_type": "BALLING",
+      "formation": null,
+      "intent": "ledger",
+      "tools": [
+        "get_ledger"
+      ],
+      "refused": false,
+      "took_ms": 19.4,
+      "correct": true,
+      "top_is_planted_best_of_ranked": true
+    },
+    {
+      "category": "unanswerable",
+      "q": "What happened on SYN-ASM-77?",
+      "intent": "refuse",
+      "tools": [],
+      "refused": true,
+      "took_ms": 2.3,
+      "correct": true
+    },
+    {
+      "category": "unanswerable",
+      "q": "Did SYN-ASM-58 have losses in the Tipam?",
+      "intent": "refuse",
+      "tools": [],
+      "refused": true,
+      "took_ms": 3.4,
+      "correct": true
+    },
+    {
+      "category": "unanswerable",
+      "q": "Which treatments worked on well XYZ-ABC-1?",
+      "intent": "refuse",
+      "tools": [],
+      "refused": true,
+      "took_ms": 1.6,
+      "correct": true
+    },
+    {
+      "category": "unanswerable",
+      "q": "What is the oil price today?",
+      "intent": "refuse",
+      "tools": [],
+      "refused": true,
+      "took_ms": 1.7,
+      "correct": true
+    },
+    {
+      "category": "unanswerable",
+      "q": "Will it rain at the rig tomorrow?",
+      "intent": "search",
+      "tools": [
+        "search_documents"
+      ],
+      "refused": true,
+      "took_ms": 14.9,
+      "correct": true
+    },
+    {
+      "category": "unanswerable",
+      "q": "Write a poem about drilling rigs",
+      "intent": "refuse",
+      "tools": [],
+      "refused": true,
+      "took_ms": 2.3,
+      "correct": true
+    },
+    {
+      "category": "unanswerable",
+      "q": "Which wells had bit balling in the Barail?",
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 15.2,
+      "correct": true
+    },
+    {
+      "category": "unanswerable",
+      "q": "Which wells had kick in the Tipam Sandstone?",
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 12.3,
+      "correct": true
+    },
+    {
+      "category": "unanswerable",
+      "q": "Who was the company man on SYN-ASM-05?",
+      "intent": "search",
+      "tools": [],
+      "refused": true,
+      "took_ms": 3.8,
+      "correct": true
+    },
+    {
+      "category": "unanswerable",
+      "q": "What brand of drill bit did SYN-ASM-12 use?",
+      "intent": "search",
+      "tools": [
+        "search_documents"
+      ],
+      "refused": true,
+      "took_ms": 19.1,
+      "correct": true
+    },
+    {
+      "category": "heldout_answerable",
+      "q": "Which reports mention a pipe release pill?",
+      "phrase": "pipe release pill",
+      "intent": "search",
+      "tools": [
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 25.5,
+      "correct": true
+    },
+    {
+      "category": "heldout_answerable",
+      "q": "Show reports where detergent was pumped",
+      "phrase": "detergent",
+      "intent": "search",
+      "tools": [
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 27.3,
+      "correct": true
+    },
+    {
+      "category": "heldout_answerable",
+      "q": "Where was lubricant added to the mud?",
+      "phrase": "lubricant",
+      "intent": "search",
+      "tools": [
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 24.4,
+      "correct": true
+    },
+    {
+      "category": "heldout_answerable",
+      "q": "Find reports describing a squeeze job",
+      "phrase": "squeeze",
+      "intent": "search",
+      "tools": [
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 26.5,
+      "correct": true
+    },
+    {
+      "category": "heldout_answerable",
+      "q": "Which reports describe using the driller's method?",
+      "phrase": "driller",
+      "intent": "search",
+      "tools": [
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 40.4,
+      "correct": true
+    },
+    {
+      "category": "heldout_unanswerable",
+      "q": "Which contractor supplied the mud chemicals?",
+      "intent": "search",
+      "tools": [],
+      "refused": true,
+      "took_ms": 2.9,
+      "correct": true
+    },
+    {
+      "category": "heldout_unanswerable",
+      "q": "What was the rig cost per day on SYN-ASM-20?",
+      "intent": "search",
+      "tools": [],
+      "refused": true,
+      "took_ms": 2.4,
+      "correct": true
+    },
+    {
+      "category": "heldout_unanswerable",
+      "q": "Who was the toolpusher on the night shift at SYN-ASM-03?",
+      "intent": "search",
+      "tools": [],
+      "refused": true,
+      "took_ms": 2.3,
+      "correct": true
+    },
+    {
+      "category": "heldout_unanswerable",
+      "q": "What was the ambient temperature at the rig site during the cement job report?",
+      "intent": "events",
+      "tools": [],
+      "refused": true,
+      "took_ms": 6.0,
+      "correct": true
+    },
+    {
+      "category": "heldout_unanswerable",
+      "q": "How many people were in the drilling crew on SYN-ASM-10?",
+      "intent": "events",
+      "tools": [],
+      "refused": true,
+      "took_ms": 2.4,
+      "correct": true
+    },
+    {
+      "category": "heldout2_answerable",
+      "q": "Which wells used a cement plug to cure losses?",
+      "intent": "ledger",
+      "tools": [
+        "get_ledger"
+      ],
+      "refused": false,
+      "took_ms": 29.1,
+      "correct": true
+    },
+    {
+      "category": "heldout2_answerable",
+      "q": "Where was jarring needed to free stuck pipe?",
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 16.6,
+      "correct": true
+    },
+    {
+      "category": "heldout2_answerable",
+      "q": "Which reports mention reduced mud weight after losses?",
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 17.3,
+      "correct": true
+    },
+    {
+      "category": "heldout2_answerable",
+      "q": "Show reports where LCM was pumped in the Tipam",
+      "intent": "search",
+      "tools": [
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 81.7,
+      "correct": true
+    },
+    {
+      "category": "heldout2_answerable",
+      "q": "What happened on SYN-ASM-12?",
+      "intent": "search",
+      "tools": [
+        "search_documents"
+      ],
+      "refused": false,
+      "took_ms": 22.2,
+      "correct": true
+    },
+    {
+      "category": "heldout2_answerable",
+      "q": "What are the drilling risks in the Barail for SYN-ASM-41?",
+      "intent": "risk",
+      "tools": [
+        "get_risk_profile"
+      ],
+      "refused": false,
+      "took_ms": 57.2,
+      "correct": true
+    },
+    {
+      "category": "heldout2_answerable",
+      "q": "What worked for stuck pipe in the Barail?",
+      "intent": "ledger",
+      "tools": [
+        "get_ledger"
+      ],
+      "refused": false,
+      "took_ms": 33.7,
+      "correct": true
+    },
+    {
+      "category": "heldout2_answerable",
+      "q": "Which wells within 5 km of SYN-ASM-41 had losses?",
+      "intent": "events",
+      "tools": [
+        "get_events"
+      ],
+      "refused": false,
+      "took_ms": 22.1,
+      "correct": true
+    },
+    {
+      "category": "heldout2_unanswerable",
+      "q": "What was the daily mud cost on SYN-ASM-08?",
+      "intent": "search",
+      "tools": [],
+      "refused": true,
+      "took_ms": 5.8,
+      "correct": true
+    },
+    {
+      "category": "heldout2_unanswerable",
+      "q": "Which service company ran the wireline logs on SYN-ASM-15?",
+      "intent": "search",
+      "tools": [],
+      "refused": true,
+      "took_ms": 3.9,
+      "correct": true
+    },
+    {
+      "category": "heldout2_unanswerable",
+      "q": "What was the wind speed during the rig move to SYN-ASM-22?",
+      "intent": "search",
+      "tools": [],
+      "refused": true,
+      "took_ms": 4.6,
+      "correct": true
+    },
+    {
+      "category": "heldout2_unanswerable",
+      "q": "How many litres of diesel did the rig burn on SYN-ASM-30?",
+      "intent": "events",
+      "tools": [],
+      "refused": true,
+      "took_ms": 5.8,
+      "correct": true
+    },
+    {
+      "category": "heldout2_unanswerable",
+      "q": "What was the name of the drilling supervisor on SYN-ASM-14 during the losses?",
+      "intent": "events",
+      "tools": [],
+      "refused": true,
+      "took_ms": 4.4,
+      "correct": true
+    },
+    {
+      "category": "heldout2_unanswerable",
+      "q": "What was the contract day rate for the rig that drilled SYN-ASM-02?",
+      "intent": "search",
+      "tools": [],
+      "refused": true,
+      "took_ms": 4.2,
+      "correct": true
+    },
+    {
+      "category": "heldout2_unanswerable",
+      "q": "Which hospital treated injuries on SYN-ASM-19?",
+      "intent": "search",
+      "tools": [],
+      "refused": true,
+      "took_ms": 3.7,
+      "correct": true
+    },
+    {
+      "category": "heldout2_unanswerable",
+      "q": "What was the humidity in the mud lab on SYN-ASM-11?",
+      "intent": "search",
+      "tools": [],
+      "refused": true,
+      "took_ms": 3.1,
+      "correct": true
+    }
+  ],
+  "notes": [
+    "SYNTHETIC: questions and gold answers are generated from the seeded field's truth; report phrasing is our generator's fixed vocabulary, so these are upper bounds, not the §13.3 manual evaluation on real reports.",
+    "Answer correctness is scored automatically against structured gold (depth, well sets, ledger order), not on the 3-point manual scale of §13.3.",
+    "Unanswerable: the search-coverage rule was added after the first run failed two questions of the original ten (1.0 on those ten is therefore tuned); the five held-out questions were written before re-running and are the honest estimate.",
+    "Part 7 (V-B34): a scope check refuses questions whose focus (what/which/how many/who + noun phrase) names something the reports never mention; it applies to every intent, not only search. The first held-out set was diagnosed and so became development data. held-out 2 (8 unanswerable, 8 answerable) was committed in cac2c41 before the check was coded and run once after; the questions were written by the same developer, knowing the kind of fix planned, and n = 8 per side is small.",
+    "Recall@5 without filters searches the question text alone; with planner filters is how the copilot actually searches (the well and formation it read).",
+    "Faithfulness is checked for event lines (the cited page belongs to the named well and mentions the problem); quoted passages are the page text itself.",
+    "The optional LLM engine is not evaluated here (no model server in the sandbox)."
+  ]
+}

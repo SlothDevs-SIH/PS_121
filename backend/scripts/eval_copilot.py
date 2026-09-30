@@ -363,6 +363,12 @@ def main() -> None:
             "Unanswerable: the search-coverage rule was added after the first run failed two "
             "questions of the original ten (1.0 on those ten is therefore tuned); the five "
             "held-out questions were written before re-running and are the honest estimate.",
+            "Part 7 (V-B34): a scope check refuses questions whose focus (what/which/how "
+            "many/who + noun phrase) names something the reports never mention; it applies to "
+            "every intent, not only search. The first held-out set was diagnosed and so became "
+            "development data. held-out 2 (8 unanswerable, 8 answerable) was committed in "
+            "cac2c41 before the check was coded and run once after; the questions were written "
+            "by the same developer, knowing the kind of fix planned, and n = 8 per side is small.",
             "Recall@5 without filters searches the question text alone; with planner filters "
             "is how the copilot actually searches (the well and formation it read).",
             "Faithfulness is checked for event lines (the cited page belongs to the named well "
