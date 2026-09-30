@@ -179,6 +179,35 @@ def main() -> None:
             "How many people were in the drilling crew on SYN-ASM-10?",
         )
     ]
+    # Held out 2 (Part 7, written 2026-09-30 BEFORE the cross-intent coverage rule was coded;
+    # the first held-out set above had already been diagnosed, so it is development data now).
+    # Answerable ones span every intent and are scored "answered with a citation".
+    questions += [
+        {"category": "heldout2_answerable", "q": q}
+        for q in (
+            "Which wells used a cement plug to cure losses?",
+            "Where was jarring needed to free stuck pipe?",
+            "Which reports mention reduced mud weight after losses?",
+            "Show reports where LCM was pumped in the Tipam",
+            "What happened on SYN-ASM-12?",
+            "What are the drilling risks in the Barail for SYN-ASM-41?",
+            "What worked for stuck pipe in the Barail?",
+            "Which wells within 5 km of SYN-ASM-41 had losses?",
+        )
+    ]
+    questions += [
+        {"category": "heldout2_unanswerable", "q": q}
+        for q in (
+            "What was the daily mud cost on SYN-ASM-08?",
+            "Which service company ran the wireline logs on SYN-ASM-15?",
+            "What was the wind speed during the rig move to SYN-ASM-22?",
+            "How many litres of diesel did the rig burn on SYN-ASM-30?",
+            "What was the name of the drilling supervisor on SYN-ASM-14 during the losses?",
+            "What was the contract day rate for the rig that drilled SYN-ASM-02?",
+            "Which hospital treated injuries on SYN-ASM-19?",
+            "What was the humidity in the mud lab on SYN-ASM-11?",
+        )
+    ]
 
     with session_scope() as s:
         doc_ids = {f: i for f, i in s.execute(select(Document.filename, Document.id))}
@@ -250,6 +279,8 @@ def main() -> None:
                 row["top_is_planted_best_of_ranked"] = bool(ranked and ranked[0] == best)
             elif cat == "heldout_answerable":
                 row["correct"] = not a.get("refused") and qd["phrase"] in answer.lower()
+            elif cat == "heldout2_answerable":
+                row["correct"] = not a.get("refused") and bool(cites)
             else:
                 row["correct"] = bool(a.get("refused")) or answer.lower().startswith("no record")
             # Faithfulness of cited pages, line by line.
@@ -302,6 +333,8 @@ def main() -> None:
             "unanswerable_correct_refusal": rate("unanswerable"),
             "heldout_unanswerable_correct_refusal": rate("heldout_unanswerable"),
             "heldout_answerable_answered_with_the_phrase": rate("heldout_answerable"),
+            "heldout2_unanswerable_correct_refusal": rate("heldout2_unanswerable"),
+            "heldout2_answerable_answered_with_citation": rate("heldout2_answerable"),
             "citation_faithfulness": round(faithful / checked, 4) if checked else None,
             "citations_checked": checked,
         },
